@@ -30,3 +30,4 @@ team_id AUTO_INCREMENT PRIMARY KEY,
 team_name varchar(255) UNIQUE,
 team_memo text
 );
+

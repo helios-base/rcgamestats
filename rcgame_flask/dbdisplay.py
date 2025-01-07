@@ -14,3 +14,9 @@ def show_teams():
     db = get_db()
     teams = db.execute('SELECT * FROM teams').fetchall()
     return render_template('dbdisplay/teams.html', teams=teams)
+
+@bp.route('/test_matche')
+def show_match():
+    db = get_db()
+    match = db.execute('SELECT * FROM test_matche').fetchall()
+    return render_template('dbdisplay/test_matche.html', match=match)

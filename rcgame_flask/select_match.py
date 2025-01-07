@@ -34,7 +34,7 @@ def select_team():
                 (select_team1, select_team2, match_count)
             )
             db.commit()
-            return redirect(url_for("list.index"))
+            return redirect(url_for("dbdisplay.show_match"))
 
         flash(error)
         

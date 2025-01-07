@@ -10,7 +10,10 @@ from rcgame_flask.db import get_db
 bp = Blueprint('select_match', __name__, url_prefix='/select_match')
 
 @bp.route('/teamselect', methods=('GET','POST'))
-def register():
+def select_team():
+    db = get_db()
+    teams = db.execute('SELECT team_name FROM teams').fetchall()
+    
     if request.method == 'POST':
         select_team1 = request.form['team_name1']
         select_team2 = request.form['team_name2']
@@ -22,10 +25,12 @@ def register():
             error = 'team serect is required.'
         elif not select_team2:
             error = 'team select is required.'
+        elif select_team1 == select_team2:
+            error = '「Team1」と「Team2」が重複しています.'
 
         if error is None:
             db.execute(
-                "INSERT INTO  test_matche (left_team, light_team, Mcount) VALUES (?, ?, ?)"
+                "INSERT INTO  test_matche (left_team, light_team, Mcount) VALUES (?, ?, ?)",
                 (select_team1, select_team2, match_count)
             )
             db.commit()
@@ -33,4 +38,4 @@ def register():
 
         flash(error)
         
-    return render_template('auth/register.html')
+    return render_template('select_match/select_team.html', teams=teams)

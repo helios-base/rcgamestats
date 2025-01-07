@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Select Teams</title>
-</head>
-<body>
-    <h1>Select Teams</h1>
-    <form method="post">
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Select Team{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    {% for message in get_flashed_messages() %}
+    {% endfor %}
+    <form id="teamForm" method="post">
         <label for="team_name1">Team 1:</label>
         <select name="team_name1" id="team_name1">
             {% for team in teams %}
@@ -24,7 +24,22 @@
         <label for="match_count">Match Count:</label>
         <input type="number" name="match_count" id="match_count" required>
         <br>
-        <button type="submit">Submit</button>
+        <button type="submit">登録</button>
     </form>
-</body>
-</html>
+    
+    <script>
+        document.getElementById('teamForm').onsubmit = function(event) {
+            event.preventDefault(); 
+
+            var team1 = document.getElementById('team_name1').value;
+            var team2 = document.getElementById('team_name2').value;
+            var matchCount = document.getElementById('match_count').value;
+
+            var confirmation = confirm(`この内容でよろしいですか？\n"${team1}" vs "${team2}" を ${matchCount} 試合`);
+
+            if (confirmation) {
+                this.submit();
+            }
+        };
+    </script>
+{% endblock %}

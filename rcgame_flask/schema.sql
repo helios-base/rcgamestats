@@ -36,7 +36,7 @@ flag varchar(10)
 CREATE TABLE matches (
 match_id AUTO_INCREMENT PRIMARY KEY,
 group_id int(10),
-host verchar(30),
+host varchar(30),
 left_score int(10),
 right_score int(10),
 FOREIGN KEY (group_id) REFERENCES group_matchs(group_id)

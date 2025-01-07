@@ -39,4 +39,7 @@ def create_app(test_config=None):
     from . import select_match
     app.register_blueprint(select_match.bp)
 
+    from . import dbdisplay
+    app.register_blueprint(dbdisplay.bp)
+
     return app

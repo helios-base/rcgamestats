@@ -1,0 +1,36 @@
+import functools
+
+from flask import (
+    Blueprint, flash, g, redirect, render_template, request, session, url_for
+)
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from rcgame_flask.db import get_db
+
+bp = Blueprint('select_match', __name__, url_prefix='/select_match')
+
+@bp.route('/teamselect', methods=('GET','POST'))
+def register():
+    if request.method == 'POST':
+        select_team1 = request.form['team_name1']
+        select_team2 = request.form['team_name2']
+        match_count = request.form['match_count']
+        db = get_db()
+        error = None
+
+        if not select_team1:
+            error = 'team serect is required.'
+        elif not select_team2:
+            error = 'team select is required.'
+
+        if error is None:
+            db.execute(
+                "INSERT INTO  test_matche (left_team, light_team, Mcount) VALUES (?, ?, ?)"
+                (select_team1, select_team2, match_count)
+            )
+            db.commit()
+            return redirect(url_for("list.index"))
+
+        flash(error)
+        
+    return render_template('auth/register.html')

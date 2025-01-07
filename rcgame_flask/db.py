@@ -1,5 +1,5 @@
 import sqlite3
-
+import csv
 import click
 from flask import current_app, g
 
@@ -27,6 +27,16 @@ def init_db():
     with current_app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
+    # teamlist.csvのデータを挿入
+    with current_app.open_resource('teamlist.csv') as f:
+        reader = csv.reader(f.read().decode('utf8').splitlines())
+        for row in reader:
+            if len(row) == 3:
+                db.execute(
+                    'INSERT INTO teams (team_name, acceleration, filepass) VALUES (?, ?, ?)',
+                    (row[0], row[1], row[2])
+                )
+        db.commit()
 
 @click.command('init-db')
 def init_db_command():

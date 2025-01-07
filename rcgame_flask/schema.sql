@@ -43,8 +43,10 @@ FOREIGN KEY (group_id) REFERENCES group_matchs(group_id)
 );
 
 CREATE TABLE teams (
-team_id AUTO_INCREMENT PRIMARY KEY,
+team_id INTEGER PRIMARY KEY AUTOINCREMENT,
 team_name varchar(255) UNIQUE,
+acceleration varchar(5),
+filepass varchar(50),
 team_memo text
 );
 

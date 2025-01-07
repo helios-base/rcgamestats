@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Teams</title>
+</head>
+<body>
+    <h1>Select Teams</h1>
+    <form method="post">
+        <label for="team_name1">Team 1:</label>
+        <select name="team_name1" id="team_name1">
+            {% for team in teams %}
+            <option value="{{ team.team_name }}">{{ team.team_name }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="team_name2">Team 2:</label>
+        <select name="team_name2" id="team_name2">
+            {% for team in teams %}
+            <option value="{{ team.team_name }}">{{ team.team_name }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="match_count">Match Count:</label>
+        <input type="number" name="match_count" id="match_count" required>
+        <br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

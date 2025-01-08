@@ -15,8 +15,8 @@ def show_teams():
     teams = db.execute('SELECT * FROM teams').fetchall()
     return render_template('dbdisplay/teams.html', teams=teams)
 
-@bp.route('/test_matche')
-def show_match():
+@bp.route('/group_matches')
+def show_group_matches():
     db = get_db()
-    match = db.execute('SELECT * FROM test_matche').fetchall()
-    return render_template('dbdisplay/test_matche.html', match=match)
+    matches = db.execute('SELECT * FROM group_matches').fetchall()
+    return render_template('dbdisplay/group_matches.html', matches=matches)

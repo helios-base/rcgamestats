@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block header %}
   <h1>{% block title %}Teams{% endblock %}</h1>
+  <a class="action" href="{{ url_for('select_match.select_team') }}">スケジューリング</a>
 {% endblock %}
 
 {% block content %}

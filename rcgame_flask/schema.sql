@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS test_matche;
 DROP TABLE IF EXISTS hosts;
 DROP TABLE IF EXISTS matches;
+DROP TABLE IF EXISTS group_matches;
 DROP TABLE IF EXISTS teams;
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS post;
@@ -26,20 +27,31 @@ light_team varchar(30),
 Mcount int(10000)
 );
 
+CREATE TABLE group_matches (
+group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+group_time datetime,
+left_team varchar(30),
+right_team varchar(30),
+group_memo text,
+game_count INTEGER,
+processed varchar(10) DEFAULT '未'
+);
+
 CREATE TABLE hosts (
-host_id AUTO_INCREMENT PRIMARY KEY,
+host_id INTEGER PRIMARY KEY AUTOINCREMENT,
 host_name varchar(30),
 IP varchar(12),
-flag varchar(10)
+is_standby varchar(10)
 );
 
 CREATE TABLE matches (
-match_id AUTO_INCREMENT PRIMARY KEY,
+match_id INTEGER PRIMARY KEY AUTOINCREMENT,
 group_id int(10),
-host varchar(30),
+host_name varchar(30),
 left_score int(10),
 right_score int(10),
-FOREIGN KEY (group_id) REFERENCES group_matchs(group_id)
+FOREIGN KEY (group_id) REFERENCES group_matches(group_id),
+FOREIGN KEY (host_name) REFERENCES group_matches(host_name)
 );
 
 CREATE TABLE teams (

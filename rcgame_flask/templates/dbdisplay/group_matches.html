@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Group Matches{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Group ID</th>
+            <th>Group Time</th>
+            <th>Left Team</th>
+            <th>Right Team</th>
+            <th>Group Memo</th>
+            <th>Game Count</th>
+            <th>Processed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for match in matches %}
+        <tr>
+            <td>{{ match.group_id }}</td>
+            <td>{{ match.group_time }}</td>
+            <td>{{ match.left_team }}</td>
+            <td>{{ match.right_team }}</td>
+            <td>{{ match.group_memo }}</td>
+            <td>{{ match.game_count }}</td>
+            <td>{{ match.processed }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

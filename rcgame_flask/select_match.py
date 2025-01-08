@@ -18,6 +18,7 @@ def select_team():
         select_team1 = request.form['team_name1']
         select_team2 = request.form['team_name2']
         match_count = request.form['match_count']
+        group_memo = request.form['group_memo']
         db = get_db()
         error = None
 
@@ -30,11 +31,11 @@ def select_team():
 
         if error is None:
             db.execute(
-                "INSERT INTO  test_matche (left_team, light_team, Mcount) VALUES (?, ?, ?)",
-                (select_team1, select_team2, match_count)
+            "INSERT INTO group_matches (group_time,left_team, right_team, game_count, group_memo) VALUES (datetime('now'),?, ?, ?, ?)",
+            (select_team1, select_team2, match_count, group_memo)
             )
             db.commit()
-            return redirect(url_for("dbdisplay.show_match"))
+            return redirect(url_for("dbdisplay.show_group_matches"))
 
         flash(error)
         

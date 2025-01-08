@@ -24,6 +24,10 @@
         <label for="match_count">Match Count:</label>
         <input type="number" name="match_count" id="match_count" required>
         <br>
+        <br>
+        <label for="group_memo">Group Memo:</label>
+        <input type="text" name="group_memo" id="group_memo">
+        <br>
         <button type="submit">登録</button>
     </form>
     
@@ -34,7 +38,12 @@
             var team1 = document.getElementById('team_name1').value;
             var team2 = document.getElementById('team_name2').value;
             var matchCount = document.getElementById('match_count').value;
+            var groupMemo = document.getElementById('group_memo').value;
 
+            if (team1 === team2) {
+                alert('「Team1」と「Team2」が重複しています.');
+                return;
+            }
             var confirmation = confirm(`この内容でよろしいですか？\n"${team1}" vs "${team2}" を ${matchCount} 試合`);
 
             if (confirmation) {

@@ -20,3 +20,9 @@ def show_group_matches():
     db = get_db()
     matches = db.execute('SELECT * FROM group_matches').fetchall()
     return render_template('dbdisplay/group_matches.html', matches=matches)
+
+@bp.route('/matches')
+def show_matches():
+    db = get_db()
+    matches = db.execute('SELECT * FROM matches').fetchall()
+    return render_template('dbdisplay/matches.html', matches=matches)

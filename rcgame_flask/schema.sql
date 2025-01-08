@@ -29,12 +29,13 @@ Mcount int(10000)
 
 CREATE TABLE group_matches (
 group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+group_name varchar(255) UNIQUE,
 group_time datetime,
 left_team varchar(30),
 right_team varchar(30),
 group_memo text,
 game_count INTEGER,
-processed varchar(10) DEFAULT '未'
+executed_count INTEGER DEFAULT 0
 );
 
 CREATE TABLE hosts (
@@ -48,8 +49,13 @@ CREATE TABLE matches (
 match_id INTEGER PRIMARY KEY AUTOINCREMENT,
 group_id int(10),
 host_name varchar(30),
+start_time DATETIME,
+end_time DATETIME,
+left_team varchar(30),
+right_team varchar(30),
 left_score int(10),
 right_score int(10),
+processed VARCHAR(15) DEFAULT 'unexecuted',
 FOREIGN KEY (group_id) REFERENCES group_matches(group_id),
 FOREIGN KEY (host_name) REFERENCES group_matches(host_name)
 );

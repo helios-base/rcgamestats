@@ -1,8 +1,8 @@
 html { font-family: sans-serif; background: #eee; padding: 1rem; }
-body { max-width: 960px; margin: 0 auto; background: white; }
-h1 { font-family: serif; color: #377ba8; margin: 1rem 0; }
-h2 { font-family: serif; color: #000000; margin: 1rem 0; }
-a { color: #377ba8; }
+body { max-width: 1200px; margin: 0 auto; background: white; }
+h1 { font-family: serif; color: #377ba8; margin: 1rem 0; font-size: 2.2em; } 
+h2 { color: #000000; margin: 1rem 0; }
+a { color: #202020; }
 hr { border: none; border-top: 1px solid lightgray; }
 nav { background: lightgray; display: flex; align-items: center; padding: 0 0.5rem; }
 nav h1 { flex: auto; margin: 0; }
@@ -22,6 +22,6 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 .content form { margin: 1em 0; display: flex; flex-direction: column; }
 .content label { font-weight: bold; margin-bottom: 0.5em; }
 .content input, .content textarea { margin-bottom: 1em; }
-.content textarea { min-height: 12em; resize: vertical; }
+.content textarea { min-height: 16em; resize: vertical; } 
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }

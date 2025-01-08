@@ -27,12 +27,13 @@
             display: flex;
             flex-direction: column;
             position: fixed;
-            right: 0;
+            right: -200px; /* 初期位置を画面外に設定 */
             top: 50%;
             transform: translateY(-50%);
             background-color: #ffffff;
             padding: 1rem;
             border: 1px solid #ddd;
+            transition: right 0.3s ease; /* アニメーションを追加 */
         }
         .footer-nav a {
             text-decoration: none;
@@ -47,6 +48,21 @@
         .footer-nav a:hover {
             background-color: #ddd; /* ホバー時の背景色を変更 */
             color: #000; /* ホバー時の文字色を変更 */
+        }
+        .footer-nav:hover {
+            right: 0; /* カーソルが近づくと表示 */
+        }
+        .footer-nav::before {
+        content: '';
+        position: absolute;
+        left: -20px; /* 少し出ている部分の幅 */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px; /* 少し出ている部分の幅 */
+        height: 100%;
+        background-color: #377ba8; /* 装飾の背景色 */
+        border-top-left-radius: 4px; /* 角を丸くする */
+        border-bottom-left-radius: 4px; /* 角を丸くする */
         }
 </style>
 <nav>

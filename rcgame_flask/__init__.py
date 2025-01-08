@@ -42,4 +42,7 @@ def create_app(test_config=None):
     from . import dbdisplay
     app.register_blueprint(dbdisplay.bp)
 
+    from . import communication
+    app.register_blueprint(communication.bp)
+
     return app

@@ -44,6 +44,11 @@
                 alert('「Team1」と「Team2」が重複しています.');
                 return;
             }
+            if (matchCount <= 0)
+            {
+                alert('0以下の数字は使用できません');
+                return;
+            }
             var confirmation = confirm(`この内容でよろしいですか？\n"${team1}" vs "${team2}" を ${matchCount} 試合`);
 
             if (confirmation) {

@@ -54,15 +54,7 @@ def result():
     files = request.files.getlist('log_file')
     if not files:
         return jsonify({"error": "No selected files"}), 400
-
-    saved_files = []
-    for file in files:
-        if file:
-            filename = file.filename
-            save_path = os.path.join('rcgame_flask', 'static', 'logs', filename)
-            file.save(save_path)
-            saved_files.append(filename)
-
+        
     data = request.form.to_dict()
     match_id = data.get("match_id")
     left_team = data.get("left_team")
@@ -70,7 +62,7 @@ def result():
     left_score = data.get("left_score")
     right_score = data.get("right_score")
     processed = data.get("processed")
-
+    log_file = data.get("log_file")
     db = get_db()
 
     match = db.execute("SELECT * FROM matches WHERE match_id = ?", (match_id,)).fetchone()
@@ -86,18 +78,21 @@ def result():
         if not os.path.exists(log_dir_path):
             os.makedirs(log_dir_path)
 
+        log_file_dir_path = os.path.join(log_dir_path, log_file)
+        if not os.path.exists(log_file_dir_path):
+            os.makedirs(log_file_dir_path)
         saved_files = []
         for file in files:
             if file:
                 filename = file.filename
-                save_path = os.path.join(log_dir_path, filename)
+                save_path = os.path.join(log_file_dir_path, filename)
                 file.save(save_path)
                 saved_files.append(filename)
         
         # レコードを更新
         db.execute(
             "UPDATE matches SET end_time = ?, left_team = ?, right_team = ?, left_score = ?, right_score = ?, processed = ?, log_directory_name = ?, log_file = ? WHERE match_id = ?",
-            (end_time, left_team, right_team, left_score, right_score, 'completed', log_directory_name, ','.join(saved_files), match_id)
+            (end_time, left_team, right_team, left_score, right_score, 'completed', log_directory_name, log_file, match_id)
         )
         
         db.execute(

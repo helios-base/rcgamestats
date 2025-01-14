@@ -81,6 +81,7 @@ def result():
         log_file_dir_path = os.path.join(log_dir_path, log_file)
         if not os.path.exists(log_file_dir_path):
             os.makedirs(log_file_dir_path)
+            
         saved_files = []
         for file in files:
             if file:

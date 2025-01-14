@@ -1,0 +1,5 @@
+import webbrowser
+
+def open_url():
+    url = "https://www.ous.ac.jp/"
+    webbrowser.open(url)

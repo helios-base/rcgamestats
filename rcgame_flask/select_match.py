@@ -40,8 +40,8 @@ def select_team():
             group_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
             for i in range(match_count):
                 db.execute(
-                    "INSERT INTO matches (group_id, left_team, right_team) VALUES (?, ?, ?)",
-                    (group_id, select_team1, select_team2)
+                    "INSERT INTO matches (match_index, group_id, left_team, right_team) VALUES (?, ?, ?, ?)",
+                    (i+1, group_id, select_team1, select_team2)
                 )            
             db.commit()
             return redirect(url_for("dbdisplay.show_group_matches"))
@@ -49,3 +49,5 @@ def select_team():
         flash(error)
         
     return render_template('select_match/select_team.html', teams=teams)
+
+

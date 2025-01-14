@@ -73,3 +73,5 @@ def result():
         db.commit()
 
         return jsonify({"message": "レコードが更新されました"})
+    
+    

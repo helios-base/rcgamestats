@@ -35,7 +35,7 @@
             <td>{{ match.left_score }}</td>
             <td>{{ match.right_score }}</td>
             <td>{{ match.processed }}</td>
-            <td><a href="{{ url_for('static', filename='logs/testfile')  }}" target="_blank">Log File</a></td> <!-- ファイルパスリンク -->
+            <td><a href="{{ url_for('static', filename='logs/' ~ match.log_directory_name ~ '/' ~ match.log_file) }}" target="_blank">{{ match.log_file }}</a></td>
         </tr>
         {% endfor %}
     </tbody>

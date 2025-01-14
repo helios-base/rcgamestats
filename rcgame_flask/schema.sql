@@ -24,7 +24,7 @@ CREATE TABLE post (
 CREATE TABLE test_matche (
 left_team varchar(30),
 light_team varchar(30),
-Mcount int(10000)
+Mcount int(100000)
 );
 
 CREATE TABLE group_matches (
@@ -48,6 +48,7 @@ is_standby varchar(10)
 CREATE TABLE matches (
 match_id INTEGER PRIMARY KEY AUTOINCREMENT,
 group_id int(10),
+match_index int(10),
 host_name varchar(30),
 start_time DATETIME,
 end_time DATETIME,
@@ -56,6 +57,8 @@ right_team varchar(30),
 left_score int(10),
 right_score int(10),
 processed VARCHAR(15) DEFAULT 'unexecuted',
+log_directory_name varchar(255),
+log_file varchar(255),
 FOREIGN KEY (group_id) REFERENCES group_matches(group_id),
 FOREIGN KEY (host_name) REFERENCES group_matches(host_name)
 );

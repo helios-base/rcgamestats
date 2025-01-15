@@ -6,11 +6,13 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from rcgame_flask.auth import login_required
 from rcgame_flask.db import get_db
 
 bp = Blueprint('select_match', __name__, url_prefix='/select_match')
 
-@bp.route('/teamselect', methods=('GET','POST'))
+@bp.route('/', methods=('GET', 'POST'))
+@login_required
 def select_team():
     db = get_db()
     teams = db.execute('SELECT team_name FROM teams').fetchall()

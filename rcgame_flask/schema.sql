@@ -1,30 +1,13 @@
-DROP TABLE IF EXISTS test_matche;
 DROP TABLE IF EXISTS hosts;
 DROP TABLE IF EXISTS matches;
 DROP TABLE IF EXISTS group_matches;
 DROP TABLE IF EXISTS teams;
 DROP TABLE IF EXISTS user;
-DROP TABLE IF EXISTS post;
 
 CREATE TABLE user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL
-);
-
-CREATE TABLE post (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  author_id INTEGER NOT NULL,
-  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  FOREIGN KEY (author_id) REFERENCES user (id)
-);
-
-CREATE TABLE test_matche (
-left_team varchar(30),
-light_team varchar(30),
-Mcount int(100000)
 );
 
 CREATE TABLE group_matches (
@@ -43,6 +26,12 @@ host_id INTEGER PRIMARY KEY AUTOINCREMENT,
 host_name varchar(30),
 IP varchar(12),
 is_standby varchar(10)
+);
+
+CREATE TABLE key_certificates (
+  key_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  host_name varchar(30),
+  product_key varchar(255),
 );
 
 CREATE TABLE matches (

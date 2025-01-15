@@ -67,6 +67,15 @@
 </style>
 <nav>
   <h1>RCgame</h1>
+  <ul>
+    {% if g.user %}
+      <li><span>{{ g.user['username'] }}</span>
+      <li><a href="{{ url_for('auth.logout') }}">Log Out</a>
+    {% else %}
+      <li><a href="{{ url_for('auth.register') }}">Register</a>
+      <li><a href="{{ url_for('auth.login') }}">Log In</a>
+    {% endif %}
+  </ul>
 </nav>
 <section class="content">
   <header>
@@ -78,7 +87,7 @@
   {% block content %}{% endblock %}
 </section>
 <!-- index.html 以外の画面に表示されるフッター -->
-{% if request.path != '/' %}
+{% if request.path not in ['/', '/auth/login', '/auth/register', '/auth/logout'] %}
 <footer>
   <div class="footer-nav">
     <a href="{{ url_for('index') }}">メインメニュー</a>

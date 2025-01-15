@@ -5,6 +5,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from rcgame_flask.auth import login_required
 from rcgame_flask.db import get_db
 
 bp = Blueprint('list', __name__)

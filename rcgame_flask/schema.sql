@@ -32,7 +32,7 @@ is_standby varchar(10)
 CREATE TABLE key_certificates (
   key_id INTEGER PRIMARY KEY AUTOINCREMENT,
   host_name varchar(30),
-  product_key varchar(255) DEFAULT 'a',
+  api_key varchar(255) DEFAULT 'a',
   permit_flag varchar(10) DEFAULT 'false'
 );
 

@@ -12,7 +12,7 @@ def callback():
 @bp.route("/certification", methods=["POST"])
 def certification():
     data = request.get_json()
-    product_key = data.get("product_key")
+    product_key = data.get("api_key")
     host_name = data.get("host_name")
 
     db = get_db()
@@ -22,7 +22,7 @@ def certification():
     )
     db.commit()
     
-    certificate = db.execute("SELECT * FROM key_certificates WHERE product_key = ? AND host_name = ?", (product_key, host_name)).fetchone()
+    certificate = db.execute("SELECT * FROM key_certificates WHERE api_key = ? AND host_name = ?", (product_key, host_name)).fetchone()
     if certificate:
         db.execute(
             "UPDATE key_certificates SET host_name = ?,permit_flag = ?",(host_name,'True')

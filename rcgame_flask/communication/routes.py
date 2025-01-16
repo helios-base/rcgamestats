@@ -9,15 +9,38 @@ def callback():
     print(request.data.decode())
     return jsonify({"kekka": "受け取ったよ!"})
 
+@bp.route("/certification", methods=["POST"])
+def certification():
+    data = request.get_json()
+    product_key = data.get("product_key")
+    host_name = data.get("host_name")
+
+    db = get_db()
+    db.execute(
+        "INSERT INTO key_certificates (host_name) VALUES (?)",
+            (host_name,)
+    )
+    db.commit()
+    
+    certificate = db.execute("SELECT * FROM key_certificates WHERE product_key = ? AND host_name = ?", (product_key, host_name)).fetchone()
+    if certificate:
+        db.execute(
+            "UPDATE key_certificates SET host_name = ?,permit_flag = ?",(host_name,'True')
+            )
+        db.commit()
+        return jsonify("認証しました")
+    else:
+        return jsonify()
+
 @bp.route("/api", methods=["POST"])
 def api():
     data = request.get_json()
     host_name = data.get("host_name")
-    
+
     db = get_db()
     
     match = db.execute("SELECT * FROM matches WHERE processed = 'unexecuted' LIMIT 1").fetchone()
-    
+
     if match:
         start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         

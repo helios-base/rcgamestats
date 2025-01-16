@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS key_certificates;
 DROP TABLE IF EXISTS hosts;
 DROP TABLE IF EXISTS matches;
 DROP TABLE IF EXISTS group_matches;
@@ -31,7 +32,8 @@ is_standby varchar(10)
 CREATE TABLE key_certificates (
   key_id INTEGER PRIMARY KEY AUTOINCREMENT,
   host_name varchar(30),
-  product_key varchar(255),
+  product_key varchar(255) DEFAULT 'a',
+  permit_flag varchar(10) DEFAULT 'false'
 );
 
 CREATE TABLE matches (

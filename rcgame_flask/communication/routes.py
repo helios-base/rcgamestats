@@ -3,6 +3,28 @@ from flask import jsonify, request
 from rcgame_flask.communication import bp
 from rcgame_flask.db import get_db
 from datetime import datetime
+from functools import wraps
+from flask import url_for
+
+def certification_required(view):
+    @wraps(view)
+    def wrapped_view(**kwargs):
+        data = request.get_json()
+        host_name = data.get("host_name")
+
+        db = get_db()
+        certificate = db.execute("SELECT * FROM key_certificates WHERE host_name = ? AND permit_flag = 'True'", (host_name,)).fetchone()
+    
+        # デバッグ情報を追加
+        print("Received host_name:", host_name)
+        print("Certificate found:", certificate)
+
+        if certificate is None:
+            return jsonify({"error": "認証が必要です"}), 403
+
+        return view(**kwargs)
+    
+    return wrapped_view
 
 @bp.route("/callback", methods=["POST"])
 def callback():
@@ -12,7 +34,7 @@ def callback():
 @bp.route("/certification", methods=["POST"])
 def certification():
     data = request.get_json()
-    product_key = data.get("api_key")
+    api_key = data.get("api_key")
     host_name = data.get("host_name")
 
     db = get_db()
@@ -22,22 +44,27 @@ def certification():
     )
     db.commit()
     
-    certificate = db.execute("SELECT * FROM key_certificates WHERE api_key = ? AND host_name = ?", (product_key, host_name)).fetchone()
+    certificate = db.execute("SELECT * FROM key_certificates WHERE api_key = ? AND host_name = ? AND key_id = (SELECT key_id FROM key_certificates WHERE host_name = ?)", 
+    (api_key, host_name, host_name)).fetchone()
     if certificate:
         db.execute(
-            "UPDATE key_certificates SET host_name = ?,permit_flag = ?",(host_name,'True')
-            )
+            "UPDATE key_certificates SET permit_flag = 'True' WHERE host_name = ? AND api_key = ?",
+            (host_name, api_key)
+        )
         db.commit()
         return jsonify("認証しました")
     else:
         return jsonify()
 
 @bp.route("/api", methods=["POST"])
+@certification_required
 def api():
     data = request.get_json()
     host_name = data.get("host_name")
 
     db = get_db()
+    if not db.execute("SELECT 1 FROM matches LIMIT 1").fetchone():
+        return jsonify()
     
     match = db.execute("SELECT * FROM matches WHERE processed = 'unexecuted' LIMIT 1").fetchone()
 
@@ -71,6 +98,7 @@ def api():
 
 @bp.route("/result", methods=["POST"])
 def result():
+    
     # ファイルを受け取る
     if 'log_file' not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -79,6 +107,7 @@ def result():
         return jsonify({"error": "No selected files"}), 400
         
     data = request.form.to_dict()
+    host_name = data.get("host_name")
     match_id = data.get("match_id")
     left_team = data.get("left_team")
     right_team = data.get("right_team")

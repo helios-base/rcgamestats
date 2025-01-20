@@ -16,4 +16,8 @@ def task_post_request(host_name):
         post_url,
         json=data  # データを JSON 形式で送信
     )
+
+    print("task_post_request response status:", response.status_code)
+    print("task_post_request response text:", response.text)
+    
     return response.json()

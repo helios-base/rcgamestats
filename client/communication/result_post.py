@@ -23,6 +23,8 @@ def result_post_request(response_data, file_paths):
         "processed": response_data["processed"],
         "log_file": log_file
     })
+    print("result_post_request response status:", result_response.status_code)
+    print("result_post_request response text:", result_response.text)
 
     # サーバからのレスポンスを表示
     print("サーバに返したデータ:","left_score:", response_data["left_score"],"right_score:",response_data["right_score"])

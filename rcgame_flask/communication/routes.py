@@ -158,3 +158,4 @@ def result():
         return jsonify({"message": "レコードが更新され、ログファイルが保存されました"})
     else:
         return jsonify({"message": "マッチが見つかりませんでした"})
+    

@@ -1,7 +1,7 @@
 import os
 from flask import jsonify, request
 from rcgame_flask.communication import bp
-from rcgame_flask.db import get_db
+from rcgame_flask.models import db, certificate_key, matches, group_matches
 from datetime import datetime
 from functools import wraps
 from flask import url_for
@@ -12,8 +12,7 @@ def certification_required(view):
         data = request.get_json()
         host_name = data.get("host_name")
 
-        db = get_db()
-        certificate = db.execute("SELECT * FROM key_certificates WHERE host_name = ? AND permit_flag = 'True'", (host_name,)).fetchone()
+        certificate = certificate_key.query.filter_by(host_name=host_name, permit_flag='true').first()
     
         # デバッグ情報を追加
         print("Received host_name:", host_name)
@@ -37,75 +36,18 @@ def certification():
     api_key = data.get("api_key")
     host_name = data.get("host_name")
 
-    db = get_db()
-    db.execute(
-        "INSERT INTO key_certificates (host_name) VALUES (?)",
-            (host_name,)
-    )
-    db.commit()
+    new_certificate = certificate_key(host_name=host_name, api_key=api_key)
+    db.session.add(new_certificate)
+    db.session.commit()
     
-    certificate = db.execute("SELECT * FROM key_certificates WHERE api_key = ? AND host_name = ? AND key_id = (SELECT key_id FROM key_certificates WHERE host_name = ?)", 
-    (api_key, host_name, host_name)).fetchone()
+    certificate = certificate_key.query.filter_by(api_key=api_key, host_name=host_name).first()
     if certificate:
-        db.execute(
-            "UPDATE key_certificates SET permit_flag = 'True' WHERE host_name = ? AND api_key = ?",
-            (host_name, api_key)
-        )
-        db.commit()
-        return jsonify("認証しました")
+        return jsonify({"message": "認証が成功しました"}), 200
     else:
-        return jsonify()
+        return jsonify({"error": "認証に失敗しました"}), 403
 
-@bp.route("/api", methods=["POST"])
-@certification_required
-def api():
-    data = request.get_json()
-    host_name = data.get("host_name")
-
-    db = get_db()
-    if not db.execute("SELECT 1 FROM matches LIMIT 1").fetchone():
-        return jsonify()
-    
-    match = db.execute("SELECT * FROM matches WHERE processed = 'unexecuted' LIMIT 1").fetchone()
-
-    if match:
-        start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        db.execute(
-            "UPDATE matches SET host_name = ?, start_time = ?, processed = ? WHERE match_id = ?",
-            (host_name, start_time, 'in progress', match['match_id'])
-        )
-        db.commit()
-        updated_match = db.execute("SELECT * FROM matches WHERE match_id = ?", (match['match_id'],)).fetchone()
-        
-        return jsonify({
-            "match_id": updated_match["match_id"],
-            "group_id": updated_match["group_id"],
-            "match_index": updated_match["match_index"],
-            "host_name": updated_match["host_name"],
-            "start_time": updated_match["start_time"],
-            "end_time": updated_match["end_time"],
-            "left_team": updated_match["left_team"],
-            "right_team": updated_match["right_team"],
-            "left_score": updated_match["left_score"],
-            "right_score": updated_match["right_score"],
-            "processed": updated_match["processed"],
-            "log_directory_name": updated_match["log_directory_name"],
-            "log_file": updated_match["log_file"]
-        })
-    else:
-        return jsonify()
-
-@bp.route("/result", methods=["POST"])
-def result():
-    
-    # ファイルを受け取る
-    if 'log_file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
-    files = request.files.getlist('log_file')
-    if not files:
-        return jsonify({"error": "No selected files"}), 400
-        
+@bp.route("/update_match", methods=["POST"])
+def update_match():
     data = request.form.to_dict()
     host_name = data.get("host_name")
     match_id = data.get("match_id")
@@ -115,14 +57,13 @@ def result():
     right_score = data.get("right_score")
     processed = data.get("processed")
     log_file = data.get("log_file")
-    db = get_db()
 
-    match = db.execute("SELECT * FROM matches WHERE match_id = ?", (match_id,)).fetchone()
-    end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    match = matches.query.filter_by(match_id=match_id).first()
+    end_time = datetime.now()
     if match:
-        group = db.execute("SELECT group_name, executed_count FROM group_matches WHERE group_id = ?", (match['group_id'],)).fetchone()
-        log_directory_name = group['group_name']
-        executed_count = group['executed_count'] + 1
+        group = group_matches.query.filter_by(group_id=match.group_id).first()
+        log_directory_name = group.group_name
+        executed_count = group.executed_count + 1
 
         # ログディレクトリを作成
         logs_dir = os.path.join('rcgame_flask', 'static', 'logs')
@@ -135,7 +76,7 @@ def result():
             os.makedirs(log_file_dir_path)
             
         saved_files = []
-        for file in files:
+        for file in request.files.getlist('files'):
             if file:
                 filename = file.filename
                 save_path = os.path.join(log_file_dir_path, filename)
@@ -143,19 +84,18 @@ def result():
                 saved_files.append(filename)
         
         # レコードを更新
-        db.execute(
-            "UPDATE matches SET end_time = ?, left_team = ?, right_team = ?, left_score = ?, right_score = ?, processed = ?, log_directory_name = ?, log_file = ? WHERE match_id = ?",
-            (end_time, left_team, right_team, left_score, right_score, 'completed', log_directory_name, log_file, match_id)
-        )
+        match.end_time = end_time
+        match.left_team = left_team
+        match.right_team = right_team
+        match.left_score = left_score
+        match.right_score = right_score
+        match.processed = 'completed'
+        match.log_directory_name = log_directory_name
+        match.log_file = log_file
+        db.session.commit()
         
-        db.execute(
-            "UPDATE group_matches SET executed_count = ? WHERE group_id = ?",
-            (executed_count, match['group_id'])
-        )
+        group.executed_count = executed_count
+        db.session.commit()
 
-        db.commit()
-
-        return jsonify({"message": "レコードが更新され、ログファイルが保存されました"})
-    else:
-        return jsonify({"message": "マッチが見つかりませんでした"})
+    return jsonify({"message": "Match updated successfully"})
     

@@ -46,8 +46,43 @@ def certification():
     else:
         return jsonify({"error": "認証に失敗しました"}), 403
 
-@bp.route("/update_match", methods=["POST"])
-def update_match():
+@bp.route("/api", methods=["POST"])
+def api():
+    data = request.get_json()
+    host_name = data.get("host_name")
+
+    match = matches.query.filter_by(processed='unexecuted').first()
+
+    if match:
+        start_time = datetime.now()
+        
+        match.host_name = host_name
+        match.start_time = start_time
+        match.processed = 'in progress'
+        db.session.commit()
+        
+        updated_match = matches.query.filter_by(match_id=match.match_id).first()
+        
+        return jsonify({
+            "match_id": updated_match.match_id,
+            "group_id": updated_match.group_id,
+            "match_index": updated_match.match_index,
+            "host_name": updated_match.host_name,
+            "start_time": updated_match.start_time,
+            "end_time": updated_match.end_time,
+            "left_team": updated_match.left_team,
+            "right_team": updated_match.right_team,
+            "left_score": updated_match.left_score,
+            "right_score": updated_match.right_score,
+            "processed": updated_match.processed,
+            "log_directory_name": updated_match.log_directory_name,
+            "log_file": updated_match.log_file
+        })
+    else:
+        return jsonify()
+
+@bp.route("/result", methods=["POST"])
+def result():
     data = request.form.to_dict()
     host_name = data.get("host_name")
     match_id = data.get("match_id")

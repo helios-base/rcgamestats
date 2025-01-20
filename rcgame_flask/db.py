@@ -1,42 +1,20 @@
-import sqlite3
+from flask import current_app
+from .models import db, teams
 import csv
 import click
-from flask import current_app, g
-
-
-def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(
-            current_app.config['DATABASE'],
-            detect_types=sqlite3.PARSE_DECLTYPES
-        )
-        g.db.row_factory = sqlite3.Row
-
-    return g.db
-
-
-def close_db(e=None):
-    db = g.pop('db', None)
-
-    if db is not None:
-        db.close()
 
 def init_db():
-    db = get_db()
-
-    with current_app.open_resource('schema.sql') as f:
-        db.executescript(f.read().decode('utf8'))
+    db.drop_all()
+    db.create_all()
 
     # teamlist.csvのデータを挿入
     with current_app.open_resource('teamlist.csv') as f:
         reader = csv.reader(f.read().decode('utf8').splitlines())
         for row in reader:
             if len(row) == 3:
-                db.execute(
-                    'INSERT INTO teams (team_name, acceleration, filepass) VALUES (?, ?, ?)',
-                    (row[0], row[1], row[2])
-                )
-        db.commit()
+                team = teams(team_name=row[0], acceleration=row[1].lower() == 'true', filepass=row[2])
+                db.session.add(team)
+        db.session.commit()
 
 @click.command('init-db')
 def init_db_command():
@@ -45,5 +23,5 @@ def init_db_command():
     click.echo('Initialized the database.')
 
 def init_app(app):
-    app.teardown_appcontext(close_db)
+    db.init_app(app)
     app.cli.add_command(init_db_command)

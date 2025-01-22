@@ -5,11 +5,17 @@
 {% endblock %}
 
 {% block content %}
-  <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="username" required>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <input type="submit" value="Log In">
-  </form>
+    {% from "_formhelpers.html" import render_field %}
+    <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+        {{ form.hidden_tag() }}
+        {{ render_field(form.username) }}
+        {{ render_field(form.password) }}
+        <br>
+        {% for message in get_flashed_messages() %}
+        <div style="color: blue;">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {{ form.submit }}
+    </form>
 {% endblock %}

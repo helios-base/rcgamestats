@@ -1,6 +1,8 @@
 import os
-
 from flask import Flask
+from flask_migrate import Migrate
+from rcgame_flask.models import db, user
+from flask_login import LoginManager
 
 
 def create_app(test_config=None):
@@ -30,12 +32,28 @@ def create_app(test_config=None):
     def hello():
         return 'Hello, World!'
     
-    from . import db
-    db.init_app(app)
+    from . import create_db
+    create_db.init_app(app)
 
-    from . import auth
-    app.register_blueprint(auth.bp)
+    migrate = Migrate(app, db)
 
+    # LoginManagerインスタンス
+    login_manager = LoginManager()
+    # LoginManagerとFlaskとの紐づけ
+    login_manager.init_app(app)
+    # 未認証のユーザーがアクセスしようとした際に
+    # リダイレクトされる関数名を設定する
+    login_manager.login_view = "auth.login"
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return user.query.get(int(user_id))
+    
+
+
+    from .auth import bp as auth_bp
+    app.register_blueprint(auth_bp)
+    
     from . import list
     app.register_blueprint(list.bp)
     app.add_url_rule('/', endpoint='index')

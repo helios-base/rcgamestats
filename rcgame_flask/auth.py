@@ -1,81 +1,66 @@
-import functools
-
-from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
-)
-from werkzeug.security import check_password_hash, generate_password_hash
-
-from rcgame_flask.models import db, user
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from rcgame_flask import db
+from rcgame_flask.models import user
+from rcgame_flask.forms import LoginForm, SignUpForm
+from flask_login import login_user, logout_user, login_required
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-@bp.route('/register', methods=('GET', 'POST'))
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        error = None
-
-        if not username:
-            error = 'Username is required.'
-        elif not password:
-            error = 'Password is required.'
-
-        if error is None:
-            try:
-                new_user = user(username=username, password=generate_password_hash(password))
-                db.session.add(new_user)
-                db.session.commit()
-            except Exception as e:
-                error = f"User {username} is already registered."
-            else:
-                return redirect(url_for("auth.login"))
-
-        flash(error)
-
-    return render_template('auth/register.html')
-
-@bp.route('/login', methods=('GET', 'POST'))
+# ログイン（Form使用）
+@bp.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        error = None
-
+    # Formインスタンス生成
+    form = LoginForm()
+    if form.validate_on_submit():
+        # データ入力取得
+        username = form.username.data
+        password = form.password.data
+        # 対象User取得
         user_record = user.query.filter_by(username=username).first()
+        # 認証判定
+        if user_record is not None and user_record.check_password(password):
+            # 成功
+            # 引数として渡されたuserオブジェクトを使用して、ユーザーをログイン状態にする
+            login_user(user_record)
+            # 画面遷移
+            return redirect(url_for("index"))
+        # 失敗
+        flash("認証不備です")
+    # GET時
+    # 画面遷移
+    return render_template("login.html", form=form)
 
-        if user_record is None:
-            error = 'Incorrect username.'
-        elif not check_password_hash(user_record.password, password):
-            error = 'Incorrect password.'
-
-        if error is None:
-            session.clear()
-            session['user_id'] = user_record.id
-            return redirect(url_for('index'))
-
-        flash(error)
-
-    return render_template('auth/login.html')
-
-@bp.before_app_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
-
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = user.query.get(user_id)
-
-@bp.route('/logout')
+# ログアウト
+@bp.route("/logout")
+@login_required
 def logout():
-    session.clear()
-    return redirect(url_for('index'))
+    # 現在ログインしているユーザーをログアウトする
+    logout_user()
+    # フラッシュメッセージ
+    flash("ログアウトしました")   
+    # 画面遷移
+    return redirect(url_for("auth.login"))
 
-def login_required(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for('auth.login'))
-        return view(**kwargs)
-    return wrapped_view
+# サインアップ（Form使用）
+@bp.route("/register", methods=["GET", "POST"])
+def register():
+    # Formインスタンス生成
+    form = SignUpForm()
+    if form.validate_on_submit():
+        # データ入力取得
+        username = form.username.data
+        password = form.password.data
+        # モデルを生成
+        new_user = user(username=username)
+        # パスワードハッシュ化
+        new_user.set_password(password)
+        # 登録処理
+        db.session.add(new_user)
+        db.session.commit()
+        # フラッシュメッセージ
+        flash("ユーザー登録しました")  
+        # 画面遷移 
+        return redirect(url_for("auth.login"))
+    # GET時
+    # 画面遷移
+    return render_template("register.html", form=form)

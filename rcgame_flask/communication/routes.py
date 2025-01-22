@@ -4,49 +4,38 @@ from rcgame_flask.communication import bp
 from rcgame_flask.models import db, certificate_key, matches, group_matches
 from datetime import datetime
 from functools import wraps
-from flask import url_for
 
-def certification_required(view):
-    @wraps(view)
-    def wrapped_view(**kwargs):
-        data = request.get_json()
-        host_name = data.get("host_name")
+import secrets
 
-        certificate = certificate_key.query.filter_by(host_name=host_name, permit_flag='true').first()
-    
-        # デバッグ情報を追加
-        print("Received host_name:", host_name)
-        print("Certificate found:", certificate)
+def generate_api_key():
+   return secrets.token_hex(16)
 
-        if certificate is None:
-            return jsonify({"error": "認証が必要です"}), 403
+def require_api_key(f):
+   @wraps(f)
+   def decorated_function(*args, **kwargs):
+       api_key = request.headers.get('x-api-key')
+       user = certificate_key.query.filter_by(api_key=api_key).first()
+       if user is None:
+           return jsonify({"error": "認証に失敗しました。無効なAPIキーです。"}), 401
+       return f(*args, **kwargs)
+   return decorated_function
 
-        return view(**kwargs)
-    
-    return wrapped_view
+@bp.route("/create_user/<host_name>", methods=["POST"])
+def create_user(host_name):
+   api_key = generate_api_key()
+   new_user = certificate_key(host_name=host_name, api_key=api_key)
+   db.session.add(new_user)
+   db.session.commit()
+   return {'host_name': host_name, 'api_key': api_key}
 
 @bp.route("/callback", methods=["POST"])
+@require_api_key
 def callback():
     print(request.data.decode())
     return jsonify({"kekka": "受け取ったよ!"})
 
-@bp.route("/certification", methods=["POST"])
-def certification():
-    data = request.get_json()
-    api_key = data.get("api_key")
-    host_name = data.get("host_name")
-
-    new_certificate = certificate_key(host_name=host_name, api_key=api_key)
-    db.session.add(new_certificate)
-    db.session.commit()
-    
-    certificate = certificate_key.query.filter_by(api_key=api_key, host_name=host_name).first()
-    if certificate:
-        return jsonify({"message": "認証が成功しました"}), 200
-    else:
-        return jsonify({"error": "認証に失敗しました"}), 403
-
 @bp.route("/api", methods=["POST"])
+@require_api_key
 def api():
     data = request.get_json()
     host_name = data.get("host_name")
@@ -82,6 +71,7 @@ def api():
         return jsonify()
 
 @bp.route("/result", methods=["POST"])
+@require_api_key
 def result():
     data = request.form.to_dict()
     host_name = data.get("host_name")

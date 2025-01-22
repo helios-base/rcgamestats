@@ -5,7 +5,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from rcgame_flask.auth import login_required
+from flask_login import login_required
 from rcgame_flask.models import db, teams, group_matches, matches
 
 bp = Blueprint('dbdisplay', __name__, url_prefix='/dbdisplay')

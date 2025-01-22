@@ -32,8 +32,8 @@ def create_app(test_config=None):
     def hello():
         return 'Hello, World!'
     
-    from . import db
-    db.init_app(app)
+    from . import create_db
+    create_db.init_app(app)
 
     migrate = Migrate(app, db)
 
@@ -49,6 +49,8 @@ def create_app(test_config=None):
     def load_user(user_id):
         return user.query.get(int(user_id))
     
+
+
     from .auth import bp as auth_bp
     app.register_blueprint(auth_bp)
     

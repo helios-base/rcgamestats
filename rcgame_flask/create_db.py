@@ -1,5 +1,5 @@
 from flask import current_app
-from .models import db, teams
+from rcgame_flask.models import db, teams
 import csv
 import click
 

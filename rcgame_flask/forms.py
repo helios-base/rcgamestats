@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, PasswordField
+from wtforms import StringField, SubmitField, PasswordField
 from wtforms.validators import DataRequired, Length, ValidationError
-from rcgame_flask import user
+from rcgame_flask.models import user
 
 # ログイン用入力クラス
 class LoginForm(FlaskForm):
@@ -29,8 +29,8 @@ class SignUpForm(LoginForm):
 
     # カスタムバリデータ
     def validate_username(self, username):
-        user = user.query.filter_by(username=username.data).first()
-        if user:
+        User = user.query.filter_by(username=username.data).first()
+        if User:
             raise ValidationError('そのユーザー名は既に使用されています')
 
 

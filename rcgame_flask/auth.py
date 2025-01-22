@@ -28,7 +28,7 @@ def login():
         flash("認証不備です")
     # GET時
     # 画面遷移
-    return render_template("login.html", form=form)
+    return render_template("auth/login.html", form=form)
 
 # ログアウト
 @bp.route("/logout")
@@ -63,4 +63,4 @@ def register():
         return redirect(url_for("auth.login"))
     # GET時
     # 画面遷移
-    return render_template("register.html", form=form)
+    return render_template("auth/register.html", form=form)

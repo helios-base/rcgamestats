@@ -33,6 +33,7 @@ class certificate_key(db.Model):
     key_id = db.Column(db.Integer, primary_key=True)
     host_name = db.Column(db.String(80), unique=True, nullable=False)
     api_key = db.Column(db.String(32), unique=True, nullable=False)
+    stop_check = db.Column(db.Boolean, default=False, nullable=False)
 
 class matches(db.Model):
     match_id = db.Column(db.Integer, primary_key=True)

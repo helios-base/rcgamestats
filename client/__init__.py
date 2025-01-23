@@ -1,12 +1,13 @@
 from communication.task_post import task_post_request
 from communication.result_post import result_post_request
 from communication.create_user import create_user 
+from communication.stopfile_check import stopfile_check
 import signal
 import sys
 import time
 import os
-import random
-import string
+
+stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
 
 def signal_handler(sig, frame):
     print("処理を終わります")
@@ -32,26 +33,40 @@ while True:
 
 print("host_name:",host_name)
 
-if (api_key != None):
-    while True:
-        response_from_task_post = task_post_request(host_name,api_key)
-        print("サーバー受信を開始します！",response_from_task_post)
-        time.sleep(3)
+while True:
+    response_from_task_post = task_post_request(host_name,api_key)
+    if response_from_task_post is not None and "error" in response_from_task_post:
+        print(response_from_task_post)
+        break
 
-        if (response_from_task_post != None):
-            print("サーバーに受信できました！")
+    print("サーバー受信を開始します！")
 
-            log_dir = '/home/fugakatayama/rcgame/client/log_data'
-            file_paths = [os.path.join(log_dir, file) 
-                          for file in os.listdir(log_dir) 
-                          if os.path.isfile(os.path.join(log_dir, file))]
+    time.sleep(3)
 
-            response_from_result_post = result_post_request(response_from_task_post, file_paths,api_key)
-            print("サーバーから受信:",response_from_result_post)
-            time.sleep(5)
-        else:
-            print("サーバーから受信できませんでした！")
-            time.sleep(5)
-else:
-    print("認証失敗、プロダクトキーが違います")
+    if (response_from_task_post != None):
+        print("サーバーに受信できました！")
+
+        log_dir = '/home/fugakatayama/rcgame/client/log_data'
+        file_paths = [os.path.join(log_dir, file) 
+                      for file in os.listdir(log_dir) 
+                      if os.path.isfile(os.path.join(log_dir, file))]
+
+        response_from_result_post = result_post_request(response_from_task_post, file_paths,api_key,host_name)
+        if response_from_result_post is not None and "error" in response_from_result_post:
+            print(response_from_result_post)
+            break
+
+        print("サーバーから受信:",response_from_result_post)
+        time.sleep(5)
+    else:
+        print("サーバーから受信できませんでした！")
+        time.sleep(5)
+
+    stopfile_check(host_name,api_key)
+
+    if os.path.exists(stop_file_path):
+        print("停止ファイルが見つかりました。処理を終わります")
+        time.sleep(5)
+        os.remove(stop_file_path)
+        break
 

@@ -1,17 +1,17 @@
 import requests
-import json
 import random
-import string
 
-def result_post_request(response_data, file_paths,api_key):
+def result_post_request(response_data, file_paths,api_key,host_name):
     response_data["left_score"] = random.randint(1, 4)
     response_data["right_score"] = random.randint(1, 4)
 
     log_file = f"{str(response_data['match_index']).zfill(5)}_logfile"
 
     headers = {
-        'x-api-key': api_key
+        'x-api-key': api_key,
+        'x-host-name': host_name
     }
+
 
     # ファイルを準備
     files = [('log_file', (open(file_path, 'rb'))) for file_path in file_paths]

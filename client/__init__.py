@@ -1,13 +1,13 @@
 from communication.task_post import task_post_request
 from communication.result_post import result_post_request
 from communication.create_user import create_user 
+from config import Config
+import argparse
 import requests
 import signal
 import sys
 import time
 import os
-
-stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
 
 def signal_handler(sig, frame):
     print("処理を終わります")
@@ -79,5 +79,14 @@ def main(host_name,api_key,stop_file_path):
             time.sleep(10)
     
 
-host_name,api_key = create_user_or_login()
-main(host_name,api_key,stop_file_path)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Send result post request.')
+    parser.add_argument('--server_url', type=str, default=Config.SERVER_URL, help='Server URL')
+    args = parser.parse_args()
+
+    if args.server_url:
+        Config.SERVER_URL = args.server_url
+
+    host_name, api_key = create_user_or_login()
+    stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
+    main(host_name, api_key, stop_file_path)

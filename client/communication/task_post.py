@@ -1,7 +1,8 @@
 import requests
+from config import Config
 
 def task_post_request(host_name,api_key):
-    post_url = "http://127.0.0.1:5000/communication/api"
+    post_url = f"http://{Config.SERVER_URL}/communication/api"
 
     # POST したいデータ
     data = {

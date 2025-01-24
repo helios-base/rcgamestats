@@ -1,5 +1,6 @@
 import requests
 import random
+from config import Config
 
 def result_post_request(response_data, file_paths,api_key,host_name):
     response_data["left_score"] = random.randint(1, 4)
@@ -16,7 +17,7 @@ def result_post_request(response_data, file_paths,api_key,host_name):
     files = [('log_file', (open(file_path, 'rb'))) for file_path in file_paths]
 
     # 変更したデータをサーバに返す
-    result_post_url = "http://127.0.0.1:5000/communication/result"
+    result_post_url = f"http://{Config.SERVER_URL}/communication/result"
     result_response = requests.post(result_post_url, files=files, headers=headers, data={
         "match_id": response_data["match_id"],
         "left_team": response_data["left_team"],

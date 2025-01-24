@@ -18,9 +18,8 @@ class LoginForm(FlaskForm):
     # 英数字と記号が含まれているかチェックする
     def validate_password(self, password):
         if not (any(c.isalpha() for c in password.data) and \
-            any(c.isdigit() for c in password.data) and \
-            any(c in '!@#$%^&*()' for c in password.data)):
-            raise ValidationError('パスワードには【英数字と記号：!@#$%^&*()】を含める必要があります')
+            any(c.isdigit() for c in password.data)):
+            raise ValidationError('パスワードには【英数字を含める必要があります')
 
 # サインアップ用入力クラス
 class SignUpForm(LoginForm):

@@ -35,7 +35,7 @@
             <td>{{ match.left_score }}</td>
             <td>{{ match.right_score }}</td>
             <td>{{ match.processed }}</td>
-            <td><a href="{{ url_for('static', filename='logs/' ~ match.log_directory_name ~ '/' ~ match.log_file) }}" target="_blank">{{ match.log_file }}</a></td>
+            <td><a href="{{ url_for('dbdisplay.match_log', match_id=match.match_id) }}" target="_blank">{{ match.log_file }}</a></td>
         </tr>
         {% endfor %}
     </tbody>

@@ -112,7 +112,8 @@ def result():
             os.makedirs(log_file_dir_path)
             
         saved_files = []
-        for file in request.files.getlist('files'):
+
+        for file in request.files.getlist('log_file'):
             if file:
                 filename = file.filename
                 save_path = os.path.join(log_file_dir_path, filename)

@@ -1,7 +1,6 @@
 from communication.task_post import task_post_request
 from communication.result_post import result_post_request
 from communication.create_user import create_user 
-from communication.stopfile_check import stopfile_check
 import requests
 import signal
 import sys

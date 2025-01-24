@@ -100,6 +100,9 @@ def result():
         group = group_matches.query.filter_by(group_id=match.group_id).first()
         log_directory_name = group.group_name
         executed_count = group.executed_count + 1
+        host_name = match.host_name
+        match_index = match.match_index
+        match_index = str(match_index).zfill(5)
 
         # ログディレクトリを作成
         logs_dir = os.path.join('rcgame_flask', 'static', 'logs')
@@ -107,16 +110,14 @@ def result():
         if not os.path.exists(log_dir_path):
             os.makedirs(log_dir_path)
 
-        log_file_dir_path = os.path.join(log_dir_path, log_file)
-        if not os.path.exists(log_file_dir_path):
-            os.makedirs(log_file_dir_path)
-            
         saved_files = []
 
-        for file in request.files.getlist('log_file'):
-            if file:
-                filename = file.filename
-                save_path = os.path.join(log_file_dir_path, filename)
+        for idx,file in enumerate(request.files.getlist('log_file')):
+            if file and file.filename:
+                original_filename = file.filename
+                name, ext = os.path.splitext(original_filename)
+                filename = f"{log_directory_name}_{match_index}_{host_name}.{idx}{ext}"  
+                save_path = os.path.join(log_dir_path, filename)
                 file.save(save_path)
                 saved_files.append(filename)
         

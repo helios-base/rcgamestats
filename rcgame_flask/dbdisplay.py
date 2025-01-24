@@ -36,20 +36,19 @@ def match_log(match_id):
     if not match:
         return jsonify({"error": "Match not found"}), 404
 
-    log_directory = os.path.join(current_app.static_folder, 'logs', match.log_directory_name)
-    log_file_path = os.path.join(log_directory, match.log_file)
+    log_directory_name = match.log_directory_name
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
+    log_dir_path = os.path.join(logs_dir, log_directory_name)
 
-    if not os.path.exists(log_file_path):
-        return jsonify({"error": "Log file not found"}), 404
+    if not os.path.exists(log_dir_path):
+        return jsonify({"error": "Log directory not found"}), 404
 
-    if os.path.isdir(log_file_path):
-        # ディレクトリ内のファイルをリスト表示
-        log_files = os.listdir(log_file_path)
-        return render_template('dbdisplay/log_file.html', log_files=log_files, log_file_path=log_file_path)
-    else:
-        with open(log_file_path, 'r', encoding='utf-8') as file:
-            log_content = file.read()
-        return render_template('dbdisplay/log_file.html', log_content=log_content)
+    log_files = [f for f in os.listdir(log_dir_path) if match.log_file in f]
+
+    if not log_files:
+        return jsonify({"error": "No matching log files found"}), 404
+
+    return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory_name)
 
 @bp.route('/hosts')
 @login_required

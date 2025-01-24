@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}hosts{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Key ID</th>
+            <th>Host Name</th>
+            <th>API Key</th>
+            <th>Stop Check</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for key in host_list %}
+        <tr>
+            <td>{{ key.key_id }}</td>
+            <td>{{ key.host_name }}</td>
+            <td>{{ key.api_key }}</td>
+            <td>{{ key.stop_check }}</td>
+            <td>
+                <form method="post" action="{{ url_for('dbdisplay.update_stop_check', key_id=key.key_id) }}">
+                    <select name="stop_check">
+                        <option value="true" {% if key.stop_check %}selected{% endif %}>True</option>
+                        <option value="false" {% if not key.stop_check %}selected{% endif %}>False</option>
+                    </select>
+                    <button type="submit">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

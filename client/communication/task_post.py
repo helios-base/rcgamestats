@@ -5,7 +5,8 @@ def task_post_request(host_name,api_key):
 
     # POST したいデータ
     data = {
-        "host_name": host_name
+        "host_name": host_name,
+        "api_key": api_key
     }
     headers = {
         'x-api-key': api_key,
@@ -19,5 +20,13 @@ def task_post_request(host_name,api_key):
         headers=headers,
         json=data 
     )
+    print("レスポンス内容:", response.text)
+    response_json = response.json()
+    if response_json is not None:
+        if response_json.get('stop_check') == True:
+            stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
+            with open(stop_file_path, 'w') as f:
+                f.write('stop')
     
-    return response.json()
+        return response_json
+  

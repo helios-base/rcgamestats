@@ -12,7 +12,6 @@ def result_post_request(response_data, file_paths,api_key,host_name):
         'x-host-name': host_name
     }
 
-
     # ファイルを準備
     files = [('log_file', (open(file_path, 'rb'))) for file_path in file_paths]
 
@@ -24,7 +23,6 @@ def result_post_request(response_data, file_paths,api_key,host_name):
         "right_team": response_data["right_team"],
         "left_score": response_data["left_score"],
         "right_score": response_data["right_score"],
-        "processed": response_data["processed"],
         "log_file": log_file
     })
     print("result_post_request response status:", result_response.status_code)

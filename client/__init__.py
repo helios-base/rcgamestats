@@ -36,10 +36,17 @@ def create_user_or_login():
     print("host_name:",host_name)  
     return host_name, api_key
 
-def main(host_name,api_key):
+def main(host_name,api_key,stop_file_path):
     while True:
         try:
             response_from_task_post = task_post_request(host_name,api_key)
+            if response_from_task_post and response_from_task_post.get('stop_check') == True:
+                if os.path.exists(stop_file_path):
+                    print("停止ファイルが見つかりました。処理を終わります")
+                    time.sleep(5)
+                    os.remove(stop_file_path)
+                    break
+
             if response_from_task_post is not None and "error" in response_from_task_post:
                 print(response_from_task_post)
                 break
@@ -67,14 +74,6 @@ def main(host_name,api_key):
                 print("サーバーから受信できませんでした！")
                 time.sleep(5)
 
-            stopfile_check(host_name,api_key)
-
-            if os.path.exists(stop_file_path):
-                print("停止ファイルが見つかりました。処理を終わります")
-                time.sleep(5)
-                os.remove(stop_file_path)
-                break
-
         except requests.exceptions.RequestException as e:
             print(f"サーバーに接続できませんでした")
             print("10秒後に再試行します...")
@@ -82,4 +81,4 @@ def main(host_name,api_key):
     
 
 host_name,api_key = create_user_or_login()
-main(host_name,api_key)
+main(host_name,api_key,stop_file_path)

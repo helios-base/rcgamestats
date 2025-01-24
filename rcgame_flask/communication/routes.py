@@ -42,11 +42,21 @@ def callback():
 @bp.route("/api", methods=["POST"])
 @require_api_key
 def api():
+
     data = request.get_json()
     host_name = data.get("host_name")
+    api_key = data.get("api_key")
+
+    if not host_name or not api_key:
+        return jsonify({"error": "Host-NameまたはAPI-Keyが不足しています"}), 400
+    
+    cert_key = certificate_key.query.filter_by(host_name=host_name, api_key=api_key).first()
+    stpo_check_response = cert_key.stop_check
+    if cert_key.stop_check is True:
+        return jsonify({"stop_check": stpo_check_response})
 
     match = matches.query.filter_by(processed='unexecuted').first()
-
+    
     if match:
         start_time = datetime.now()
         
@@ -56,6 +66,8 @@ def api():
         db.session.commit()
         
         updated_match = matches.query.filter_by(match_id=match.match_id).first()
+
+
         
         return jsonify({
             "match_id": updated_match.match_id,
@@ -63,14 +75,8 @@ def api():
             "match_index": updated_match.match_index,
             "host_name": updated_match.host_name,
             "start_time": updated_match.start_time,
-            "end_time": updated_match.end_time,
             "left_team": updated_match.left_team,
             "right_team": updated_match.right_team,
-            "left_score": updated_match.left_score,
-            "right_score": updated_match.right_score,
-            "processed": updated_match.processed,
-            "log_directory_name": updated_match.log_directory_name,
-            "log_file": updated_match.log_file
         })
     else:
         return jsonify()
@@ -129,20 +135,5 @@ def result():
 
     return jsonify({"message": "Match updated successfully"})
 
-@bp.route('/create_stop_file', methods=['POST'])
-@require_api_key
-def create_stop_file():
-    headers = request.headers
-    host_name = headers.get('x-host-name')
-    api_key = headers.get('x-api-key')
 
-    if not host_name or not api_key:
-        return jsonify({"error": "Host-NameまたはAPI-Keyが不足しています"}), 400
-    
-    cert_key = certificate_key.query.filter_by(host_name=host_name, api_key=api_key).first()
-    response = cert_key.stop_check
-
-    cert_key.stop_check = False
-    db.session.commit()
-    return jsonify({"stop_check": response})
     

@@ -1,11 +1,12 @@
 import os
+import re
+import secrets
 from flask import jsonify, request
 from rcgame_flask.communication import bp
 from rcgame_flask.models import db, certificate_key, matches, group_matches
 from datetime import datetime
 from functools import wraps
 
-import secrets
 
 def generate_api_key():
    return secrets.token_hex(16)
@@ -51,9 +52,9 @@ def api():
         return jsonify({"error": "Host-NameまたはAPI-Keyが不足しています"}), 400
     
     cert_key = certificate_key.query.filter_by(host_name=host_name, api_key=api_key).first()
-    stpo_check_response = cert_key.stop_check
+    stop_check_response = cert_key.stop_check
     if cert_key.stop_check is True:
-        return jsonify({"stop_check": stpo_check_response})
+        return jsonify({"stop_check": stop_check_response})
 
     match = matches.query.filter_by(processed='unexecuted').first()
     
@@ -96,6 +97,8 @@ def result():
 
     match = matches.query.filter_by(match_id=match_id).first()
     end_time = datetime.now()
+
+    
     if match:
         group = group_matches.query.filter_by(group_id=match.group_id).first()
         log_directory_name = group.group_name
@@ -114,9 +117,12 @@ def result():
 
         for idx,file in enumerate(request.files.getlist('log_file')):
             if file and file.filename:
-                original_filename = file.filename
-                name, ext = os.path.splitext(original_filename)
-                filename = f"{log_directory_name}_{match_index}_{host_name}.{idx}{ext}"  
+                original_filename = re.match(r'(.+)\.(.+)\.(.+)', file.filename)
+                if match:
+                    name = original_filename.group(1)
+                    ext1 = original_filename.group(2)
+                    ext2 = original_filename.group(3)
+                filename = f"{log_directory_name}_{match_index}_{host_name}.{ext1}.{ext2}"  
                 save_path = os.path.join(log_dir_path, filename)
                 file.save(save_path)
                 saved_files.append(filename)

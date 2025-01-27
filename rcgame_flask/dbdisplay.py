@@ -1,5 +1,5 @@
 import functools
-
+import os
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask_login import login_required
 from rcgame_flask.models import db, teams, group_matches, matches,certificate_key
+from flask import current_app, jsonify, render_template
 
 bp = Blueprint('dbdisplay', __name__, url_prefix='/dbdisplay')
 
@@ -27,6 +28,27 @@ def show_group_matches():
 def show_matches():
     match_list = matches.query.all()
     return render_template('dbdisplay/matches.html', matches=match_list)
+
+@bp.route('/match_log/<int:match_id>', methods=['GET'])
+@login_required
+def match_log(match_id):
+    match = matches.query.get(match_id)
+    if not match:
+        return jsonify({"error": "Match not found"}), 404
+
+    log_file_name = match.log_file_name
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
+    log_dir_path = os.path.join(logs_dir, match.log_directory_name)
+
+    if not os.path.exists(log_dir_path):
+        return jsonify({"error": "Log directory not found"}), 404
+
+    log_files = [f for f in os.listdir(log_dir_path) if log_file_name in f]
+
+    if not log_files:
+        return jsonify({"error": "No matching log files found"}), 404
+
+    return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=match.log_directory_name)
 
 @bp.route('/hosts')
 @login_required

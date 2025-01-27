@@ -1,7 +1,8 @@
 import requests
+from config import Config
 def create_user(username):
     
-    url = "http://127.0.0.1:5000/communication/create_user/{}".format(username)
+    url = f"http://{Config.SERVER_URL}/communication/create_user/{username}"
     response = requests.post(url)
 
     if response.status_code == 200:
@@ -14,3 +15,4 @@ def create_user(username):
         print("Failed to create user. Status code:", response.status_code)
         print("Response:", response.text)
         return None, None  
+    

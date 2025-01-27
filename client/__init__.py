@@ -1,20 +1,21 @@
 from communication.task_post import task_post_request
 from communication.result_post import result_post_request
 from communication.create_user import create_user 
-from communication.stopfile_check import stopfile_check
+from config import Config
+import argparse
 import requests
 import signal
 import sys
+import shutil
 import time
 import os
-
-stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
 
 def signal_handler(sig, frame):
     print("処理を終わります")
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
+
 
 def create_user_or_login():
     while True: 
@@ -39,6 +40,11 @@ def create_user_or_login():
 def main(host_name,api_key,stop_file_path):
     while True:
         try:
+            for file in os.listdir(Config.TEMPORAL_DIR):
+                file_path = os.path.join(Config.TEMPORAL_DIR, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+
             response_from_task_post = task_post_request(host_name,api_key)
             if response_from_task_post and response_from_task_post.get('stop_check') == True:
                 if os.path.exists(stop_file_path):
@@ -80,5 +86,17 @@ def main(host_name,api_key,stop_file_path):
             time.sleep(10)
     
 
-host_name,api_key = create_user_or_login()
-main(host_name,api_key,stop_file_path)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Send result post request.')
+    parser.add_argument('--server_url', type=str, default=Config.SERVER_URL, help='Server URL')
+    args = parser.parse_args()
+
+    if args.server_url:
+        Config.SERVER_URL = args.server_url
+
+    if os.path.exists(Config.TEMPORAL_DIR):
+        shutil.rmtree(Config.TEMPORAL_DIR)
+    os.makedirs(Config.TEMPORAL_DIR)
+    #host_name, api_key = create_user_or_login()
+    stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
+    main(Config.NAME, Config.API_KEY, stop_file_path)

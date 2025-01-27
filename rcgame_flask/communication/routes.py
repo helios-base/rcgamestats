@@ -1,11 +1,16 @@
 import os
+import re
+import secrets
 from flask import jsonify, request
 from rcgame_flask.communication import bp
 from rcgame_flask.models import db, certificate_key, matches, group_matches
 from datetime import datetime
 from functools import wraps
 
-import secrets
+def log_file_name(group_id, match_index, host_name,left_team,right_team):
+    match_index = str(match_index).zfill(5)
+    group_id = str(match_index).zfill(10)
+    return f"{group_id}_{match_index}_{left_team}_{right_team}_{host_name}"
 
 def generate_api_key():
    return secrets.token_hex(16)
@@ -51,14 +56,15 @@ def api():
         return jsonify({"error": "Host-NameまたはAPI-Keyが不足しています"}), 400
     
     cert_key = certificate_key.query.filter_by(host_name=host_name, api_key=api_key).first()
-    stpo_check_response = cert_key.stop_check
+    stop_check_response = cert_key.stop_check
     if cert_key.stop_check is True:
-        return jsonify({"stop_check": stpo_check_response})
+        return jsonify({"stop_check": stop_check_response})
 
     match = matches.query.filter_by(processed='unexecuted').first()
     
     if match:
         start_time = datetime.now()
+        
         
         match.host_name = host_name
         match.start_time = start_time
@@ -67,7 +73,10 @@ def api():
         
         updated_match = matches.query.filter_by(match_id=match.match_id).first()
 
+        log_file_name_value = log_file_name(updated_match.group_id, updated_match.match_index, host_name, updated_match.left_team, updated_match.right_team)
 
+        updated_match.log_file_name = log_file_name_value
+        db.session.commit()
         
         return jsonify({
             "match_id": updated_match.match_id,
@@ -77,6 +86,7 @@ def api():
             "start_time": updated_match.start_time,
             "left_team": updated_match.left_team,
             "right_team": updated_match.right_team,
+            "log_file_name": updated_match.log_file_name,
         })
     else:
         return jsonify()
@@ -96,10 +106,15 @@ def result():
 
     match = matches.query.filter_by(match_id=match_id).first()
     end_time = datetime.now()
+
+    
     if match:
         group = group_matches.query.filter_by(group_id=match.group_id).first()
         log_directory_name = group.group_name
         executed_count = group.executed_count + 1
+        host_name = match.host_name
+        match_index = match.match_index
+        match_index = str(match_index).zfill(5)
 
         # ログディレクトリを作成
         logs_dir = os.path.join('rcgame_flask', 'static', 'logs')
@@ -107,17 +122,14 @@ def result():
         if not os.path.exists(log_dir_path):
             os.makedirs(log_dir_path)
 
-        log_file_dir_path = os.path.join(log_dir_path, log_file)
-        if not os.path.exists(log_file_dir_path):
-            os.makedirs(log_file_dir_path)
-            
         saved_files = []
-        for file in request.files.getlist('files'):
-            if file:
-                filename = file.filename
-                save_path = os.path.join(log_file_dir_path, filename)
+
+        for file in request.files.getlist('log_file'):
+            if file and file.filename:
+                original_filename = file.filename
+                save_path = os.path.join(log_dir_path, original_filename)
                 file.save(save_path)
-                saved_files.append(filename)
+                saved_files.append(original_filename)
         
         # レコードを更新
         match.end_time = end_time

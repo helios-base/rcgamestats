@@ -2,6 +2,7 @@ from communication.task_post import task_post_request
 from communication.result_post import result_post_request
 from communication.create_user import create_user 
 from config import Config
+from api_key import API_KEY
 import argparse
 import requests
 import signal
@@ -99,4 +100,4 @@ if __name__ == "__main__":
     os.makedirs(Config.TEMPORAL_DIR)
     #host_name, api_key = create_user_or_login()
     stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
-    main(Config.NAME, Config.API_KEY, stop_file_path)
+    main(Config.NAME, API_KEY, stop_file_path)

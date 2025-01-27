@@ -10,8 +10,7 @@ def task_post_request(host_name,api_key):
         "api_key": api_key
     }
     headers = {
-        'x-api-key': api_key,
-        'x-host-name': host_name
+        'x-api-key': api_key
     }
 
 

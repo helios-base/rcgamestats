@@ -90,10 +90,14 @@ def main(host_name,api_key,stop_file_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Send result post request.')
     parser.add_argument('--server_url', type=str, default=Config.SERVER_URL, help='Server URL')
+    parser.add_argument('--name', type=str, default=Config.NAME, help='Host Name')
     args = parser.parse_args()
 
     if args.server_url:
         Config.SERVER_URL = args.server_url
+
+    if args.name:
+        Config.NAME = args.name
 
     if os.path.exists(Config.TEMPORAL_DIR):
         shutil.rmtree(Config.TEMPORAL_DIR)

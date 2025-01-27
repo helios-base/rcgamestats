@@ -11,23 +11,64 @@ from flask import current_app, jsonify, render_template
 
 bp = Blueprint('dbdisplay', __name__, url_prefix='/dbdisplay')
 
+#team関係の表示
 @bp.route('/teams')
 @login_required
 def show_teams():
     team_list = teams.query.all()
     return render_template('dbdisplay/teams.html', teams=team_list)
 
+#group_matches関係の表示
 @bp.route('/group_matches')
 @login_required
 def show_group_matches():
     match_list = group_matches.query.all()
     return render_template('dbdisplay/group_matches.html', matches=match_list)
 
+@bp.route('/group_matches/<int:group_id>')
+@login_required
+def show_group_matches_detail(group_id):
+    match_list = matches.query.filter_by(group_id=group_id).all()
+    return render_template('dbdisplay/group_matches_detail.html', matches=match_list)
+
+@bp.route('/group_log_files/<int:group_id>', methods=['GET'])
+@login_required
+def show_group_log_files(group_id):
+    matches_in_group = matches.query.filter_by(group_id=group_id).all()
+    log_files = []
+    log_directory = None
+
+    for match in matches_in_group:
+        log_directory = match.log_directory_name
+        logs_dir = os.path.join(current_app.static_folder, 'logs')
+        log_dir_path = os.path.join(logs_dir, log_directory)
+
+        if os.path.exists(log_dir_path):
+            log_files.extend([f for f in os.listdir(log_dir_path) if match.log_file_name in f])
+
+    if not log_files:
+        return jsonify({"error": "No matching log files found"}), 404
+
+    return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory)
+
+#matches関係の表示
 @bp.route('/matches')
 @login_required
 def show_matches():
     match_list = matches.query.all()
     return render_template('dbdisplay/matches.html', matches=match_list)
+
+@bp.route('/reset_match/<int:match_id>', methods=['GET'])
+@login_required
+def reset_match(match_id):
+    match = matches.query.get(match_id)
+    if match and match.processed == 'in progress':
+        match.host_name = None
+        match.start_time = None
+        match.processed = 'unexecuted'
+        db.session.commit()
+    
+    return redirect(url_for('dbdisplay.show_matches'))
 
 @bp.route('/match_log/<int:match_id>', methods=['GET'])
 @login_required
@@ -50,6 +91,8 @@ def match_log(match_id):
 
     return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=match.log_directory_name)
 
+
+#certificate_key関係の表示
 @bp.route('/hosts')
 @login_required
 def show_hosts():

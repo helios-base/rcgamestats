@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block header %}
-  <h1>{% block title %}Matches{% endblock %}</h1>
+  <h1>{% block title %}Group Matches Detail{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -34,13 +34,7 @@
             <td>{{ match.right_team }}</td>
             <td>{{ match.left_score }}</td>
             <td>{{ match.right_score }}</td>
-            <td>
-                {% if match.processed == 'in progress' %}
-                <a href="{{ url_for('dbdisplay.reset_match', match_id=match.match_id) }}">in progress</a>
-                {% else %}
-                    {{ match.processed }}
-                {% endif %}
-            </td>
+            <td>{{ match.processed }}</td>
             <td><a href="{{ url_for('dbdisplay.match_log', match_id=match.match_id) }}" target="_blank">{{ match.log_file }}</a></td>
         </tr>
         {% endfor %}

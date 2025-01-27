@@ -9,7 +9,7 @@ from functools import wraps
 
 def log_file_name(group_id, match_index, host_name,left_team,right_team):
     match_index = str(match_index).zfill(5)
-    group_id = str(match_index).zfill(10)
+    group_id = str(group_id).zfill(10)
     return f"{group_id}_{match_index}_{left_team}_{right_team}_{host_name}"
 
 def generate_api_key():

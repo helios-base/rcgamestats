@@ -1,5 +1,8 @@
 import requests
 import random
+import os
+import shutil
+import re
 from config import Config
 
 def result_post_request(response_data, file_paths,api_key,host_name):
@@ -13,8 +16,24 @@ def result_post_request(response_data, file_paths,api_key,host_name):
         'x-host-name': host_name
     }
 
-    # ファイルを準備
-    files = [('log_file', (open(file_path, 'rb'))) for file_path in file_paths]
+    log_file_name = response_data["log_file_name"]
+
+    print(log_file_name)
+
+    copied_file_paths = []
+
+    for file_path in file_paths:
+        original_filename = re.match(r'(.+)\.(.+)\.(.+)', os.path.basename(file_path))
+        if original_filename:
+            name = original_filename.group(1)
+            ext1 = original_filename.group(2)
+            ext2 = original_filename.group(3)
+            new_file_name = f"{log_file_name}.{ext1}.{ext2}"
+            new_file_path = os.path.join(Config.TEMPORAL_DIR, new_file_name)
+            shutil.copy(file_path, new_file_path)
+            copied_file_paths.append(new_file_path)
+
+    files = [('log_file', (open(file_path, 'rb'))) for file_path in copied_file_paths]
 
     # 変更したデータをサーバに返す
     result_post_url = f"http://{Config.SERVER_URL}/communication/result"
@@ -31,5 +50,6 @@ def result_post_request(response_data, file_paths,api_key,host_name):
 
     # サーバからのレスポンスを表示
     print("サーバに返したデータ:","left_score:", response_data["left_score"],"right_score:",response_data["right_score"])
+
 
     return result_response.json()

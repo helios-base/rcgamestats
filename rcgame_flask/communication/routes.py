@@ -7,6 +7,10 @@ from rcgame_flask.models import db, certificate_key, matches, group_matches
 from datetime import datetime
 from functools import wraps
 
+def log_file_name(group_id, match_index, host_name,left_team,right_team):
+    match_index = str(match_index).zfill(5)
+    group_id = str(match_index).zfill(10)
+    return f"{group_id}_{match_index}_{left_team}_{right_team}_{host_name}"
 
 def generate_api_key():
    return secrets.token_hex(16)
@@ -61,6 +65,7 @@ def api():
     if match:
         start_time = datetime.now()
         
+        
         match.host_name = host_name
         match.start_time = start_time
         match.processed = 'in progress'
@@ -68,7 +73,10 @@ def api():
         
         updated_match = matches.query.filter_by(match_id=match.match_id).first()
 
+        log_file_name_value = log_file_name(updated_match.group_id, updated_match.match_index, host_name, updated_match.left_team, updated_match.right_team)
 
+        updated_match.log_file_name = log_file_name_value
+        db.session.commit()
         
         return jsonify({
             "match_id": updated_match.match_id,
@@ -78,6 +86,7 @@ def api():
             "start_time": updated_match.start_time,
             "left_team": updated_match.left_team,
             "right_team": updated_match.right_team,
+            "log_file_name": updated_match.log_file_name,
         })
     else:
         return jsonify()
@@ -115,17 +124,12 @@ def result():
 
         saved_files = []
 
-        for idx,file in enumerate(request.files.getlist('log_file')):
+        for file in request.files.getlist('log_file'):
             if file and file.filename:
-                original_filename = re.match(r'(.+)\.(.+)\.(.+)', file.filename)
-                if match:
-                    name = original_filename.group(1)
-                    ext1 = original_filename.group(2)
-                    ext2 = original_filename.group(3)
-                filename = f"{log_directory_name}_{match_index}_{host_name}.{ext1}.{ext2}"  
-                save_path = os.path.join(log_dir_path, filename)
+                original_filename = file.filename
+                save_path = os.path.join(log_dir_path, original_filename)
                 file.save(save_path)
-                saved_files.append(filename)
+                saved_files.append(original_filename)
         
         # レコードを更新
         match.end_time = end_time

@@ -48,6 +48,7 @@ class matches(db.Model):
     right_score = db.Column(db.Integer)
     processed = db.Column(db.String(15), default='unexecuted')
     log_directory_name = db.Column(db.String(255))
+    log_file_name = db.Column(db.String(255))
     log_file = db.Column(db.String(255))
 
 class teams(db.Model):

@@ -36,19 +36,19 @@ def match_log(match_id):
     if not match:
         return jsonify({"error": "Match not found"}), 404
 
-    log_directory_name = match.log_directory_name
+    log_file_name = match.log_file_name
     logs_dir = os.path.join(current_app.static_folder, 'logs')
-    log_dir_path = os.path.join(logs_dir, log_directory_name)
+    log_dir_path = os.path.join(logs_dir, match.log_directory_name)
 
     if not os.path.exists(log_dir_path):
         return jsonify({"error": "Log directory not found"}), 404
 
-    log_files = [f for f in os.listdir(log_dir_path) if match.log_file in f]
+    log_files = [f for f in os.listdir(log_dir_path) if log_file_name in f]
 
     if not log_files:
         return jsonify({"error": "No matching log files found"}), 404
 
-    return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory_name)
+    return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=match.log_directory_name)
 
 @bp.route('/hosts')
 @login_required

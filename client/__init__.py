@@ -6,6 +6,7 @@ import argparse
 import requests
 import signal
 import sys
+import shutil
 import time
 import os
 
@@ -14,6 +15,7 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
+
 
 def create_user_or_login():
     while True: 
@@ -38,6 +40,11 @@ def create_user_or_login():
 def main(host_name,api_key,stop_file_path):
     while True:
         try:
+            for file in os.listdir(Config.TEMPORAL_DIR):
+                file_path = os.path.join(Config.TEMPORAL_DIR, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+
             response_from_task_post = task_post_request(host_name,api_key)
             if response_from_task_post and response_from_task_post.get('stop_check') == True:
                 if os.path.exists(stop_file_path):
@@ -87,6 +94,9 @@ if __name__ == "__main__":
     if args.server_url:
         Config.SERVER_URL = args.server_url
 
+    if os.path.exists(Config.TEMPORAL_DIR):
+        shutil.rmtree(Config.TEMPORAL_DIR)
+    os.makedirs(Config.TEMPORAL_DIR)
     host_name, api_key = create_user_or_login()
     stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
     main(host_name, api_key, stop_file_path)

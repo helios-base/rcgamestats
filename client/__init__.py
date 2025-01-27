@@ -97,6 +97,6 @@ if __name__ == "__main__":
     if os.path.exists(Config.TEMPORAL_DIR):
         shutil.rmtree(Config.TEMPORAL_DIR)
     os.makedirs(Config.TEMPORAL_DIR)
-    host_name, api_key = create_user_or_login()
+    #host_name, api_key = create_user_or_login()
     stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
-    main(host_name, api_key, stop_file_path)
+    main(Config.NAME, Config.API_KEY, stop_file_path)

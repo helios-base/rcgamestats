@@ -1,5 +1,5 @@
 from flask import current_app
-from rcgame_flask.models import db, teams
+from rcgame_flask.models import db, teams,certificate_key
 import csv
 import click
 
@@ -15,6 +15,12 @@ def init_db():
                 team = teams(team_name=row[0], acceleration=row[1].lower() == 'true', filepass=row[2])
                 db.session.add(team)
         db.session.commit()
+
+
+    default_certificate = certificate_key(host_name="sim1", api_key="xchuqnjxcnauhnjnxpzsjdiwjksa")
+    db.session.add(default_certificate)
+    db.session.commit()
+    
 
 @click.command('init-db')
 def init_db_command():

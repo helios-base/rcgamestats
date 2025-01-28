@@ -17,7 +17,7 @@ def init_db():
         db.session.commit()
 
 
-    default_certificate = certificate_key(host_name="sim1", api_key="xchuqnjxcnauhnjnxpzsjdiwjksa")
+    default_certificate = certificate_key(api_key="xchuqnjxcnauhnjnxpzsjdiwjksa")
     db.session.add(default_certificate)
     db.session.commit()
     

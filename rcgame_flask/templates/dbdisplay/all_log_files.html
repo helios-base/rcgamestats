@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}All Log Files{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<ul>
+  {% for log_file in log_files %}
+    <li><a href="{{ url_for('static', filename=log_file) }}">{{ log_file }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

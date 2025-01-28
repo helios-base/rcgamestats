@@ -12,14 +12,13 @@ def result_post_request(response_data, file_paths,api_key,host_name):
     log_file = f"{str(response_data['match_index']).zfill(5)}"
 
     headers = {
-        'x-api-key': api_key,
-        'x-host-name': host_name
+        'x-api-key': api_key
     }
 
     log_file_name = response_data["log_file_name"]
 
     print(log_file_name)
-
+    print(response_data["group_id"])
     copied_file_paths = []
 
     for file_path in file_paths:

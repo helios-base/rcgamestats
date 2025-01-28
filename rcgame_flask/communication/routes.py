@@ -9,7 +9,7 @@ from functools import wraps
 
 def log_file_name(group_id, match_index, host_name,left_team,right_team):
     match_index = str(match_index).zfill(5)
-    group_id = str(match_index).zfill(10)
+    group_id = str(group_id).zfill(10)
     return f"{group_id}_{match_index}_{left_team}_{right_team}_{host_name}"
 
 def generate_api_key():
@@ -19,8 +19,7 @@ def require_api_key(f):
    @wraps(f)
    def decorated_function(*args, **kwargs):
        api_key = request.headers.get('x-api-key')
-       host_name = request.headers.get('x-host-name')
-       user = certificate_key.query.filter_by(api_key=api_key, host_name=host_name).first()
+       user = certificate_key.query.filter_by(api_key=api_key).first()
        if user is None:
            return jsonify({"error": "認証に失敗しました。無効なAPIキーです。"}), 401
        return f(*args, **kwargs)
@@ -55,7 +54,7 @@ def api():
     if not host_name or not api_key:
         return jsonify({"error": "Host-NameまたはAPI-Keyが不足しています"}), 400
     
-    cert_key = certificate_key.query.filter_by(host_name=host_name, api_key=api_key).first()
+    cert_key = certificate_key.query.filter_by(api_key=api_key).first()
     stop_check_response = cert_key.stop_check
     if cert_key.stop_check is True:
         return jsonify({"stop_check": stop_check_response})

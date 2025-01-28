@@ -2,6 +2,7 @@ from communication.task_post import task_post_request
 from communication.result_post import result_post_request
 from communication.create_user import create_user 
 from config import Config
+from api_key import API_KEY
 import argparse
 import requests
 import signal
@@ -64,10 +65,9 @@ def main(host_name,api_key,stop_file_path):
             if (response_from_task_post != None):
                 print("サーバーに受信できました！")
 
-                log_dir = '/home/fugakatayama/rcgame/client/log_data'
-                file_paths = [os.path.join(log_dir, file) 
-                              for file in os.listdir(log_dir) 
-                              if os.path.isfile(os.path.join(log_dir, file))]
+                file_paths = [os.path.join(Config.LOG_DIR, file) 
+                              for file in os.listdir(Config.LOG_DIR) 
+                              if os.path.isfile(os.path.join(Config.LOG_DIR, file))]
 
                 response_from_result_post = result_post_request(response_from_task_post, file_paths,api_key,host_name)
                 if response_from_result_post is not None and "error" in response_from_result_post:
@@ -89,14 +89,17 @@ def main(host_name,api_key,stop_file_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Send result post request.')
     parser.add_argument('--server_url', type=str, default=Config.SERVER_URL, help='Server URL')
+    parser.add_argument('--name', type=str, default=Config.NAME, help='Host Name')
     args = parser.parse_args()
 
     if args.server_url:
         Config.SERVER_URL = args.server_url
 
+    if args.name:
+        Config.NAME = args.name
+
     if os.path.exists(Config.TEMPORAL_DIR):
         shutil.rmtree(Config.TEMPORAL_DIR)
     os.makedirs(Config.TEMPORAL_DIR)
     #host_name, api_key = create_user_or_login()
-    stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
-    main(Config.NAME, Config.API_KEY, stop_file_path)
+    main(Config.NAME, API_KEY, Config.STOP_FILE_PATH)

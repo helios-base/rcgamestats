@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block header %}
   <h1>{% block title %}Group Matches{% endblock %}</h1>
+  <h2><a href="{{ url_for('dbdisplay.show_all_log_files') }}">All Log Files</a></h2>
 {% endblock %}
 
 {% block content %}
@@ -15,19 +16,21 @@
             <th>Group Memo</th>
             <th>Game Count</th>
             <th>Executed Count</th>
+            <th>Log Files</th> 
         </tr>
     </thead>
     <tbody>
         {% for match in matches %}
         <tr>
             <td>{{ match.group_id }}</td>
-            <td>{{ match.group_name }}</td>
+            <td><a href="{{ url_for('dbdisplay.show_group_matches_detail', group_id=match.group_id) }}">{{ match.group_name }}</a></td>
             <td>{{ match.group_time }}</td>
             <td>{{ match.left_team }}</td>
             <td>{{ match.right_team }}</td>
             <td>{{ match.group_memo }}</td>
             <td>{{ match.game_count }}</td>
             <td>{{ match.executed_count }}</td>
+            <td><a href="{{ url_for('dbdisplay.show_group_log_files', group_id=match.group_id) }}">group_log_file</a></td>
         </tr>
         {% endfor %}
     </tbody>

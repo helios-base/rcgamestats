@@ -51,6 +51,25 @@ def show_group_log_files(group_id):
 
     return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory)
 
+@bp.route('/all_log_files', methods=['GET'])
+@login_required
+def show_all_log_files():
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
+    all_log_files = []
+
+    for root, dirs, files in os.walk(logs_dir):
+        for file in files:
+            all_log_files.append(os.path.relpath(os.path.join(root, file), current_app.static_folder))
+
+    if not all_log_files:
+        return jsonify({"error": "No log files found"}), 404
+
+    # ファイル名のみを取得
+    all_log_files = sorted([os.path.basename(f) for f in all_log_files], key=lambda x: int(x.split('_')[0]))
+
+    return render_template('dbdisplay/all_log_files.html', log_files=all_log_files)
+
+
 #matches関係の表示
 @bp.route('/matches')
 @login_required

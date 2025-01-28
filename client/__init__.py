@@ -65,10 +65,9 @@ def main(host_name,api_key,stop_file_path):
             if (response_from_task_post != None):
                 print("サーバーに受信できました！")
 
-                log_dir = '/home/fugakatayama/rcgame/client/log_data'
-                file_paths = [os.path.join(log_dir, file) 
-                              for file in os.listdir(log_dir) 
-                              if os.path.isfile(os.path.join(log_dir, file))]
+                file_paths = [os.path.join(Config.LOG_DIR, file) 
+                              for file in os.listdir(Config.LOG_DIR) 
+                              if os.path.isfile(os.path.join(Config.LOG_DIR, file))]
 
                 response_from_result_post = result_post_request(response_from_task_post, file_paths,api_key,host_name)
                 if response_from_result_post is not None and "error" in response_from_result_post:
@@ -103,5 +102,4 @@ if __name__ == "__main__":
         shutil.rmtree(Config.TEMPORAL_DIR)
     os.makedirs(Config.TEMPORAL_DIR)
     #host_name, api_key = create_user_or_login()
-    stop_file_path = '/home/fugakatayama/rcgame/client/condition/stop.txt'
-    main(Config.NAME, API_KEY, stop_file_path)
+    main(Config.NAME, API_KEY, Config.STOP_FILE_PATH)

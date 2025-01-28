@@ -5,10 +5,7 @@ import shutil
 import re
 from config import Config
 
-def result_post_request(response_data, file_paths,api_key,host_name):
-    response_data["left_score"] = random.randint(1, 4)
-    response_data["right_score"] = random.randint(1, 4)
-
+def result_post_request(response_data, file_paths, api_key, host_name):
     log_file = f"{str(response_data['match_index']).zfill(5)}"
 
     headers = {

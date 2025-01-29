@@ -17,6 +17,7 @@
             <th>Game Count</th>
             <th>Executed Count</th>
             <th>Log Files</th> 
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -31,6 +32,11 @@
             <td>{{ match.game_count }}</td>
             <td>{{ match.executed_count }}</td>
             <td><a href="{{ url_for('dbdisplay.show_group_log_files', group_id=match.group_id) }}">group_log_file</a></td>
+            <td>
+                <form action="{{ url_for('dbdisplay.delete_match', group_id=match.group_id) }}" method="post" onsubmit="return confirm('{{match.group_name}}を削除しますか?');">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>

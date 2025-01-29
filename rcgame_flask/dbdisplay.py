@@ -25,6 +25,26 @@ def show_group_matches():
     match_list = group_matches.query.all()
     return render_template('dbdisplay/group_matches.html', matches=match_list)
 
+#group_matchesのレコード削除
+@bp.route('/delete_match/<int:group_id>', methods=['POST'])
+@login_required
+def delete_match(group_id):
+    matches_to_delete = matches.query.filter_by(group_id=group_id).all()
+    group_match_to_delete = group_matches.query.get(group_id)
+    
+    if matches_to_delete:
+        for match in matches_to_delete:
+            db.session.delete(match)
+    
+    if group_match_to_delete:
+        group_name = group_match_to_delete.group_name
+        db.session.delete(group_match_to_delete)
+    
+    db.session.commit()
+    flash(f'{group_name}は削除されました。')
+    
+    return redirect(url_for('dbdisplay.show_group_matches'))
+
 @bp.route('/group_matches/<int:group_id>')
 @login_required
 def show_group_matches_detail(group_id):

@@ -1,0 +1,6 @@
+flask
+flask-migrate
+flask-login
+flask-wtf
+oauth2client
+gspread

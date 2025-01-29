@@ -89,16 +89,18 @@ def main(host_name,api_key,stop_file_path):
 
             if (response_from_task_post != None):
 
-                run_game(response_from_task_post.get('left_team'),
-                         response_from_task_post.get('right_team'),
-                         response_from_task_post.get('log_file_name'))
+                #run_game(response_from_task_post.get('left_team'),
+                         #response_from_task_post.get('right_team'),
+                         #response_from_task_post.get('log_file_name'))
  
-                print("Finished the match!")
-                result_csv = os.path.join(Config.LOG_DIR, response_from_task_post.get('log_file_name') + ".csv")
-                left_score, right_score = get_score_from_result_file(result_csv)
-                response_from_task_post["left_score"] = left_score
-                response_from_task_post["right_score"] = right_score
+                #print("Finished the match!")
+                #result_csv = os.path.join(Config.LOG_DIR, response_from_task_post.get('log_file_name') + ".csv")
+                #left_score, right_score = get_score_from_result_file(result_csv)
+                #response_from_task_post["left_score"] = left_score
+                #response_from_task_post["right_score"] = right_score
 
+                response_from_task_post["left_score"] = 0
+                response_from_task_post["right_score"] = 0                
 
                 file_paths = [os.path.join(Config.LOG_DIR, file) 
                               for file in os.listdir(Config.LOG_DIR) 

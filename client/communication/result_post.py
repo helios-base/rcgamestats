@@ -35,6 +35,7 @@ def result_post_request(response_data, file_paths, api_key, host_name):
     result_post_url = f"http://{Config.SERVER_URL}/communication/result"
     result_response = requests.post(result_post_url, files=files, headers=headers, data={
         "match_id": response_data["match_id"],
+        "start_time": response_data["start_time"],
         "left_team": response_data["left_team"],
         "right_team": response_data["right_team"],
         "left_score": response_data["left_score"],
@@ -43,6 +44,7 @@ def result_post_request(response_data, file_paths, api_key, host_name):
     })
     print("result_post_request response status:", result_response.status_code)
     print("result_post_request response text:", result_response.text)
+    print("start_time:", response_data["start_time"])
 
     # サーバからのレスポンスを表示
     print("サーバに返したデータ:","left_score:", response_data["left_score"],"right_score:",response_data["right_score"])

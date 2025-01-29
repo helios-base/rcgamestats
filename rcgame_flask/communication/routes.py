@@ -62,7 +62,7 @@ def api():
     match = matches.query.filter_by(processed='unexecuted').first()
     
     if match:
-        start_time = datetime.now()
+        start_time = datetime.now().replace(microsecond=0)
         
         
         match.host_name = host_name
@@ -95,6 +95,7 @@ def api():
 def result():
     data = request.form.to_dict()
     host_name = data.get("host_name")
+    start_time_str = data.get("start_time")
     match_id = data.get("match_id")
     left_team = data.get("left_team")
     right_team = data.get("right_team")
@@ -103,8 +104,9 @@ def result():
     processed = data.get("processed")
     log_file = data.get("log_file")
 
-    match = matches.query.filter_by(match_id=match_id).first()
-    end_time = datetime.now()
+    start_time = datetime.strptime(start_time_str, '%a, %d %b %Y %H:%M:%S %Z')
+    match = matches.query.filter_by(match_id=match_id,start_time=start_time).first()
+    end_time = datetime.now().replace(microsecond=0)
 
     
     if match:
@@ -143,8 +145,9 @@ def result():
         
         group.executed_count = executed_count
         db.session.commit()
-
-    return jsonify({"message": "Match updated successfully"})
+        return jsonify({"message": "Match updated successfully"})
+    else:
+        return jsonify({"message": "Match not updated "})
 
 
     

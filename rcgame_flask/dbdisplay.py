@@ -1,5 +1,6 @@
 import functools
 import os
+import shutil
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -34,7 +35,17 @@ def delete_match(group_id):
     
     if matches_to_delete:
         for match in matches_to_delete:
+            # ログディレクトリのパスを取得
+            log_directory_name = match.log_directory_name
+            logs_dir = os.path.join(current_app.static_folder, 'logs')
+            log_dir_path = os.path.join(logs_dir, log_directory_name)
+            
+            # レコードを削除
             db.session.delete(match)
+            
+            # ディレクトリを削除
+            if os.path.exists(log_dir_path):
+                shutil.rmtree(log_dir_path)
     
     if group_match_to_delete:
         group_name = group_match_to_delete.group_name
@@ -44,6 +55,18 @@ def delete_match(group_id):
     flash(f'{group_name}は削除されました。')
     
     return redirect(url_for('dbdisplay.show_group_matches'))
+
+@bp.route('/group_reset_match/<int:match_id>', methods=['GET'])
+@login_required
+def group_reset_match(match_id):
+    match = matches.query.get(match_id)
+    if match and match.processed == 'in progress':
+        match.host_name = None
+        match.start_time = None
+        match.processed = 'unexecuted'
+        db.session.commit()
+    
+    return redirect(url_for('dbdisplay.show_group_matches_detail', group_id=match.group_id))
 
 @bp.route('/group_matches/<int:group_id>')
 @login_required
@@ -97,6 +120,7 @@ def show_matches():
     match_list = matches.query.all()
     return render_template('dbdisplay/matches.html', matches=match_list)
 
+#process変更
 @bp.route('/reset_match/<int:match_id>', methods=['GET'])
 @login_required
 def reset_match(match_id):

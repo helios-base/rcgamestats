@@ -15,7 +15,11 @@ import os
 def signal_handler(sig, frame):
     with open(Config.STOP_FILE_PATH, 'w') as f:
         f.write('Stop signal received.')
-    print("stop信号を検知しました。")
+    print("stop信号を検知しました。今の処理を完了した後に終了します")
+
+#def signal_handler(sig, frame):
+ #   print("処理を終わります")
+  #  sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -72,14 +76,13 @@ def main(host_name,api_key):
                 file_path = os.path.join(Config.TEMPORAL_DIR, file)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
-
-            response_from_task_post = task_post_request(host_name,api_key)
-
+                    
             if os.path.exists(Config.STOP_FILE_PATH):
-                print("停止ファイルが見つかりました。処理を終わります")
-                time.sleep(3)
+                print("処理を終わります")
                 os.remove(Config.STOP_FILE_PATH)
                 break
+
+            response_from_task_post = task_post_request(host_name,api_key)
 
             if response_from_task_post is not None and "error" in response_from_task_post:
                 print(response_from_task_post)

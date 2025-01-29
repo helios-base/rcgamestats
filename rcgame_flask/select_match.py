@@ -11,7 +11,7 @@ from rcgame_flask.models import db, teams, group_matches, matches
 
 bp = Blueprint('select_match', __name__, url_prefix='/select_match')
 
-@bp.route('/', methods=('GET', 'POST'))
+@bp.route('/select_team', methods=('GET', 'POST'))
 @login_required
 def select_team():
     team_list = teams.query.all()
@@ -31,8 +31,9 @@ def select_team():
             error = '「Team1」と「Team2」が重複しています.'
 
         if error is None:
-            now = datetime.now()
-            group_name = now.strftime("%m%d%H%M") +("-")+ select_team1 +("-")+ select_team2
+            now = datetime.now().replace(microsecond=0)
+            timestamp = now.strftime("%m%d%H%M")
+            group_name = timestamp + "-" + select_team1 + "-" + select_team2
             group_match = group_matches(
                 group_name=group_name,
                 group_time=now,
@@ -54,5 +55,7 @@ def select_team():
                 db.session.add(match)
             db.session.commit()
             return redirect(url_for("dbdisplay.show_group_matches"))
+
+        flash(error)
 
     return render_template('select_match/select_team.html', teams=team_list)

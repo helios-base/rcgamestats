@@ -13,8 +13,9 @@ import time
 import os
 
 def signal_handler(sig, frame):
-    print("処理を終わります")
-    sys.exit(0)
+    with open(Config.STOP_FILE_PATH, 'w') as f:
+        f.write('Stop signal received.')
+    print("stop信号を検知しました。")
 
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -64,7 +65,7 @@ def get_score_from_result_file(result_csv):
     return left_score, right_score
 
 
-def main(host_name,api_key,stop_file_path):
+def main(host_name,api_key):
     while True:
         try:
             for file in os.listdir(Config.TEMPORAL_DIR):
@@ -73,12 +74,12 @@ def main(host_name,api_key,stop_file_path):
                     os.remove(file_path)
 
             response_from_task_post = task_post_request(host_name,api_key)
-            if response_from_task_post and response_from_task_post.get('stop_check') == True:
-                if os.path.exists(stop_file_path):
-                    print("停止ファイルが見つかりました。処理を終わります")
-                    time.sleep(5)
-                    os.remove(stop_file_path)
-                    break
+
+            if os.path.exists(Config.STOP_FILE_PATH):
+                print("停止ファイルが見つかりました。処理を終わります")
+                time.sleep(3)
+                os.remove(Config.STOP_FILE_PATH)
+                break
 
             if response_from_task_post is not None and "error" in response_from_task_post:
                 print(response_from_task_post)
@@ -139,4 +140,4 @@ if __name__ == "__main__":
         shutil.rmtree(Config.TEMPORAL_DIR)
     os.makedirs(Config.TEMPORAL_DIR)
     #host_name, api_key = create_user_or_login()
-    main(Config.NAME, API_KEY, Config.STOP_FILE_PATH)
+    main(Config.NAME, API_KEY)

@@ -46,16 +46,26 @@ def get_or_create_summary_sheet():
         header = [
             "group_name",
             "datetime",
-            "left", "right",
+            "left",
+            "right",
             "memo",
             "# of game",
-            "l-win", "draw", "r-win",
-            "l-goal", "r-goal",
-            "l win rate", "draw rate", "r win rate",
-            "l ave goal", "r ave goal",
-            "l max goal", "r max goal",
-            "# of l scored", "# of r scored",
-            "l scored rate", "r scored rate",
+            "l-win",
+            "draw",
+            "r-win",
+            "l-goal",
+            "r-goal",
+            "l win rate",
+            "draw rate",
+            "r win rate",
+            "l ave goal",
+            "r ave goal",
+            "l max goal",
+            "r max goal",
+            "# of l scored",
+            "# of r scored",
+            "l scored rate",
+            "r scored rate",
         ]
         summary_sheet.append_row(header)
 
@@ -104,10 +114,28 @@ def insert_group_summary_row(group_name, datetime, left_name, right_name, memo):
     r_scored_rate = "=K2/F2"
 
     data = [
-        group_name, datetime, left_name, right_name, memo,
-        num_match, l_win, draw, r_win, l_goal, r_goal,
-        l_win_rate, draw_rate, r_win_rate, l_ave_goal, r_ave_goal,
-        l_max_goal, r_max_goal, n_l_scored, n_r_scored, l_scored_rate, r_scored_rate
+        group_name,
+        datetime,
+        left_name,
+        right_name,
+        memo,
+        num_match,
+        l_win,
+        draw,
+        r_win,
+        l_goal,
+        r_goal,
+        l_win_rate,
+        draw_rate,
+        r_win_rate,
+        l_ave_goal,
+        r_ave_goal,
+        l_max_goal,
+        r_max_goal,
+        n_l_scored,
+        n_r_scored,
+        l_scored_rate,
+        r_scored_rate,
     ]
 
     # insert a new row at the second row of the summary sheet
@@ -169,42 +197,36 @@ def add_group(group_name, datetime, left_name, right_name, memo):
     return group_sheet
 
 
-def upload_group_results(match_list):
+def upload_group_results(group_name, match_records):
     """
-    Upload the group results to the Google Spreadsheet.
-
+    Upload the match results to the Google Spreadsheet.
     """
-    spreadsheet = get_spreadsheet()
-    if spreadsheet is None:
+    group_sheet = get_group_sheet(group_name)
+    if group_sheet is None:
+        print(f"Error: Failed to get a group sheet for {group_name}")
         return
 
     # Create a dictionary to store the group records
-    group_records = {}
-    for match in match_list:
-        group_name = match.group_name
-        if group_name not in group_records:
-            group_records[group_name] = []
-        point = 1 if match.left_score > match.right_score else -1 if match.left_score < match.right_score else 0
-        match_record = [
-            str(match.match_index).zfill(5),
-            match.host_name,
-            match.start_time,
-            match.left_team,
-            match.right_team,
-            match.left_score,
-            match.right_score,
-            point
-        ]
-        group_records[group_name].append(match_record)
+    local_records = []
+    for match in match_records:
+        point = (
+            1
+            if match.left_score > match.right_score
+            else -1 if match.left_score < match.right_score
+            else 0
+        )
+        local_records.append(
+            [
+                str(match.match_index).zfill(5),
+                match.host_name,
+                match.start_time,
+                match.left_team,
+                match.right_team,
+                match.left_score,
+                match.right_score,
+                point,
+            ]
+        )
 
-    # Upload the group results
-    for group_name, records in group_records.items():
-        group_sheet = get_group_sheet(group_name)
-        if group_sheet is None:
-            print(f"Error: Failed to create a group sheet for {group_name}")
-            continue
-
-        # レコードをアップロード
-        for record in records:
-            group_sheet.append_row(record)
-    
+    group_sheet.clear()
+    group_sheet.append_rows(local_records)

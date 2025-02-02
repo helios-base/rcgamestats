@@ -4,6 +4,13 @@
 {% endblock %}
 
 {% block content %}
+<!-- Googleスプレッドシートへアップロードするボタンを追加 -->
+<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+    <form action="{{ url_for('dbdisplay.upload_to_google_sheet', group_id=group_id) }}" method="post">
+        <button type="submit">Upload to Google Spreadsheet</button>
+    </form>
+</div>
+
 <table>
     <thead>
         <tr>

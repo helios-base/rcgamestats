@@ -2,10 +2,7 @@ import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-
-DOC_ID = "Your Document Id"
-KEY_PATH = "Path to your json file"
-
+import rcgame_flask.config as config
 
 def _get_spreadsheet():
     """
@@ -14,8 +11,8 @@ def _get_spreadsheet():
     :return: spreadsheet
     """
     scope = ["https://spreadsheets.google.com/feeds"]
-    doc_id = DOC_ID
-    key_path = os.path.expanduser(KEY_PATH)
+    doc_id = config.config.DOC_ID
+    key_path = os.path.expanduser(config.config.KEY_PATH)
 
     credentials = ServiceAccountCredentials.from_json_keyfile_name(key_path, scope)
     client = gspread.authorize(credentials)
@@ -24,19 +21,20 @@ def _get_spreadsheet():
     return spreadsheet
 
 
-def _get_or_create_summary_sheet():
+def _get_or_create_summary_sheet(spreadsheet):
     """
     Get the summary worksheet.
     If the summary worksheet does not exist, create a new one.
 
+    Args:
+        spread_sheet (gspread.models.Spreadsheet): The entire spreadsheet.
+
     :return: summary_sheet
     """
 
-    try:
-        spreadsheet = _get_spreadsheet()
-    except Exception as e:
-        print("Error: ", e)
-        return
+    if spreadsheet is None:
+        print("Error: spread_sheet is None")
+        return None
 
     try:
         summary_sheet = spreadsheet.worksheet("summary")
@@ -72,19 +70,23 @@ def _get_or_create_summary_sheet():
     return summary_sheet
 
 
-def _insert_group_summary_row(group_name, datetime, left_name, right_name, memo):
+def _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, right_name, memo):
     """
     Insert a new row into the summary worksheet.
 
     Args:
+        spreadsheet (gspread.models.Worksheet): The summary worksheet.
         group_name (str): The name of the group.
-        datetime (str): The date and time of the group creation.
+        group_time (str): The date and time of the group creation.
         left_name (str): The name of the left team.
         right_name (str): The name of the right team.
         memo (str): The memo for the group.
     """
+    if spreadsheet is None:
+        print("Error: spread_sheet is None")
+        return None
 
-    summary_sheet = _get_or_create_summary_sheet()
+    summary_sheet = _get_or_create_summary_sheet(spreadsheet)
     if summary_sheet is None:
         print("Error: summary_sheet is None")
         return None
@@ -115,7 +117,7 @@ def _insert_group_summary_row(group_name, datetime, left_name, right_name, memo)
 
     data = [
         group_name,
-        datetime,
+        group_time.strftime("%Y-%m-%d %H:%M:%S"),
         left_name,
         right_name,
         memo,
@@ -142,12 +144,17 @@ def _insert_group_summary_row(group_name, datetime, left_name, right_name, memo)
     summary_sheet.insert_row(values=data, index=2, value_input_option="USER_ENTERED")
 
 
-def _get_group_sheet(group_name):
+def get_or_create_group_sheet(group_name, group_time, left_name, right_name, memo):
     """
     Get the worksheet for the group.
+    If the group worksheet does not exist, create a new one.
 
     Args:
         group_name (str): The name of the group.
+        group_time (str): The date and time of the group creation
+        left_name (str): The name of the left team.
+        right_name (str): The name of the right team.
+        memo (str): The memo for the group.
 
     :return: group_sheet
     """
@@ -159,56 +166,29 @@ def _get_group_sheet(group_name):
     try:
         group_sheet = spreadsheet.worksheet(group_name)
     except gspread.exceptions.WorksheetNotFound:
-        print(f"Error: Worksheet '{group_name}' not found.")
-        return None
-
-    return group_sheet
-
-
-def add_group(group_name, datetime, left_name, right_name, memo):
-    """
-    Create a new worksheet for the group.
-    Add a new row associated with the group to the summary worksheet.
-
-    Args:
-        group_name (str): The name of the group.
-        datetime (str): The date and time of the group creation.
-        left_name (str): The name of the left team.
-        right_name (str): The name of the right team.
-        memo (str): The memo for the group.
-    """
-
-    spreadsheet = _get_spreadsheet()
-    if spreadsheet is None:
-        return None
-
-    # Get the worksheet for the group
-    # If the group worksheet does not exist, create a new one.
-    try:
-        group_sheet = spreadsheet.worksheet(group_name)
-        print("group sheet already exists.")
-    except gspread.exceptions.WorksheetNotFound:
         print("create a new group sheet " + group_name)
         group_sheet = spreadsheet.add_worksheet(group_name, 100, 8)
 
-    # Insert a new row into the summary worksheet
-    _insert_group_summary_row(group_name, datetime, left_name, right_name, memo)
+    _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, right_name, memo)
 
     return group_sheet
 
 
-def upload_group_results(group_name, match_records):
+def upload_group_results(group_name, group_time, left_name, right_name, memo, match_records):
     """
     Upload the match results to the Google Spreadsheet.
     """
-    group_sheet = _get_group_sheet(group_name)
+    group_sheet = get_or_create_group_sheet(group_name, group_time, left_name, right_name, memo)
     if group_sheet is None:
         print(f"Error: Failed to get a group sheet for {group_name}")
-        return
+        return False
 
     # Create a dictionary to store the group records
     local_records = []
     for match in match_records:
+        if match.processed != "processed":
+            continue
+
         point = (
             1
             if match.left_score > match.right_score
@@ -219,7 +199,7 @@ def upload_group_results(group_name, match_records):
             [
                 str(match.match_index).zfill(5),
                 match.host_name,
-                match.start_time,
+                match.start_time.strftime("%Y-%m-%d %H:%M:%S"),
                 match.left_team,
                 match.right_team,
                 match.left_score,
@@ -230,3 +210,4 @@ def upload_group_results(group_name, match_records):
 
     group_sheet.clear()
     group_sheet.append_rows(local_records)
+    return True

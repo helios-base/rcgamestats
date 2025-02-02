@@ -7,7 +7,7 @@ DOC_ID = "Your Document Id"
 KEY_PATH = "Path to your json file"
 
 
-def get_spreadsheet():
+def _get_spreadsheet():
     """
     Get the entire spreadsheet.
 
@@ -24,7 +24,7 @@ def get_spreadsheet():
     return spreadsheet
 
 
-def get_or_create_summary_sheet():
+def _get_or_create_summary_sheet():
     """
     Get the summary worksheet.
     If the summary worksheet does not exist, create a new one.
@@ -33,7 +33,7 @@ def get_or_create_summary_sheet():
     """
 
     try:
-        spreadsheet = get_spreadsheet()
+        spreadsheet = _get_spreadsheet()
     except Exception as e:
         print("Error: ", e)
         return
@@ -72,7 +72,7 @@ def get_or_create_summary_sheet():
     return summary_sheet
 
 
-def insert_group_summary_row(group_name, datetime, left_name, right_name, memo):
+def _insert_group_summary_row(group_name, datetime, left_name, right_name, memo):
     """
     Insert a new row into the summary worksheet.
 
@@ -84,7 +84,7 @@ def insert_group_summary_row(group_name, datetime, left_name, right_name, memo):
         memo (str): The memo for the group.
     """
 
-    summary_sheet = get_or_create_summary_sheet()
+    summary_sheet = _get_or_create_summary_sheet()
     if summary_sheet is None:
         print("Error: summary_sheet is None")
         return None
@@ -142,7 +142,7 @@ def insert_group_summary_row(group_name, datetime, left_name, right_name, memo):
     summary_sheet.insert_row(values=data, index=2, value_input_option="USER_ENTERED")
 
 
-def get_group_sheet(group_name):
+def _get_group_sheet(group_name):
     """
     Get the worksheet for the group.
 
@@ -152,7 +152,7 @@ def get_group_sheet(group_name):
     :return: group_sheet
     """
 
-    spreadsheet = get_spreadsheet()
+    spreadsheet = _get_spreadsheet()
     if spreadsheet is None:
         return None
 
@@ -178,7 +178,7 @@ def add_group(group_name, datetime, left_name, right_name, memo):
         memo (str): The memo for the group.
     """
 
-    spreadsheet = get_spreadsheet()
+    spreadsheet = _get_spreadsheet()
     if spreadsheet is None:
         return None
 
@@ -192,7 +192,7 @@ def add_group(group_name, datetime, left_name, right_name, memo):
         group_sheet = spreadsheet.add_worksheet(group_name, 100, 8)
 
     # Insert a new row into the summary worksheet
-    insert_group_summary_row(group_name, datetime, left_name, right_name, memo)
+    _insert_group_summary_row(group_name, datetime, left_name, right_name, memo)
 
     return group_sheet
 
@@ -201,7 +201,7 @@ def upload_group_results(group_name, match_records):
     """
     Upload the match results to the Google Spreadsheet.
     """
-    group_sheet = get_group_sheet(group_name)
+    group_sheet = _get_group_sheet(group_name)
     if group_sheet is None:
         print(f"Error: Failed to get a group sheet for {group_name}")
         return

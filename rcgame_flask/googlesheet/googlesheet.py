@@ -2,7 +2,7 @@ import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-import rcgame_flask.config as config
+from rcgame_flask.config import config
 
 def _get_spreadsheet():
     """
@@ -11,8 +11,13 @@ def _get_spreadsheet():
     :return: spreadsheet
     """
     scope = ["https://spreadsheets.google.com/feeds"]
-    doc_id = config.config.DOC_ID
-    key_path = os.path.expanduser(config.config.KEY_PATH)
+
+    if config.DOC_ID is None or config.KEY_PATH is None:
+        print("Error: DOC_ID or KEY_PATH is not set.")
+        return None
+
+    doc_id = config.DOC_ID
+    key_path = os.path.expanduser(config.KEY_PATH)
 
     credentials = ServiceAccountCredentials.from_json_keyfile_name(key_path, scope)
     client = gspread.authorize(credentials)

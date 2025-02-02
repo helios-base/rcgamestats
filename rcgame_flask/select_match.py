@@ -8,6 +8,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from rcgame_flask.auth import login_required
 from rcgame_flask.models import db, teams, group_matches, matches
+from rcgame_flask.googlesheet import googlesheet
 
 bp = Blueprint('select_match', __name__, url_prefix='/select_match')
 
@@ -54,6 +55,9 @@ def select_team():
                 )
                 db.session.add(match)
             db.session.commit()
+
+            if googlesheet.get_or_create_group_sheet(group_name, now, select_team1, select_team2, group_memo) is None:
+                flash('Error: Failed to create a group sheet for ' + group_name)
             return redirect(url_for("dbdisplay.show_group_matches"))
 
         flash(error)

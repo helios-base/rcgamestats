@@ -9,7 +9,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import login_required
 from rcgame_flask.models import db, teams, group_matches, matches,certificate_key
 from flask import current_app, jsonify, render_template
-import rcgame_flask.googlesheet.googlesheet as googlesheet
+from rcgame_flask.googlesheet import googlesheet
 
 bp = Blueprint('dbdisplay', __name__, url_prefix='/dbdisplay')
 

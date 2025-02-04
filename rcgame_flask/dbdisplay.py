@@ -34,19 +34,17 @@ def delete_match(group_id):
     matches_to_delete = matches.query.filter_by(group_id=group_id).all()
     group_match_to_delete = group_matches.query.get(group_id)
     
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
     if matches_to_delete:
         for match in matches_to_delete:
-            # ログディレクトリのパスを取得
-            log_directory_name = match.log_directory_name
-            logs_dir = os.path.join(current_app.static_folder, 'logs')
-            log_dir_path = os.path.join(logs_dir, log_directory_name)
-            
+            if match.log_directory_name is not None:
+                log_dir_path = os.path.join(logs_dir, match.log_directory_name)
+                # ディレクトリを削除
+                if os.path.exists(log_dir_path):
+                    shutil.rmtree(log_dir_path)
             # レコードを削除
             db.session.delete(match)
-            
-            # ディレクトリを削除
-            if os.path.exists(log_dir_path):
-                shutil.rmtree(log_dir_path)
+
     
     if group_match_to_delete:
         group_name = group_match_to_delete.group_name
@@ -99,9 +97,11 @@ def upload_to_google_sheet(group_id):
     match_records = matches.query.filter_by(group_id=group_id).all()
     
     # Googleスプレッドシートにデータをアップロード
-    googlesheet.upload_group_results(group_name, group_time, left_team, right_team, memo, match_records)
-    
-    flash('Googleスプレッドシートへ同期しました。')
+    if googlesheet.upload_group_results(group_name, group_time, left_team, right_team, memo, match_records):
+        flash('Succeeded to upload the group results to the Google Spreadsheet.')
+    else:
+        flash('Failed to upload the group results to the Google Spreadsheet.')
+
     return redirect(url_for('dbdisplay.show_group_matches_detail', group_id=group_id))
 
 
@@ -112,11 +112,14 @@ def show_group_log_files(group_id):
     log_files = []
     log_directory = None
 
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
     for match in matches_in_group:
-        log_directory = match.log_directory_name
-        logs_dir = os.path.join(current_app.static_folder, 'logs')
-        log_dir_path = os.path.join(logs_dir, log_directory)
+        if match.log_directory_name is None:
+            continue
+        if match.log_file_name is None:
+            continue
 
+        log_dir_path = os.path.join(logs_dir, match.log_directory_name)
         if os.path.exists(log_dir_path):
             log_files.extend([f for f in os.listdir(log_dir_path) if match.log_file_name in f])
 
@@ -172,8 +175,15 @@ def match_log(match_id):
     if not match:
         return jsonify({"error": "Match not found"}), 404
 
+    if match.log_directory_name is None:
+        return jsonify({"error": "Log directory not found"}), 404
+    
+    if match.log_file_name is None:
+        return jsonify({"error": "Log file name not found"}), 404
+    
     log_file_name = match.log_file_name
     logs_dir = os.path.join(current_app.static_folder, 'logs')
+
     log_dir_path = os.path.join(logs_dir, match.log_directory_name)
 
     if not os.path.exists(log_dir_path):

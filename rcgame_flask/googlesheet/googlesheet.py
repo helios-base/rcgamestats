@@ -15,13 +15,17 @@ def _get_spreadsheet():
     if config.DOC_ID is None or config.KEY_PATH is None:
         print("Error: DOC_ID or KEY_PATH is not set.")
         return None
-
+    
     doc_id = config.DOC_ID
     key_path = os.path.expanduser(config.KEY_PATH)
 
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(key_path, scope)
-    client = gspread.authorize(credentials)
-    spreadsheet = client.open_by_key(doc_id)
+    try:
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(key_path, scope)
+        client = gspread.authorize(credentials)
+        spreadsheet = client.open_by_key(doc_id)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
     return spreadsheet
 

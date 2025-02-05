@@ -1,13 +1,17 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from rcgame_flask.models import db
 from rcgame_flask.models import user
-from rcgame_flask.forms import LoginForm, SignUpForm
+from .forms import LoginForm, SignUpForm
 from flask_login import login_user, logout_user, login_required
 
-bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
+
+@auth.route('/')
+def index():
+    return render_template('auth/index.html')
 
 # ログイン（Form使用）
-@bp.route("/login", methods=["GET", "POST"])
+@auth.route("/login", methods=["GET", "POST"])
 def login():
     # Formインスタンス生成
     form = LoginForm()
@@ -30,8 +34,9 @@ def login():
     # 画面遷移
     return render_template("auth/login.html", form=form)
 
+
 # ログアウト
-@bp.route("/logout")
+@auth.route("/logout")
 @login_required
 def logout():
     # 現在ログインしているユーザーをログアウトする
@@ -41,8 +46,9 @@ def logout():
     # 画面遷移
     return redirect(url_for("auth.login"))
 
+
 # サインアップ（Form使用）
-@bp.route("/register", methods=["GET", "POST"])
+@auth.route("/register", methods=["GET", "POST"])
 def register():
     # Formインスタンス生成
     form = SignUpForm()

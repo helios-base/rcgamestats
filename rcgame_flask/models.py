@@ -56,4 +56,3 @@ class teams(db.Model):
     acceleration = db.Column(db.String(5))
     filepass = db.Column(db.String(50))
     team_memo = db.Column(db.Text)
-

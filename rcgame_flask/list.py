@@ -5,9 +5,9 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from rcgame_flask.auth import login_required
 from rcgame_flask.models import db, teams
 from flask_login import login_required
+
 bp = Blueprint('list', __name__)
 
 @bp.route('/')

@@ -4,9 +4,8 @@ from datetime import datetime
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
+from flask_login import login_required
 from werkzeug.security import check_password_hash, generate_password_hash
-
-from rcgame_flask.auth import login_required
 from rcgame_flask.models import db, teams, group_matches, matches
 from rcgame_flask.googlesheet import googlesheet
 

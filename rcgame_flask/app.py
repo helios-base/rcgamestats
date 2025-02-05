@@ -32,15 +32,10 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-    
     from . import create_db
     create_db.init_app(app)
 
-    migrate = Migrate(app, db)
+    Migrate(app, db)
 
     csrf.init_app(app)
 
@@ -55,11 +50,9 @@ def create_app(test_config=None):
     @login_manager.user_loader
     def load_user(user_id):
         return user.query.get(int(user_id))
-    
 
-
-    from .auth import bp as auth_bp
-    app.register_blueprint(auth_bp)
+    from rcgame_flask.auth import views as auth_views
+    app.register_blueprint(auth_views.auth, url_prefix='/auth')
     
     from . import list
     app.register_blueprint(list.bp)
@@ -75,5 +68,6 @@ def create_app(test_config=None):
     app.register_blueprint(communication.bp)
 
     return app
+
 
 app = create_app()

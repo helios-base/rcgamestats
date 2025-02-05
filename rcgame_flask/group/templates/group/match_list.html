@@ -42,7 +42,7 @@
             <td>{{ match.host_name }}</td>
             <td>
                 {% if match.processed == 'in progress' %}
-                <a href="{{ url_for('dbdisplay.group_reset_match', match_id=match.match_id) }}" onclick="return confirm('{{ match.match_id }}を初期化しますか？');">in progress</a>
+                <a href="{{ url_for('group.reset_match', match_id=match.match_id) }}" onclick="return confirm('{{ match.match_id }}を初期化しますか？');">in progress</a>
                 {% else %}
                     {{ match.processed }}
                 {% endif %}

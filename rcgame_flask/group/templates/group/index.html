@@ -24,7 +24,7 @@
         {% for group in groups %}
         <tr>
             <td>{{ group.group_id }}</td>
-            <td><a href="{{ url_for('dbdisplay.show_group_matches_detail', group_id=group.group_id) }}">{{ group.group_name }}</a></td>
+            <td><a href="{{ url_for('group.show_group_matches', group_id=group.group_id) }}">{{ group.group_name }}</a></td>
             <td>{{ group.group_time }}</td>
             <td>{{ group.left_team }}</td>
             <td>{{ group.right_team }}</td>
@@ -33,7 +33,7 @@
             <td>{{ group.executed_count }}</td>
             <td><a href="{{ url_for('dbdisplay.show_group_log_files', group_id=group.group_id) }}">group_log_file</a></td>
             <td>
-                <form action="{{ url_for('dbdisplay.delete_match', group_id=group.group_id) }}" method="post" onsubmit="return confirm('{{group.group_name}}を削除しますか?');">
+                <form action="{{ url_for('group.delete_group', group_id=group.group_id) }}" method="post" onsubmit="return confirm('{{group.group_name}}を削除しますか?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit">Delete</button>
                 </form>

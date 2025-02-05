@@ -22,51 +22,18 @@ def show_teams():
     return render_template('dbdisplay/teams.html', teams=team_list)
 
 
-# Groupのレコード削除
-@bp.route('/delete_match/<int:group_id>', methods=['POST'])
-@login_required
-def delete_match(group_id):
-    matches_to_delete = Match.query.filter_by(group_id=group_id).all()
-    group_match_to_delete = Group.query.get(group_id)
-    
-    logs_dir = os.path.join(current_app.static_folder, 'logs')
-    if matches_to_delete:
-        for match in matches_to_delete:
-            if match.log_directory_name is not None:
-                log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-                # ディレクトリを削除
-                if os.path.exists(log_dir_path):
-                    shutil.rmtree(log_dir_path)
-            # レコードを削除
-            db.session.delete(match)
 
+# @bp.route('/group_reset_match/<int:match_id>', methods=['GET'])
+# @login_required
+# def group_reset_match(match_id):
+#     match = Match.query.get(match_id)
+#     if match and match.processed == 'in progress':
+#         match.host_name = None
+#         match.start_time = None
+#         match.processed = 'unexecuted'
+#         db.session.commit()
     
-    if group_match_to_delete:
-        group_name = group_match_to_delete.group_name
-        db.session.delete(group_match_to_delete)
-    
-    db.session.commit()
-    flash(f'{group_name}は削除されました。')
-    
-    return redirect(url_for('group.index'))
-
-@bp.route('/group_reset_match/<int:match_id>', methods=['GET'])
-@login_required
-def group_reset_match(match_id):
-    match = Match.query.get(match_id)
-    if match and match.processed == 'in progress':
-        match.host_name = None
-        match.start_time = None
-        match.processed = 'unexecuted'
-        db.session.commit()
-    
-    return redirect(url_for('dbdisplay.show_group_matches_detail', group_id=match.group_id))
-
-@bp.route('/group_matches/<int:group_id>')
-@login_required
-def show_group_matches_detail(group_id):
-    match_list = Match.query.filter_by(group_id=group_id).all()
-    return render_template('dbdisplay/group_matches_detail.html', group_id=group_id, matches=match_list)
+#     return redirect(url_for('group.show_group_matches', group_id=match.group_id))
 
 
 @bp.route('/upload_to_google_sheet/<int:group_id>', methods=['POST'])
@@ -97,7 +64,7 @@ def upload_to_google_sheet(group_id):
     else:
         flash('Failed to upload the group results to the Google Spreadsheet.')
 
-    return redirect(url_for('dbdisplay.show_group_matches_detail', group_id=group_id))
+    return redirect(url_for('group.show_group_matches', group_id=group_id))
 
 
 @bp.route('/group_log_files/<int:group_id>', methods=['GET'])

@@ -21,12 +21,6 @@ def show_teams():
     team_list = teams.query.all()
     return render_template('dbdisplay/teams.html', teams=team_list)
 
-# Group関係の表示
-@bp.route('/group_matches')
-@login_required
-def show_group_matches():
-    match_list = Group.query.all()
-    return render_template('dbdisplay/group_matches.html', matches=match_list)
 
 # Groupのレコード削除
 @bp.route('/delete_match/<int:group_id>', methods=['POST'])
@@ -54,7 +48,7 @@ def delete_match(group_id):
     db.session.commit()
     flash(f'{group_name}は削除されました。')
     
-    return redirect(url_for('dbdisplay.show_group_matches'))
+    return redirect(url_for('group.index'))
 
 @bp.route('/group_reset_match/<int:match_id>', methods=['GET'])
 @login_required

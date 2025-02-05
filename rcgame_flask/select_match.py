@@ -58,7 +58,7 @@ def select_team():
 
             if googlesheet.get_or_create_group_sheet(group_name, now, select_team1, select_team2, group_memo) is None:
                 flash('Error: Failed to create a group sheet for ' + group_name)
-            return redirect(url_for("dbdisplay.show_group_matches"))
+            return redirect(url_for("group.index"))
 
         flash(error)
 

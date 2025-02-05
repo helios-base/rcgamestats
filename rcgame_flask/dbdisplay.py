@@ -9,6 +9,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import login_required
 from rcgame_flask.models import db, teams, group_matches, matches,certificate_key
 from flask import current_app, jsonify, render_template
+from rcgame_flask.googlesheet import googlesheet
 
 bp = Blueprint('dbdisplay', __name__, url_prefix='/dbdisplay')
 
@@ -33,19 +34,17 @@ def delete_match(group_id):
     matches_to_delete = matches.query.filter_by(group_id=group_id).all()
     group_match_to_delete = group_matches.query.get(group_id)
     
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
     if matches_to_delete:
         for match in matches_to_delete:
-            # ログディレクトリのパスを取得
-            log_directory_name = match.log_directory_name
-            logs_dir = os.path.join(current_app.static_folder, 'logs')
-            log_dir_path = os.path.join(logs_dir, log_directory_name)
-            
+            if match.log_directory_name is not None:
+                log_dir_path = os.path.join(logs_dir, match.log_directory_name)
+                # ディレクトリを削除
+                if os.path.exists(log_dir_path):
+                    shutil.rmtree(log_dir_path)
             # レコードを削除
             db.session.delete(match)
-            
-            # ディレクトリを削除
-            if os.path.exists(log_dir_path):
-                shutil.rmtree(log_dir_path)
+
     
     if group_match_to_delete:
         group_name = group_match_to_delete.group_name
@@ -72,7 +71,39 @@ def group_reset_match(match_id):
 @login_required
 def show_group_matches_detail(group_id):
     match_list = matches.query.filter_by(group_id=group_id).all()
-    return render_template('dbdisplay/group_matches_detail.html', matches=match_list)
+    return render_template('dbdisplay/group_matches_detail.html', group_id=group_id, matches=match_list)
+
+
+@bp.route('/upload_to_google_sheet/<int:group_id>', methods=['POST'])
+@login_required
+def upload_to_google_sheet(group_id):
+    group = group_matches.query.get(group_id)
+    if group is None:
+        flash(f'ID:{group_id} のグループを取得できませんでした。')
+        return redirect(url_for('dbdisplay.group_matches'))
+    
+    group_name = group.group_name
+    if group_name is None:
+        flash(f'ID:{group_id} のグループ名を取得できませんでした。')
+        return redirect(url_for('dbdisplay.group_matches'))
+    
+    group_time = group.group_time
+    left_team = group.left_team
+    right_team = group.right_team
+    memo = group.group_memo
+
+    print(f'(upload_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]')
+    # データベースから指定されたグループIDのマッチデータを取得
+    match_records = matches.query.filter_by(group_id=group_id).all()
+    
+    # Googleスプレッドシートにデータをアップロード
+    if googlesheet.upload_group_results(group_name, group_time, left_team, right_team, memo, match_records):
+        flash('Succeeded to upload the group results to the Google Spreadsheet.')
+    else:
+        flash('Failed to upload the group results to the Google Spreadsheet.')
+
+    return redirect(url_for('dbdisplay.show_group_matches_detail', group_id=group_id))
+
 
 @bp.route('/group_log_files/<int:group_id>', methods=['GET'])
 @login_required
@@ -81,11 +112,14 @@ def show_group_log_files(group_id):
     log_files = []
     log_directory = None
 
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
     for match in matches_in_group:
-        log_directory = match.log_directory_name
-        logs_dir = os.path.join(current_app.static_folder, 'logs')
-        log_dir_path = os.path.join(logs_dir, log_directory)
+        if match.log_directory_name is None:
+            continue
+        if match.log_file_name is None:
+            continue
 
+        log_dir_path = os.path.join(logs_dir, match.log_directory_name)
         if os.path.exists(log_dir_path):
             log_files.extend([f for f in os.listdir(log_dir_path) if match.log_file_name in f])
 
@@ -93,6 +127,7 @@ def show_group_log_files(group_id):
         return jsonify({"error": "No matching log files found"}), 404
 
     return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory)
+
 
 @bp.route('/all_log_files', methods=['GET'])
 @login_required
@@ -140,8 +175,15 @@ def match_log(match_id):
     if not match:
         return jsonify({"error": "Match not found"}), 404
 
+    if match.log_directory_name is None:
+        return jsonify({"error": "Log directory not found"}), 404
+    
+    if match.log_file_name is None:
+        return jsonify({"error": "Log file name not found"}), 404
+    
     log_file_name = match.log_file_name
     logs_dir = os.path.join(current_app.static_folder, 'logs')
+
     log_dir_path = os.path.join(logs_dir, match.log_directory_name)
 
     if not os.path.exists(log_dir_path):

@@ -101,9 +101,9 @@ def show_group_logs(group_id):
     return render_template("group/log_files.html", log_files=log_files, log_directory=log_directory)
 
 
-@group.route("/match_log/<int:match_id>", methods=["GET"])
+@group.route("/<int:group_id>/log/<int:match_id>", methods=["GET"])
 @login_required
-def show_match_log(match_id):
+def show_match_log(group_id, match_id):
     """
     Show log files for a match.
     """

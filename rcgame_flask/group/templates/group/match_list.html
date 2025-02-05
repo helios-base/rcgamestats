@@ -50,7 +50,7 @@
                     {{ match.processed }}
                 {% endif %}
             </td>
-            <td><a href="{{ url_for('group.show_match_log', match_id=match.match_id) }}" target="_blank">{{ match.log_file }}</a></td>
+            <td><a href="{{ url_for('group.show_match_log', group_id=group_id, match_id=match.match_id) }}" target="_blank">{{ match.log_file }}</a></td>
         </tr>
         {% endfor %}
     </tbody>

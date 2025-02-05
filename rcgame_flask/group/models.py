@@ -1,6 +1,8 @@
 from rcgame_flask.app import db
 
 
+# TODO: log_direcotry_nameをMatchからGroupへ移動させる
+
 class Group(db.Model):
     group_id = db.Column(db.Integer, primary_key=True)
     group_name = db.Column(db.String(255), unique=True)

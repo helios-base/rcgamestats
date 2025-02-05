@@ -22,20 +22,6 @@ def show_teams():
     return render_template('dbdisplay/teams.html', teams=team_list)
 
 
-
-# @bp.route('/group_reset_match/<int:match_id>', methods=['GET'])
-# @login_required
-# def group_reset_match(match_id):
-#     match = Match.query.get(match_id)
-#     if match and match.processed == 'in progress':
-#         match.host_name = None
-#         match.start_time = None
-#         match.processed = 'unexecuted'
-#         db.session.commit()
-    
-#     return redirect(url_for('group.show_group_matches', group_id=match.group_id))
-
-
 @bp.route('/upload_to_google_sheet/<int:group_id>', methods=['POST'])
 @login_required
 def upload_to_google_sheet(group_id):
@@ -67,30 +53,6 @@ def upload_to_google_sheet(group_id):
     return redirect(url_for('group.show_group_matches', group_id=group_id))
 
 
-# @bp.route('/group_log_files/<int:group_id>', methods=['GET'])
-# @login_required
-# def show_group_log_files(group_id):
-#     matches_in_group = Match.query.filter_by(group_id=group_id).all()
-#     log_files = []
-#     log_directory = None
-
-#     logs_dir = os.path.join(current_app.static_folder, 'logs')
-#     for match in matches_in_group:
-#         if match.log_directory_name is None:
-#             continue
-#         if match.log_file_name is None:
-#             continue
-
-#         log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-#         if os.path.exists(log_dir_path):
-#             log_files.extend([f for f in os.listdir(log_dir_path) if match.log_file_name in f])
-
-#     if not log_files:
-#         return jsonify({"error": "No matching log files found"}), 404
-
-#     return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory)
-
-
 @bp.route('/all_log_files', methods=['GET'])
 @login_required
 def show_all_log_files():
@@ -108,49 +70,6 @@ def show_all_log_files():
     all_log_files = sorted([os.path.basename(f) for f in all_log_files], key=lambda x: int(x.split('_')[0]))
 
     return render_template('dbdisplay/all_log_files.html', log_files=all_log_files)
-
-
-
-#process変更
-# @bp.route('/reset_match/<int:match_id>', methods=['GET'])
-# @login_required
-# def reset_match(match_id):
-#     match = Match.query.get(match_id)
-#     if match and match.processed == 'in progress':
-#         match.host_name = None
-#         match.start_time = None
-#         match.processed = 'unexecuted'
-#         db.session.commit()
-    
-#     return redirect(url_for('dbdisplay.show_matches'))
-
-@bp.route('/match_log/<int:match_id>', methods=['GET'])
-@login_required
-def match_log(match_id):
-    match = Match.query.get(match_id)
-    if not match:
-        return jsonify({"error": "Match not found"}), 404
-
-    if match.log_directory_name is None:
-        return jsonify({"error": "Log directory not found"}), 404
-    
-    if match.log_file_name is None:
-        return jsonify({"error": "Log file name not found"}), 404
-    
-    log_file_name = match.log_file_name
-    logs_dir = os.path.join(current_app.static_folder, 'logs')
-
-    log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-
-    if not os.path.exists(log_dir_path):
-        return jsonify({"error": "Log directory not found"}), 404
-
-    log_files = [f for f in os.listdir(log_dir_path) if log_file_name in f]
-
-    if not log_files:
-        return jsonify({"error": "No matching log files found"}), 404
-
-    return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=match.log_directory_name)
 
 
 #certificate_key関係の表示

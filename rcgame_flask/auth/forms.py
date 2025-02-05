@@ -1,10 +1,14 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
 from wtforms.validators import DataRequired, Length, ValidationError
-from rcgame_flask.models import user
+from rcgame_flask.auth.models import User
 
-# ログイン用入力クラス
+
 class LoginForm(FlaskForm):
+    """
+    ログイン用入力クラス
+    """
+
     username = StringField('ユーザー名：', 
                            validators=[DataRequired('ユーザー名は必須入力です')])
     # パスワード：パスワード入力
@@ -13,7 +17,7 @@ class LoginForm(FlaskForm):
                                     'パスワードの長さは4文字以上10文字以内です')])
     # ボタン
     submit = SubmitField('ログイン')
-    
+
     # カスタムバリデータ
     # 英数字と記号が含まれているかチェックする
     def validate_password(self, password):
@@ -21,15 +25,19 @@ class LoginForm(FlaskForm):
             any(c.isdigit() for c in password.data)):
             raise ValidationError('パスワードには【英数字を含める必要があります')
 
-# サインアップ用入力クラス
+
 class SignUpForm(LoginForm):
+    """
+    サインアップ用入力クラス
+    """
+
     # ボタン                               
     submit = SubmitField('サインアップ')
 
     # カスタムバリデータ
     def validate_username(self, username):
-        User = user.query.filter_by(username=username.data).first()
-        if User:
+        user = User.query.filter_by(username=username.data).first()
+        if user:
             raise ValidationError('そのユーザー名は既に使用されています')
 
 

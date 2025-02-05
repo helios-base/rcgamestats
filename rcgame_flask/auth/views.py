@@ -1,18 +1,20 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from rcgame_flask.models import db
-from rcgame_flask.models import user
-from .forms import LoginForm, SignUpForm
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
+from rcgame_flask.models import db
+from rcgame_flask.auth.forms import LoginForm, SignUpForm
+from rcgame_flask.auth.models import User
 
 auth = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
+
 
 @auth.route('/')
 def index():
     return render_template('auth/index.html')
 
-# ログイン（Form使用）
+
 @auth.route("/login", methods=["GET", "POST"])
 def login():
+    # ログイン（Form使用）
     # Formインスタンス生成
     form = LoginForm()
     if form.validate_on_submit():
@@ -20,7 +22,7 @@ def login():
         username = form.username.data
         password = form.password.data
         # 対象User取得
-        user_record = user.query.filter_by(username=username).first()
+        user_record = User.query.filter_by(username=username).first()
         # 認証判定
         if user_record is not None and user_record.check_password(password):
             # 成功
@@ -57,7 +59,7 @@ def register():
         username = form.username.data
         password = form.password.data
         # モデルを生成
-        new_user = user(username=username)
+        new_user = User(username=username)
         # パスワードハッシュ化
         new_user.set_password(password)
         # 登録処理

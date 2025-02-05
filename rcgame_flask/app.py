@@ -1,12 +1,20 @@
 import os
 from flask import Flask
 from flask_migrate import Migrate
-from rcgame_flask.models import db, user
+#from rcgame_flask.models import db, user
 from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
 
+db = SQLAlchemy()
 csrf = CSRFProtect()
+# LoginManagerインスタンス
+login_manager = LoginManager()
+# 未認証のユーザーがアクセスしようとした際にリダイレクトされるエンドポイントを設定する
+login_manager.login_view = "auth.login"
+# ログインが必要なページにアクセスしようとした際に表示されるメッセージ
+login_manager.login_message = "Please log in to access this page."
 
 
 def create_app(test_config=None):
@@ -39,17 +47,8 @@ def create_app(test_config=None):
 
     csrf.init_app(app)
 
-    # LoginManagerインスタンス
-    login_manager = LoginManager()
     # LoginManagerとFlaskとの紐づけ
     login_manager.init_app(app)
-    # 未認証のユーザーがアクセスしようとした際に
-    # リダイレクトされる関数名を設定する
-    login_manager.login_view = "auth.login"
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        return user.query.get(int(user_id))
 
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')

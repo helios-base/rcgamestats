@@ -1,8 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from rcgame_flask.app import db, login_manager
 
-db = SQLAlchemy()
 
 class user(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -56,3 +56,8 @@ class teams(db.Model):
     acceleration = db.Column(db.String(5))
     filepass = db.Column(db.String(50))
     team_memo = db.Column(db.Text)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return user.query.get(int(user_id))

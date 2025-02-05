@@ -7,6 +7,7 @@
     {% for message in get_flashed_messages() %}
     {% endfor %}
     <form id="teamForm" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="team_name1">Team 1:</label>
         <select name="team_name1" id="team_name1">
             {% for team in teams %}

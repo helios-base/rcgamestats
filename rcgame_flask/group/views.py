@@ -60,20 +60,23 @@ def delete_group(group_id):
 
 
 # TODO: POSTメソッドに変更する
-@group.route("/reset/<int:match_id>", methods=["GET"])
+@group.route("/<int:group_id>/reset/<int:match_id>", methods=["POST"])
 @login_required
-def reset_match(match_id):
+def reset_match(group_id, match_id):
     """
     Reset a match.
     """
-    match = Match.query.get(match_id)
+    match = Match.query.filter_by(group_id=group_id, match_id=match_id).first()
     if match and match.processed == "in progress":
         match.host_name = None
         match.start_time = None
         match.processed = "unexecuted"
         db.session.commit()
+        flash(f"Match {match.match_index} has been reset.")
+    else:
+        flash(f"Match not found or not in progress.")
 
-    return redirect(url_for("group.show_group_matches", group_id=match.group_id))
+    return redirect(url_for("group.show_group_matches", group_id=group_id))
 
 
 @group.route("/<int:group_id>/logs", methods=["GET"])

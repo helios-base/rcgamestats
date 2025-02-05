@@ -7,7 +7,8 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask_login import login_required
-from rcgame_flask.models import db, teams, group_matches, matches,certificate_key
+from rcgame_flask.models import db, teams, certificate_key
+from rcgame_flask.group.models import Group, Match
 from flask import current_app, jsonify, render_template
 from rcgame_flask.googlesheet import googlesheet
 
@@ -20,19 +21,19 @@ def show_teams():
     team_list = teams.query.all()
     return render_template('dbdisplay/teams.html', teams=team_list)
 
-#group_matches関係の表示
+# Group関係の表示
 @bp.route('/group_matches')
 @login_required
 def show_group_matches():
-    match_list = group_matches.query.all()
+    match_list = Group.query.all()
     return render_template('dbdisplay/group_matches.html', matches=match_list)
 
-#group_matchesのレコード削除
+# Groupのレコード削除
 @bp.route('/delete_match/<int:group_id>', methods=['POST'])
 @login_required
 def delete_match(group_id):
-    matches_to_delete = matches.query.filter_by(group_id=group_id).all()
-    group_match_to_delete = group_matches.query.get(group_id)
+    matches_to_delete = Match.query.filter_by(group_id=group_id).all()
+    group_match_to_delete = Group.query.get(group_id)
     
     logs_dir = os.path.join(current_app.static_folder, 'logs')
     if matches_to_delete:
@@ -58,7 +59,7 @@ def delete_match(group_id):
 @bp.route('/group_reset_match/<int:match_id>', methods=['GET'])
 @login_required
 def group_reset_match(match_id):
-    match = matches.query.get(match_id)
+    match = Match.query.get(match_id)
     if match and match.processed == 'in progress':
         match.host_name = None
         match.start_time = None
@@ -70,14 +71,14 @@ def group_reset_match(match_id):
 @bp.route('/group_matches/<int:group_id>')
 @login_required
 def show_group_matches_detail(group_id):
-    match_list = matches.query.filter_by(group_id=group_id).all()
+    match_list = Match.query.filter_by(group_id=group_id).all()
     return render_template('dbdisplay/group_matches_detail.html', group_id=group_id, matches=match_list)
 
 
 @bp.route('/upload_to_google_sheet/<int:group_id>', methods=['POST'])
 @login_required
 def upload_to_google_sheet(group_id):
-    group = group_matches.query.get(group_id)
+    group = Group.query.get(group_id)
     if group is None:
         flash(f'ID:{group_id} のグループを取得できませんでした。')
         return redirect(url_for('dbdisplay.group_matches'))
@@ -94,7 +95,7 @@ def upload_to_google_sheet(group_id):
 
     print(f'(upload_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]')
     # データベースから指定されたグループIDのマッチデータを取得
-    match_records = matches.query.filter_by(group_id=group_id).all()
+    match_records = Match.query.filter_by(group_id=group_id).all()
     
     # Googleスプレッドシートにデータをアップロード
     if googlesheet.upload_group_results(group_name, group_time, left_team, right_team, memo, match_records):
@@ -108,7 +109,7 @@ def upload_to_google_sheet(group_id):
 @bp.route('/group_log_files/<int:group_id>', methods=['GET'])
 @login_required
 def show_group_log_files(group_id):
-    matches_in_group = matches.query.filter_by(group_id=group_id).all()
+    matches_in_group = Match.query.filter_by(group_id=group_id).all()
     log_files = []
     log_directory = None
 
@@ -152,14 +153,14 @@ def show_all_log_files():
 @bp.route('/matches')
 @login_required
 def show_matches():
-    match_list = matches.query.all()
+    match_list = Match.query.all()
     return render_template('dbdisplay/matches.html', matches=match_list)
 
 #process変更
 @bp.route('/reset_match/<int:match_id>', methods=['GET'])
 @login_required
 def reset_match(match_id):
-    match = matches.query.get(match_id)
+    match = Match.query.get(match_id)
     if match and match.processed == 'in progress':
         match.host_name = None
         match.start_time = None
@@ -171,7 +172,7 @@ def reset_match(match_id):
 @bp.route('/match_log/<int:match_id>', methods=['GET'])
 @login_required
 def match_log(match_id):
-    match = matches.query.get(match_id)
+    match = Match.query.get(match_id)
     if not match:
         return jsonify({"error": "Match not found"}), 404
 

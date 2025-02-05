@@ -22,6 +22,7 @@
             <td>{{ key.stop_check }}</td>
             <td>
                 <form method="post" action="{{ url_for('dbdisplay.update_stop_check', key_id=key.key_id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <select name="stop_check">
                         <option value="true" {% if key.stop_check %}selected{% endif %}>True</option>
                         <option value="false" {% if not key.stop_check %}selected{% endif %}>False</option>

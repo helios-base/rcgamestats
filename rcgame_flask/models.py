@@ -1,15 +1,15 @@
 from rcgame_flask.app import db
 
 
-class group_matches(db.Model):
-    group_id = db.Column(db.Integer, primary_key=True)
-    group_name = db.Column(db.String(255), unique=True)
-    group_time = db.Column(db.DateTime)
-    left_team = db.Column(db.String(30))
-    right_team = db.Column(db.String(30))
-    group_memo = db.Column(db.Text)
-    game_count = db.Column(db.Integer)
-    executed_count = db.Column(db.Integer, default=0)
+# class group_matches(db.Model):
+#     group_id = db.Column(db.Integer, primary_key=True)
+#     group_name = db.Column(db.String(255), unique=True)
+#     group_time = db.Column(db.DateTime)
+#     left_team = db.Column(db.String(30))
+#     right_team = db.Column(db.String(30))
+#     group_memo = db.Column(db.Text)
+#     game_count = db.Column(db.Integer)
+#     executed_count = db.Column(db.Integer, default=0)
 
 class hosts(db.Model):
     host_id = db.Column(db.Integer, primary_key=True)
@@ -22,21 +22,21 @@ class certificate_key(db.Model):
     api_key = db.Column(db.String(32), unique=True, nullable=False)
     stop_check = db.Column(db.Boolean, default=False, nullable=False)
 
-class matches(db.Model):
-    match_id = db.Column(db.Integer, primary_key=True)
-    group_id = db.Column(db.Integer, db.ForeignKey('group_matches.group_id'))
-    match_index = db.Column(db.Integer)
-    host_name = db.Column(db.String(30))
-    start_time = db.Column(db.DateTime)
-    end_time = db.Column(db.DateTime)
-    left_team = db.Column(db.String(30))
-    right_team = db.Column(db.String(30))
-    left_score = db.Column(db.Integer)
-    right_score = db.Column(db.Integer)
-    processed = db.Column(db.String(15), default='unexecuted')
-    log_directory_name = db.Column(db.String(255))
-    log_file_name = db.Column(db.String(255))
-    log_file = db.Column(db.String(255))
+# class matches(db.Model):
+#     match_id = db.Column(db.Integer, primary_key=True)
+#     group_id = db.Column(db.Integer, db.ForeignKey('group_matches.group_id'))
+#     match_index = db.Column(db.Integer)
+#     host_name = db.Column(db.String(30))
+#     start_time = db.Column(db.DateTime)
+#     end_time = db.Column(db.DateTime)
+#     left_team = db.Column(db.String(30))
+#     right_team = db.Column(db.String(30))
+#     left_score = db.Column(db.Integer)
+#     right_score = db.Column(db.Integer)
+#     processed = db.Column(db.String(15), default='unexecuted')
+#     log_directory_name = db.Column(db.String(255))
+#     log_file_name = db.Column(db.String(255))
+#     log_file = db.Column(db.String(255))
 
 class teams(db.Model):
     team_id = db.Column(db.Integer, primary_key=True)

@@ -3,7 +3,8 @@ import re
 import secrets
 from flask import jsonify, request
 from rcgame_flask.communication import bp
-from rcgame_flask.models import db, certificate_key, matches, group_matches
+from rcgame_flask.models import db, certificate_key
+from rcgame_flask.group.models import Group, Match
 from datetime import datetime
 from functools import wraps
 
@@ -59,7 +60,7 @@ def api():
     if cert_key.stop_check is True:
         return jsonify({"stop_check": stop_check_response})
 
-    match = matches.query.filter_by(processed='unexecuted').first()
+    match = Match.query.filter_by(processed='unexecuted').first()
     
     if match:
         start_time = datetime.now().replace(microsecond=0)
@@ -105,12 +106,12 @@ def result():
     log_file = data.get("log_file")
 
     start_time = datetime.strptime(start_time_str, '%a, %d %b %Y %H:%M:%S %Z')
-    match = matches.query.filter_by(match_id=match_id,start_time=start_time).first()
+    match = Match.query.filter_by(match_id=match_id,start_time=start_time).first()
     end_time = datetime.now().replace(microsecond=0)
 
     
     if match:
-        group = group_matches.query.filter_by(group_id=match.group_id).first()
+        group = Group.query.filter_by(group_id=match.group_id).first()
         log_directory_name = group.group_name
         executed_count = group.executed_count + 1
         host_name = match.host_name

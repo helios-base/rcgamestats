@@ -1,7 +1,6 @@
 import os
 from flask import Flask
 from flask_migrate import Migrate
-#from rcgame_flask.models import db, user
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
@@ -52,6 +51,9 @@ def create_app(test_config=None):
 
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')
+    
+    from rcgame_flask.group import views as group_views
+    app.register_blueprint(group_views.group, url_prefix='/group')
     
     from . import list
     app.register_blueprint(list.bp)

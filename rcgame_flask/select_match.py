@@ -6,7 +6,8 @@ from flask import (
 )
 from flask_login import login_required
 from werkzeug.security import check_password_hash, generate_password_hash
-from rcgame_flask.models import db, teams, group_matches, matches
+from rcgame_flask.models import db, teams
+from rcgame_flask.group.models import Group, Match
 from rcgame_flask.googlesheet import googlesheet
 
 bp = Blueprint('select_match', __name__, url_prefix='/select_match')
@@ -34,7 +35,7 @@ def select_team():
             now = datetime.now().replace(microsecond=0)
             timestamp = now.strftime("%m%d%H%M")
             group_name = timestamp + "-" + select_team1 + "-" + select_team2
-            group_match = group_matches(
+            group_match = Group(
                 group_name=group_name,
                 group_time=now,
                 left_team=select_team1,
@@ -46,7 +47,7 @@ def select_team():
             db.session.commit()
 
             for i in range(match_count):
-                match = matches(
+                match = Match(
                     match_index=i+1,
                     group_id=group_match.group_id,
                     left_team=select_team1,

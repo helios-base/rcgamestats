@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Menu{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <div>
+      <h2><a href="{{ url_for('select_match.select_team') }}">スケジューリング</a></h2>
+    </div>
+    <div>
+      <h2><a href="{{ url_for('group.index') }}">Groups</a></h2>
+    </div>
+    <div>
+      <h2><a href="{{ url_for('dbdisplay.show_matches') }}">対戦結果</a></h2>
+    </div>
+    <div>
+      <h2><a href="{{ url_for('dbdisplay.show_teams') }}">チーム一覧</a></h2>
+    </div>
+    <div>
+      <h2><a href="{{ url_for('dbdisplay.show_hosts') }}">ホスト</a></h2>
+    </div>
+{% endblock %}

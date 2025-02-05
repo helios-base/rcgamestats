@@ -1,7 +1,7 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_migrate import Migrate
-from flask_login import LoginManager
+from flask_login import LoginManager, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
@@ -55,10 +55,6 @@ def create_app(test_config=None):
     from rcgame_flask.group import views as group_views
     app.register_blueprint(group_views.group, url_prefix='/group')
     
-    from . import list
-    app.register_blueprint(list.bp)
-    app.add_url_rule('/', endpoint='index')
-
     from . import select_match
     app.register_blueprint(select_match.bp)
 
@@ -67,6 +63,11 @@ def create_app(test_config=None):
 
     from . import communication
     app.register_blueprint(communication.bp)
+
+    @app.route('/')
+    @login_required
+    def index():
+        return render_template('index.html')
 
     return app
 

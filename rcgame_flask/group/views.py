@@ -1,5 +1,6 @@
 import os
 import shutil
+import glob
 from rcgame_flask.app import db
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required
@@ -96,7 +97,8 @@ def show_group_logs(group_id):
             log_directory = match.log_directory_name
             this_log_dir_path = os.path.join(logs_dir, match.log_directory_name)
             if os.path.exists(this_log_dir_path):
-                log_files.extend([f for f in os.listdir(this_log_dir_path) if match.log_file_name in f])
+                #log_files.extend([f for f in os.listdir(this_log_dir_path) if match.log_file_name in f])
+                log_files.extend(glob.glob(os.path.join(this_log_dir_path, f"{match.log_file_name}*")))
 
     return render_template("group/log_files.html", log_files=log_files, log_directory=log_directory)
 
@@ -126,8 +128,8 @@ def show_match_log(group_id, match_id):
     if not os.path.exists(this_log_dir_path):
         return jsonify({"error": "Log directory not found"}), 404
 
-    # TODO: more effiecient way to search for log files
-    log_files = [f for f in os.listdir(this_log_dir_path) if log_file_name in f]
+    #log_files = [f for f in os.listdir(this_log_dir_path) if log_file_name in f]
+    log_files = glob.glob(os.path.join(this_log_dir_path, f"{log_file_name}*"))
 
     if not log_files:
         return jsonify({"error": "No matching log files found"}), 404

@@ -3,6 +3,10 @@ from flask import Flask
 from flask_migrate import Migrate
 from rcgame_flask.models import db, user
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
+
+
+csrf = CSRFProtect()
 
 
 def create_app(test_config=None):
@@ -11,7 +15,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'rcgame_flask.sqlite'),
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,    
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        WTF_CSRF_SECRET_KEY='kwjer283n2k3gpiue9vrdfagb',
         )
 
     if test_config is None:
@@ -36,6 +41,8 @@ def create_app(test_config=None):
     create_db.init_app(app)
 
     migrate = Migrate(app, db)
+
+    csrf.init_app(app)
 
     # LoginManagerインスタンス
     login_manager = LoginManager()

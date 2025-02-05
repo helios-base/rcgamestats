@@ -29,7 +29,7 @@ def show_group_matches(group_id):
     return render_template("group/match_list.html", group_id=group_id, matches=matches)
 
 
-@group.route("/delete/<int:group_id>", methods=["POST"])
+@group.route("/<int:group_id>/delete", methods=["POST"])
 @login_required
 def delete_group(group_id):
     """
@@ -76,7 +76,7 @@ def reset_match(match_id):
     return redirect(url_for("group.show_group_matches", group_id=match.group_id))
 
 
-@group.route("/group_logs/<int:group_id>", methods=["GET"])
+@group.route("/<int:group_id>/logs", methods=["GET"])
 @login_required
 def show_group_logs(group_id):
     """

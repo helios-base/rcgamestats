@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from rcgame_flask import db
+from rcgame_flask.models import db
 from rcgame_flask.models import user
 from rcgame_flask.forms import LoginForm, SignUpForm
 from flask_login import login_user, logout_user, login_required

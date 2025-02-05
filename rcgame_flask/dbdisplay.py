@@ -110,12 +110,6 @@ def show_all_log_files():
     return render_template('dbdisplay/all_log_files.html', log_files=all_log_files)
 
 
-#matches関係の表示
-@bp.route('/matches')
-@login_required
-def show_matches():
-    match_list = Match.query.all()
-    return render_template('dbdisplay/matches.html', matches=match_list)
 
 #process変更
 @bp.route('/reset_match/<int:match_id>', methods=['GET'])

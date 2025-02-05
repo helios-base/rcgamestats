@@ -66,7 +66,7 @@
         }
 </style>
 <nav>
-  <h1>RCgame</h1>
+  <h1><a href="{{ url_for('index') }}">RCgame</a></h1>
   <ul>
     {% if current_user.is_authenticated %}
       <li><span>{{ current_user['username'] }}</span>
@@ -90,11 +90,10 @@
 {% if request.path not in ['/', '/auth/login', '/auth/register', '/auth/logout'] %}
 <footer>
   <div class="footer-nav">
-    <a href="{{ url_for('index') }}">メインメニュー</a>
+    <a href="{{ url_for('index') }}">Menu</a>
     <a href="{{ url_for('select_match.select_team') }}">スケジューリング</a>
+    <a href="{{ url_for('group.index') }}">Groups</a>
     <a href="{{ url_for('dbdisplay.show_teams') }}">チーム一覧を表示</a>
-    <a href="{{ url_for('group.index') }}">対戦組み合わせを表示</a>
-    <a href="{{ url_for('dbdisplay.show_matches') }}">対戦結果</a>
     <a href="{{ url_for('dbdisplay.show_hosts') }}">ホスト</a>
 </div>
 </footer>

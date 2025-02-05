@@ -8,7 +8,7 @@ from flask_login import login_required
 from werkzeug.security import check_password_hash, generate_password_hash
 from rcgame_flask.models import db, teams
 from rcgame_flask.group.models import Group, Match
-from rcgame_flask.googlesheet import googlesheet
+from rcgame_flask import googlesheet
 
 bp = Blueprint('select_match', __name__, url_prefix='/select_match')
 

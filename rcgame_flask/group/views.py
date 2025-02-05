@@ -4,6 +4,7 @@ from rcgame_flask.app import db
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required
 from rcgame_flask.group.models import Group, Match
+from rcgame_flask import googlesheet
 
 
 group = Blueprint("group", __name__, template_folder="templates", url_prefix="/group")
@@ -132,3 +133,38 @@ def show_match_log(match_id):
         return jsonify({"error": "No matching log files found"}), 404
 
     return render_template("group/log_files.html", log_files=log_files, log_directory=match.log_directory_name)
+
+
+@group.route("/<int:group_id>/upload", methods=["POST"])
+@login_required
+def upload_group_results_to_google_sheet(group_id):
+    """
+    Upload group results to Google Spreadsheet.
+    """
+    group = Group.query.get(group_id)
+    if group is None:
+        flash(f"Group ID {group_id} not found.")
+        return redirect(url_for("group.index"))
+
+    group_name = group.group_name
+    if group_name is None:
+        flash(f"Group ID {group_id} has no name.")
+        return redirect(url_for("group.index"))
+
+    group_time = group.group_time
+    left_team = group.left_team
+    right_team = group.right_team
+    memo = group.group_memo
+
+    print(f'(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]')
+
+    # Get match records for the group
+    match_records = Match.query.filter_by(group_id=group_id).all()
+
+    # Upload group results to Google Spreadsheet
+    if googlesheet.upload_group_results(group_name, group_time, left_team, right_team, memo, match_records):
+        flash("Succeeded to upload the group results to the Google Spreadsheet.")
+    else:
+        flash("Failed to upload the group results to the Google Spreadsheet.")
+
+    return redirect(url_for("group.show_group_matches", group_id=group_id))

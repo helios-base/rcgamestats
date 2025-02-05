@@ -67,28 +67,28 @@ def upload_to_google_sheet(group_id):
     return redirect(url_for('group.show_group_matches', group_id=group_id))
 
 
-@bp.route('/group_log_files/<int:group_id>', methods=['GET'])
-@login_required
-def show_group_log_files(group_id):
-    matches_in_group = Match.query.filter_by(group_id=group_id).all()
-    log_files = []
-    log_directory = None
+# @bp.route('/group_log_files/<int:group_id>', methods=['GET'])
+# @login_required
+# def show_group_log_files(group_id):
+#     matches_in_group = Match.query.filter_by(group_id=group_id).all()
+#     log_files = []
+#     log_directory = None
 
-    logs_dir = os.path.join(current_app.static_folder, 'logs')
-    for match in matches_in_group:
-        if match.log_directory_name is None:
-            continue
-        if match.log_file_name is None:
-            continue
+#     logs_dir = os.path.join(current_app.static_folder, 'logs')
+#     for match in matches_in_group:
+#         if match.log_directory_name is None:
+#             continue
+#         if match.log_file_name is None:
+#             continue
 
-        log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-        if os.path.exists(log_dir_path):
-            log_files.extend([f for f in os.listdir(log_dir_path) if match.log_file_name in f])
+#         log_dir_path = os.path.join(logs_dir, match.log_directory_name)
+#         if os.path.exists(log_dir_path):
+#             log_files.extend([f for f in os.listdir(log_dir_path) if match.log_file_name in f])
 
-    if not log_files:
-        return jsonify({"error": "No matching log files found"}), 404
+#     if not log_files:
+#         return jsonify({"error": "No matching log files found"}), 404
 
-    return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory)
+#     return render_template('dbdisplay/log_file.html', log_files=log_files, log_directory=log_directory)
 
 
 @bp.route('/all_log_files', methods=['GET'])
@@ -112,17 +112,17 @@ def show_all_log_files():
 
 
 #process変更
-@bp.route('/reset_match/<int:match_id>', methods=['GET'])
-@login_required
-def reset_match(match_id):
-    match = Match.query.get(match_id)
-    if match and match.processed == 'in progress':
-        match.host_name = None
-        match.start_time = None
-        match.processed = 'unexecuted'
-        db.session.commit()
+# @bp.route('/reset_match/<int:match_id>', methods=['GET'])
+# @login_required
+# def reset_match(match_id):
+#     match = Match.query.get(match_id)
+#     if match and match.processed == 'in progress':
+#         match.host_name = None
+#         match.start_time = None
+#         match.processed = 'unexecuted'
+#         db.session.commit()
     
-    return redirect(url_for('dbdisplay.show_matches'))
+#     return redirect(url_for('dbdisplay.show_matches'))
 
 @bp.route('/match_log/<int:match_id>', methods=['GET'])
 @login_required

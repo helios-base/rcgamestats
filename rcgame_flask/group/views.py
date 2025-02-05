@@ -1,7 +1,7 @@
 import os
 import shutil
 from rcgame_flask.app import db
-from flask import Blueprint, render_template, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required
 from rcgame_flask.group.models import Group, Match
 
@@ -59,7 +59,8 @@ def delete_group(group_id):
     return redirect(url_for("group.index"))
 
 
-@group.route("/reset_match/<int:match_id>", methods=["GET"])
+# TODO: POSTメソッドに変更する
+@group.route("/reset/<int:match_id>", methods=["GET"])
 @login_required
 def reset_match(match_id):
     """
@@ -73,3 +74,58 @@ def reset_match(match_id):
         db.session.commit()
 
     return redirect(url_for("group.show_group_matches", group_id=match.group_id))
+
+
+@group.route("/group_logs/<int:group_id>", methods=["GET"])
+@login_required
+def show_group_logs(group_id):
+    """
+    Show log files for a group.
+    """
+    matches_in_group = Match.query.filter_by(group_id=group_id).all()
+    log_files = []
+    log_directory = None
+
+    logs_dir = os.path.join(current_app.static_folder, "logs")
+    for match in matches_in_group:
+        if match.log_directory_name is not None:
+            log_directory = match.log_directory_name
+            this_log_dir_path = os.path.join(logs_dir, match.log_directory_name)
+            if os.path.exists(this_log_dir_path):
+                log_files.extend([f for f in os.listdir(this_log_dir_path) if match.log_file_name in f])
+
+    return render_template("group/log_files.html", log_files=log_files, log_directory=log_directory)
+
+
+@group.route("/match_log/<int:match_id>", methods=["GET"])
+@login_required
+def show_match_log(match_id):
+    """
+    Show log files for a match.
+    """
+    match = Match.query.get(match_id)
+
+    if match is None:
+        return jsonify({"error": "Match not found"}), 404
+
+    if match.log_directory_name is None:
+        return jsonify({"error": "Log directory not found"}), 404
+    
+    if match.log_file_name is None:
+        return jsonify({"error": "Log file name not found"}), 404
+    
+    log_file_name = match.log_file_name
+    logs_dir = os.path.join(current_app.static_folder, 'logs')
+
+    this_log_dir_path = os.path.join(logs_dir, match.log_directory_name)
+
+    if not os.path.exists(this_log_dir_path):
+        return jsonify({"error": "Log directory not found"}), 404
+
+    # TODO: more effiecient way to search for log files
+    log_files = [f for f in os.listdir(this_log_dir_path) if log_file_name in f]
+
+    if not log_files:
+        return jsonify({"error": "No matching log files found"}), 404
+
+    return render_template("group/log_files.html", log_files=log_files, log_directory=match.log_directory_name)

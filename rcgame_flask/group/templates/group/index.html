@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block header %}
   <h1>{% block title %}Group Matches{% endblock %}</h1>
-  <h2><a href="{{ url_for('dbdisplay.show_all_log_files') }}">All Log Files</a></h2>
+  <!-- <h2><a href="{{ url_for('dbdisplay.show_all_log_files') }}">All Log Files</a></h2> -->
 {% endblock %}
 
 {% block content %}
@@ -31,7 +31,7 @@
             <td>{{ group.group_memo }}</td>
             <td>{{ group.game_count }}</td>
             <td>{{ group.executed_count }}</td>
-            <td><a href="{{ url_for('dbdisplay.show_group_log_files', group_id=group.group_id) }}">group_log_file</a></td>
+            <td><a href="{{ url_for('group.show_group_logs', group_id=group.group_id) }}">group_log_file</a></td>
             <td>
                 <form action="{{ url_for('group.delete_group', group_id=group.group_id) }}" method="post" onsubmit="return confirm('{{group.group_name}}を削除しますか?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

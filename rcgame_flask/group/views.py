@@ -240,7 +240,7 @@ def reset_match(group_id, match_id):
     else:
         flash("Match not found or not in progress.")
 
-    return redirect(url_for("group.show_group_matches", group_id=group_id))
+    return redirect(url_for("group.show_group_matches_by_id", group_id=group_id))
 
 
 @group.route("/<string:group_name>/<int:match_index>/log", methods=["GET"])

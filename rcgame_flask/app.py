@@ -61,9 +61,6 @@ def create_app(test_config=None):
     from rcgame_flask.host import views as host_views
     app.register_blueprint(host_views.host, url_prefix='/host')
 
-    from . import dbdisplay
-    app.register_blueprint(dbdisplay.bp)
-
     from . import communication
     app.register_blueprint(communication.bp)
 

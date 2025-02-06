@@ -58,9 +58,6 @@ def create_app(test_config=None):
     from rcgame_flask.team import views as team_views
     app.register_blueprint(team_views.team, url_prefix='/team')
 
-    from . import select_match
-    app.register_blueprint(select_match.bp)
-
     from . import dbdisplay
     app.register_blueprint(dbdisplay.bp)
 

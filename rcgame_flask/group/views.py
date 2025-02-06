@@ -1,10 +1,12 @@
 import os
 import shutil
 import glob
+from datetime import datetime
 from rcgame_flask.app import db
-from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request, current_app
 from flask_login import login_required
 from rcgame_flask.group.models import Group, Match
+from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
 
 
@@ -24,6 +26,59 @@ def index():
     """
     group_list = Group.query.all()
     return render_template("group/index.html", groups=group_list)
+
+
+@group.route("/create", methods=["GET", "POST"])
+@login_required
+def create():
+    """
+    Create a group.
+    """
+    team_list = Team.query.filter_by(is_active=True).all()
+
+    if request.method == "POST":
+        team1 = request.form["team_name1"]
+        team2 = request.form["team_name2"]
+        match_count = request.form["match_count"]
+        group_memo = request.form["group_memo"]
+        error = None
+
+        if not team1:
+            error = "Team 1 is required."
+        elif not team2:
+            error = "team select is required."
+        elif team1 == team2:
+            error = "Team 1 and Team 2 cannot be the same."
+
+        if error is None:
+            group_time = datetime.now().replace(microsecond=0)
+            group_name = f"{group_time.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
+
+            group = Group(
+                group_name=group_name,
+                group_time=group_time,
+                left_team=team1,
+                right_team=team2,
+                game_count=match_count,
+                group_memo=group_memo
+            )
+            db.session.add(group)
+            db.session.commit()
+
+            for i in range(int(match_count)):
+                match = Match(
+                    match_index=i+1,
+                    group_id=group.group_id,
+                    left_team=team1,
+                    right_team=team2
+                )
+                db.session.add(match)
+            db.session.commit()
+
+            flash(f"Created group {group_name} with {match_count} matches for {team1} vs. {team2}.")
+            return redirect(url_for("group.index"))
+
+    return render_template("group/create.html", teams=team_list)
 
 
 @group.route("/<int:group_id>")

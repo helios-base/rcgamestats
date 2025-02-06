@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block header %}
-  <h1>{% block title %}Select Team{% endblock %}</h1>
+  <h1>{% block title %}Create New Group{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -29,7 +29,7 @@
         <label for="group_memo">Group Memo:</label>
         <textarea name="group_memo" id="group_memo" rows="4"></textarea>
         <br>
-        <button type="submit">登録</button>
+        <button type="submit">Submit</button>
     </form>
     
     <script>
@@ -42,15 +42,15 @@
             var groupMemo = document.getElementById('group_memo').value;
 
             if (team1 === team2) {
-                alert('「Team1」と「Team2」が重複しています.');
+                alert("The same team cannot be selected");');
                 return;
             }
             if (matchCount <= 0)
             {
-                alert('0以下の数字は使用できません');
+                alert("Match count must be greater than 0");
                 return;
             }
-            var confirmation = confirm(`この内容でよろしいですか？\n"${team1}" vs "${team2}" を ${matchCount} 試合`);
+            var confirmation = confirm(`Are you sure you want to create the following match?\n"${team1}" vs "${team2}" : ${matchCount} matches`);
 
             if (confirmation) {
                 this.submit();

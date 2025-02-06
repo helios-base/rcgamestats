@@ -137,7 +137,7 @@ def show_match_log(group_id, match_id):
     return render_template("group/log_files.html", log_files=log_files, log_directory=match.log_directory_name)
 
 
-@group.route("/<int:group_id>/upload", methods=["POST"])
+@group.route("/<int:group_id>/upload_to_google", methods=["POST"])
 @login_required
 def upload_group_results_to_google_sheet(group_id):
     """

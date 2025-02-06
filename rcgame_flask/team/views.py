@@ -13,11 +13,12 @@ def index():
     """
     Show all teams.
     """
-    active_only = request.args.get('active_only', 'false').lower() == 'true'
+    active_only = request.args.get('active_only', 'true').lower() == 'true'
     if active_only:
         teams = Team.query.filter_by(is_active=True).all()
     else:
         teams = Team.query.all()
+
     return render_template("team/index.html", teams=teams, active_only=active_only)
 
 

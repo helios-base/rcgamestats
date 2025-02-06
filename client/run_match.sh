@@ -82,8 +82,9 @@ opt="$opt server::game_log_fixed_name = '$log_name' server::text_log_fixed_name 
 opt="$opt server::game_log_compression = 9 server::text_log_compression = 9"
 opt="$opt server::game_log_dir = '$log_dir' server::text_log_dir = '$log_dir'"
 opt="$opt server::log_date_format = '%Y%m%d%H%M%S-'"
-opt="$opt server::nr_normal_halfs = 2 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
-opt="$opt server::half_time = 1 server::extra_half_time = 100"
+#opt="$opt server::nr_normal_halfs = 2 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
+opt="$opt server::nr_normal_halfs = 1 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
+opt="$opt server::half_time = 300 server::extra_half_time = 100"
 opt="$opt server::synch_mode = $synch_mode"
 opt="$opt server::auto_mode = true"
 opt="$opt server::team_l_start = '$team_l_start'"
@@ -127,7 +128,13 @@ echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname compressing debug log files..."
 
 debug_log_dir="${log_name}"
 mkdir -p $debug_log_dir
-mv stdout.log stderr.log ${debug_log_dir}
+if [ -e stdout.log ]; then
+	mv stdout.log ${debug_log_dir}
+fi
+if [ -e stderr.log ]; then
+	mv stderr.log ${debug_log_dir}
+fi
+#mv stdout.log stderr.log ${debug_log_dir}
 
 if [ -e /tmp/HELIOS*-1.ocl ]; then
 #	sleep 3.5

@@ -1,4 +1,5 @@
 #!/bin/sh
 
-flask --app rcgame_flask init-db
+#flask --app rcgame_flask init-db
+flask init-db
 

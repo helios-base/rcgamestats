@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Group Matches{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Group ID</th>
+            <th>Group Name</th>
+            <th>Group Time</th>
+            <th>Left Team</th>
+            <th>Right Team</th>
+            <th>Group Memo</th>
+            <th>Game Count</th>
+            <th>Executed Count</th>
+            <th>Log Files</th> 
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for group in groups %}
+        <tr>
+            <td>{{ group.group_id }}</td>
+            <td><a href="{{ url_for('group.show_group_matches', group_name=group.group_name) }}">{{ group.group_name }}</a></td>
+            <td>{{ group.group_time }}</td>
+            <td>{{ group.left_team }}</td>
+            <td>{{ group.right_team }}</td>
+            <td>{{ group.group_memo }}</td>
+            <td>{{ group.game_count }}</td>
+            <td>{{ group.executed_count }}</td>
+            <td><a href="{{ url_for('group.show_group_logs', group_name=group.group_name) }}">group_log_file</a></td>
+            <td>
+                <form action="{{ url_for('group.delete_group', group_id=group.group_id) }}" method="post" onsubmit="return confirm('{{group.group_name}}を削除しますか?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

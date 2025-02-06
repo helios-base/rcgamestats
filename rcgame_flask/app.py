@@ -1,21 +1,29 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_migrate import Migrate
-from rcgame_flask.models import db, user
-from flask_login import LoginManager
+from flask_login import LoginManager, login_required
+from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
 
+db = SQLAlchemy()
 csrf = CSRFProtect()
+# LoginManagerインスタンス
+login_manager = LoginManager()
+# 未認証のユーザーがアクセスしようとした際にリダイレクトされるエンドポイントを設定する
+login_manager.login_view = "auth.login"
+# ログインが必要なページにアクセスしようとした際に表示されるメッセージ
+login_manager.login_message = "Please log in to access this page."
 
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY='dev',
+        SECRET_KEY='kcairenkczczp93qhjnba;8ia',
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'rcgame_flask.sqlite'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        WTF_CSRF_ENABLED=True,
         WTF_CSRF_SECRET_KEY='kwjer283n2k3gpiue9vrdfagb',
         )
 
@@ -32,48 +40,34 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-    
     from . import create_db
     create_db.init_app(app)
 
-    migrate = Migrate(app, db)
+    Migrate(app, db)
 
     csrf.init_app(app)
 
-    # LoginManagerインスタンス
-    login_manager = LoginManager()
     # LoginManagerとFlaskとの紐づけ
     login_manager.init_app(app)
-    # 未認証のユーザーがアクセスしようとした際に
-    # リダイレクトされる関数名を設定する
-    login_manager.login_view = "auth.login"
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return user.query.get(int(user_id))
+    from rcgame_flask.auth import views as auth_views
+    app.register_blueprint(auth_views.auth, url_prefix='/auth')
     
-
-
-    from .auth import bp as auth_bp
-    app.register_blueprint(auth_bp)
+    from rcgame_flask.group import views as group_views
+    app.register_blueprint(group_views.group, url_prefix='/group')
     
-    from . import list
-    app.register_blueprint(list.bp)
-    app.add_url_rule('/', endpoint='index')
+    from rcgame_flask.team import views as team_views
+    app.register_blueprint(team_views.team, url_prefix='/team')
 
-    from . import select_match
-    app.register_blueprint(select_match.bp)
+    from rcgame_flask.host import views as host_views
+    app.register_blueprint(host_views.host, url_prefix='/host')
 
-    from . import dbdisplay
-    app.register_blueprint(dbdisplay.bp)
-
-    from . import communication
-    app.register_blueprint(communication.bp)
+    @app.route('/')
+    @login_required
+    def index():
+        return render_template('index.html')
 
     return app
+
 
 app = create_app()

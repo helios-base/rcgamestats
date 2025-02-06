@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}ログイン画面{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    {% from "_formhelpers.html" import render_field %}
+    <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
+        {{ render_field(form.username) }}
+        {{ render_field(form.password) }}
+        <br>
+        {% for message in get_flashed_messages() %}
+        <div style="color: blue;">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {{ form.submit }}
+    </form>
+{% endblock %}

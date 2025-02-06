@@ -1,7 +1,10 @@
+import os
+
+
 class Config:
     NAME = "sim1"
     SERVER_URL = "127.0.0.1:5000"
-    STOP_FILE_PATH = '/home/fugakatayama/rcgame/client/condition/stop.txt'
-    TEMPORAL_DIR = '/home/fugakatayama/rcgame/client/new_create_data_file'
-    LOG_DIR = '/home/fugakatayama/rcgame/client/log_data'
-    
+    RUN_SCRIPT =  os.path.join(os.path.dirname(__file__), 'run_match.sh')
+    STOP_FILE_PATH = os.path.expandvars('$HOME/testgames/stop.txt')
+    TEMPORAL_DIR = os.path.expandvars('$HOME/testgames/tmp')
+    LOG_DIR = os.path.expandvars('$HOME/testgames/log')

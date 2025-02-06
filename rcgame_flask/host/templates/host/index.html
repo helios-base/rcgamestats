@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Hosts{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Host Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for host in host_list %}
+        <tr>
+            <td>{{ host.id }}</td>
+            <td>{{ host.name }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

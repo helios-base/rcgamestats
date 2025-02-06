@@ -28,21 +28,64 @@ def index():
 
 @group.route("/<int:group_id>")
 @login_required
-def show_group_matches(group_id):
+def show_group_matches_by_id(group_id):
     """
     Show all matches associated with a group.
     """
+    group = Group.query.get(group_id)
     matches = Match.query.filter_by(group_id=group_id).all()
-    return render_template("group/match_list.html", group_id=group_id, matches=matches)
+    return render_template("group/match_list.html", group_id=group_id, group_name=group.group_name, matches=matches)
+
+
+@group.route("/<string:group_name>")
+@login_required
+def show_group_matches(group_name):
+    """
+    Show all matches associated with a group.
+    """
+    group = Group.query.filter_by(group_name=group_name).first()
+    if group is None:
+        flash(f"Group {group_name} not found.")
+        return redirect(url_for("group.index"))
+
+    matches = Match.query.filter_by(group_id=group.group_id).all()
+    return render_template("group/match_list.html", group_id=group.group_id, group_name=group_name, matches=matches)
 
 
 @group.route("/<int:group_id>/logs", methods=["GET"])
 @login_required
-def show_group_logs(group_id):
+def show_group_logs_by_id(group_id):
     """
     Show log files for a group.
     """
     matches_in_group = Match.query.filter_by(group_id=group_id).all()
+    log_files = []
+    log_directory = None
+
+    logs_dir = os.path.join(current_app.static_folder, "logs")
+    for match in matches_in_group:
+        if match.log_directory_name is not None:
+            log_directory = match.log_directory_name
+            this_log_dir_path = os.path.join(logs_dir, match.log_directory_name)
+            if os.path.exists(this_log_dir_path):
+                #log_files.extend([f for f in os.listdir(this_log_dir_path) if match.log_file_name in f])
+                log_files.extend(glob.glob(os.path.join(this_log_dir_path, f"{match.log_file_name}*")))
+
+    return render_template("group/log_files.html", log_files=log_files, log_directory=log_directory)
+
+
+@group.route("/<string:group_name>/logs", methods=["GET"])
+@login_required
+def show_group_logs(group_name):
+    """
+    Show log files for a group.
+    """
+    group = Group.query.filter_by(group_name=group_name).first()
+    if group is None:
+        flash(f"Group {group_name} not found.")
+        return redirect(url_for("group.index"))
+
+    matches_in_group = Match.query.filter_by(group_id=group.group_id).all()
     log_files = []
     log_directory = None
 
@@ -120,19 +163,19 @@ def upload_group_results_to_google_sheet(group_id):
     else:
         flash("Failed to upload the group results to the Google Spreadsheet.")
 
-    return redirect(url_for("group.show_group_matches", group_id=group_id))
+    return redirect(url_for("group.show_group_matches", group_name=group.group_name))
 
 #
 # Match management
 #
 
-@group.route("/<int:group_id>/<int:match_index>/reset", methods=["POST"])
+@group.route("/<int:group_id>/<int:match_id>/reset", methods=["POST"])
 @login_required
-def reset_match(group_id, match_index):
+def reset_match(group_id, match_id):
     """
     Reset a match.
     """
-    match = Match.query.filter_by(group_id=group_id, match_id=match_index).first()
+    match = Match.query.get(match_id)
     if match and match.processed == "in progress":
         match.host_name = None
         match.start_time = None
@@ -140,18 +183,22 @@ def reset_match(group_id, match_index):
         db.session.commit()
         flash(f"Match {match.match_index} has been reset.")
     else:
-        flash(f"Match not found or not in progress.")
+        flash("Match not found or not in progress.")
 
     return redirect(url_for("group.show_group_matches", group_id=group_id))
 
 
-@group.route("/<int:group_id>/<int:match_index>/log", methods=["GET"])
+@group.route("/<string:group_name>/<int:match_index>/log", methods=["GET"])
 @login_required
-def show_match_log(group_id, match_index):
+def show_match_log(group_name, match_index):
     """
     Show log files for a match.
     """
-    match = Match.query.filter_by(group_id=group_id, match_id=match_index).first()
+    group = Group.query.filter_by(group_name=group_name).first()
+    if group is None:
+        return jsonify({"error": "Group not found"}), 404
+
+    match = Match.query.filter_by(group_id=group.group_id, match_index=match_index).first()
 
     if match is None:
         return jsonify({"error": "Match not found"}), 404

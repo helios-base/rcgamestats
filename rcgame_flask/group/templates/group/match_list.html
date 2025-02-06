@@ -42,7 +42,7 @@
             <td>{{ match.host_name }}</td>
             <td>
                 {% if match.processed == 'in progress' %} 
-                <form id="reset-form-{{ match.id }}" action="{{ url_for('group.reset_match', group_id=group_id, match_index=match.match_index) }}" method="post" style="display:none;">
+                <form id="reset-form-{{ match.id }}" action="{{ url_for('group.reset_match', group_id=group_id, match_id=match.match_id) }}" method="post" style="display:none;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 </form>
                 <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">in progress</a>
@@ -50,7 +50,7 @@
                     {{ match.processed }}
                 {% endif %}
             </td>
-            <td><a href="{{ url_for('group.show_match_log', group_id=group_id, match_index=match.match_index) }}" target="_blank">{{ match.log_file }}</a></td>
+            <td><a href="{{ url_for('group.show_match_log', group_name=group_name, match_index=match.match_index) }}" target="_blank">{{ match.log_file }}</a></td>
         </tr>
         {% endfor %}
     </tbody>

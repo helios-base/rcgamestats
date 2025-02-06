@@ -33,7 +33,7 @@ def select_team():
 
         if error is None:
             now = datetime.now().replace(microsecond=0)
-            timestamp = now.strftime("%m%d%H%M")
+            timestamp = now.strftime("%Y%m%d-%H%M%S")
             group_name = timestamp + "-" + select_team1 + "-" + select_team2
             group_match = Group(
                 group_name=group_name,
@@ -58,6 +58,8 @@ def select_team():
 
             if googlesheet.get_or_create_group_sheet(group_name, now, select_team1, select_team2, group_memo) is None:
                 flash('Error: Failed to create a group sheet for ' + group_name)
+
+            print(f"Created group {group_name} with {match_count} matches for {select_team1} vs. {select_team2}.")
             return redirect(url_for("group.index"))
 
         flash(error)

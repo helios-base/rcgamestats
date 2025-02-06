@@ -6,8 +6,9 @@ from flask import (
 )
 from flask_login import login_required
 from werkzeug.security import check_password_hash, generate_password_hash
-from rcgame_flask.models import db, teams
+from rcgame_flask.models import db
 from rcgame_flask.group.models import Group, Match
+from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
 
 bp = Blueprint('select_match', __name__, url_prefix='/select_match')
@@ -15,7 +16,7 @@ bp = Blueprint('select_match', __name__, url_prefix='/select_match')
 @bp.route('/select_team', methods=('GET', 'POST'))
 @login_required
 def select_team():
-    team_list = teams.query.all()
+    team_list = Team.query.filter_by(is_active=True).all()
     
     if request.method == 'POST':
         select_team1 = request.form['team_name1']

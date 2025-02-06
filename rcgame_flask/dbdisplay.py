@@ -7,17 +7,16 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask_login import login_required
-from rcgame_flask.models import db, teams, certificate_key
-from flask import render_template
+from rcgame_flask.models import db, certificate_key
 
 bp = Blueprint('dbdisplay', __name__, url_prefix='/dbdisplay')
 
 #team関係の表示
-@bp.route('/teams')
-@login_required
-def show_teams():
-    team_list = teams.query.all()
-    return render_template('dbdisplay/teams.html', teams=team_list)
+# @bp.route('/teams')
+# @login_required
+# def show_teams():
+#     team_list = teams.query.all()
+#     return render_template('dbdisplay/teams.html', teams=team_list)
 
 
 #certificate_key関係の表示

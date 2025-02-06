@@ -23,7 +23,7 @@ def init_db():
                 db.session.add(team)
         db.session.commit()
 
-    default_api_key = APIKey(api_key="xchuqnjxcnauhnjnxpzsjdiwjksa")
+    default_api_key = APIKey(key="xchuqnjxcnauhnjnxpzsjdiwjksa")
     db.session.add(default_api_key)
     db.session.commit()
 

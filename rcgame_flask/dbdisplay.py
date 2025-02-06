@@ -20,12 +20,12 @@ bp = Blueprint('dbdisplay', __name__, url_prefix='/dbdisplay')
 #     return render_template('dbdisplay/teams.html', teams=team_list)
 
 
-#certificate_key関係の表示
-@bp.route('/hosts')
-@login_required
-def show_hosts():
-    host_list = APIKey.query.all()
-    return render_template('dbdisplay/hosts.html', host_list=host_list)
+# #certificate_key関係の表示
+# @bp.route('/hosts')
+# @login_required
+# def show_hosts():
+#     host_list = APIKey.query.all()
+#     return render_template('dbdisplay/hosts.html', host_list=host_list)
 
 @bp.route('/update_stop_check/<int:key_id>', methods=['POST'])
 @login_required

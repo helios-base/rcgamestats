@@ -9,7 +9,8 @@ def result_post_request(response_data, file_paths, api_key, host_name):
     log_file = f"{str(response_data['match_index']).zfill(5)}"
 
     headers = {
-        'x-api-key': api_key
+        'x-api-key': api_key,
+        'X-CSRFToken': 'kwjer283n2k3gpiue9vrdfagb'
     }
 
     log_file_name = response_data["log_file_name"]

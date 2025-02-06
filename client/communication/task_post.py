@@ -10,7 +10,8 @@ def task_post_request(host_name,api_key):
         "api_key": api_key
     }
     headers = {
-        'x-api-key': api_key
+        'x-api-key': api_key,
+        'X-CSRFToken': 'kwjer283n2k3gpiue9vrdfagb'
     }
 
 

@@ -36,7 +36,7 @@ def result_post_request(response_data, file_paths, api_key, host_name):
     files = [('log_file', (open(file_path, 'rb'))) for file_path in copied_file_paths]
 
     # 変更したデータをサーバに返す
-    result_post_url = f"http://{Config.SERVER_URL}/communication/result"
+    result_post_url = f"http://{Config.SERVER_URL}/group/submit_result"
     result_response = requests.post(result_post_url, files=files, headers=headers, data={
         "match_id": response_data["match_id"],
         "start_time": response_data["start_time"],

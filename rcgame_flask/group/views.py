@@ -5,6 +5,7 @@ from datetime import datetime
 from rcgame_flask.app import db, csrf
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request, current_app
 from flask_login import login_required
+from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match
 from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
@@ -281,3 +282,107 @@ def show_match_log(group_name, match_index):
     return render_template("group/log_files.html", log_files=log_files, log_directory=match.log_directory_name)
 
 
+#
+# Client API
+#
+
+@group.route("/request_match", methods=["POST"])
+@csrf.exempt
+@require_api_key
+def request_match():
+    """
+    Request a match.
+    """
+    data = request.get_json()
+    host_name = data.get("host_name")
+
+    if host_name is None:
+        return jsonify({"error": "Missing host name."}), 400
+    
+    match = Match.query.filter_by(processed="unexecuted").first()
+    if match is None:
+        return jsonify({"error": "No unexecuted matches found."}), 404
+    
+    start_time = datetime.now().replace(microsecond=0)
+    log_file_name = f"{str(match.match_index).zfill(5)}-{match.left_team}-{match.right_team}-{host_name}"
+
+    match.host_name = host_name
+    match.start_time = start_time
+    match.processed = "in progress"
+    match.log_file_name = log_file_name
+
+    db.session.commit()
+
+    return jsonify({
+        "match_id": match.match_id,
+        "group_id": match.group_id,
+        "match_index": match.match_index,
+        "host_name": match.host_name,
+        "start_time": start_time,
+        "left_team": match.left_team,
+        "right_team": match.right_team,
+        "log_file_name": log_file_name,
+    })
+
+
+@group.route("/submit_result", methods=["POST"])
+@csrf.exempt
+@require_api_key
+def submit_result():
+    """
+    Submit a match result.
+    """
+    data = request.form.to_dict()
+
+    #start_time_str = data.get("start_time")
+    match_id = data.get("match_id")
+    left_team = data.get("left_team")
+    right_team = data.get("right_team")
+    left_score = data.get("left_score")
+    right_score = data.get("right_score")
+    #processed = data.get("processed")
+    log_file = data.get("log_file")
+
+    #start_time = datetime.strptime(start_time_str, "%a, %d %b %Y %H:%M:%S %Z")
+    end_time = datetime.now().replace(microsecond=0)
+
+    match = Match.query.get(match_id)
+    if match is None:
+        return jsonify({"error": "Match not found."}), 404
+    if match.left_team != left_team or match.right_team != right_team:
+        return jsonify({"error": "Team names do not match."}), 400
+
+    group = Group.query.get(match.group_id)
+    if group is None:
+        return jsonify({"error": "Group not found."}), 404
+
+    group_directory_name = group.group_name
+    executed_count = group.executed_count + 1
+    match_index = match.match_index
+    match_index = str(match_index).zfill(5)
+
+    # Create the log directory
+    logs_dir = os.path.join("rcgame_flask", "static", "logs")
+    group_directory_path = os.path.join(logs_dir, group_directory_name)
+    if not os.path.exists(group_directory_path):
+        os.makedirs(group_directory_path)
+
+    # Save the log files
+    for file in request.files.getlist("log_file"):
+        if file and file.filename:
+            file.save(os.path.join(group_directory_path, file.filename))
+
+    # Update the match record
+    match.end_time = end_time
+    match.left_score = left_score
+    match.right_score = right_score
+    match.processed = "completed"
+    match.log_directory_name = group_directory_name
+    match.log_file = log_file
+    db.session.commit()
+
+    # Update the group record
+    group.executed_count = executed_count
+    db.session.commit()
+
+    return jsonify({"message": "Match result submitted."})

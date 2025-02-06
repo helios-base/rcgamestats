@@ -4,7 +4,7 @@ from communication.get_csrf_token import get_csrf_token
 
 def task_post_request(host_name,api_key):
     csrf_token = get_csrf_token()
-    post_url = f"http://{Config.SERVER_URL}/communication/api"
+    post_url = f"http://{Config.SERVER_URL}/group/request_match"
 
     print(f"csrf_token:[{csrf_token}]")
 

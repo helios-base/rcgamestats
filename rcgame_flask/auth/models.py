@@ -47,14 +47,11 @@ def require_api_key(f):
             Response: JSON response with an error message and a 401 status code if the API key is invalid.
             Otherwise, it returns the decorated function's response.
         """
-        print("decorated_function: require_api_key")
         api_key = request.headers.get("x-api-key")
         if api_key is None:
-            print("Missing API key.")
             return jsonify({"error": "Missing API key."}), 401
         user = APIKey.query.filter_by(key=api_key).first()
         if user is None:
-             print("Invalid API key.")
              jsonify({"error": "Invalid or missing API key."}), 401
         return f(*args, **kwargs)
 

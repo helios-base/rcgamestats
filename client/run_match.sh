@@ -97,7 +97,7 @@ echo "[$logtime] @$hostname left=$left_name right=$right_name synch_mode=$synch_
 
 start_epochtime=`date "+%s"`
 
-$HOME/local/bin/rcssserverq $opt 1> stdout.log 2> stderr.log
+$HOME/local/bin/rcssserver $opt 1> stdout.log 2> stderr.log
 
 #sleep 2
 sleep 1
@@ -128,7 +128,13 @@ echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname compressing debug log files..."
 
 debug_log_dir="${log_name}"
 mkdir -p $debug_log_dir
-mv stdout.log stderr.log ${debug_log_dir}
+if [ -e stdout.log ]; then
+	mv stdout.log ${debug_log_dir}
+fi
+if [ -e stderr.log ]; then
+	mv stderr.log ${debug_log_dir}
+fi
+#mv stdout.log stderr.log ${debug_log_dir}
 
 if [ -e /tmp/HELIOS*-1.ocl ]; then
 #	sleep 3.5

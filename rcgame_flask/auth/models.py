@@ -1,4 +1,5 @@
 import secrets
+from datetime import datetime, timezone
 from functools import wraps
 from flask import request, jsonify
 from flask_login import UserMixin
@@ -22,6 +23,16 @@ class APIKey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(32), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    expires_at = db.Column(db.DateTime, nullable=True)
+    scope = db.Column(db.String(255), nullable=True)
+
+    @staticmethod
+    def generate_api_key():
+        return secrets.token_hex(32)
+    
+    def is_expired(self):
+        return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at
 
 
 @login_manager.user_loader
@@ -50,9 +61,11 @@ def require_api_key(f):
         api_key = request.headers.get("x-api-key")
         if api_key is None:
             return jsonify({"error": "Missing API key."}), 401
-        user = APIKey.query.filter_by(key=api_key).first()
-        if user is None:
-             jsonify({"error": "Invalid or missing API key."}), 401
+        record = APIKey.query.filter_by(key=api_key).first()
+        if record is None:
+            jsonify({"error": "Invalid or missing API key."}), 401
+        if record.is_expired():
+            return jsonify({"error": "API key has expired."}), 401
         return f(*args, **kwargs)
 
     return decorated_function

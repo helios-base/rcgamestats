@@ -2,7 +2,7 @@ import os
 import shutil
 import glob
 from datetime import datetime
-from rcgame_flask.app import db
+from rcgame_flask.app import db, csrf
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request, current_app
 from flask_login import login_required
 from rcgame_flask.group.models import Group, Match
@@ -81,7 +81,7 @@ def create():
     return render_template("group/create.html", teams=team_list)
 
 
-@group.route("/<int:group_id>")
+@group.route("/<int:group_id>/")
 @login_required
 def show_group_matches_by_id(group_id):
     """
@@ -92,7 +92,7 @@ def show_group_matches_by_id(group_id):
     return render_template("group/match_list.html", group_id=group_id, group_name=group.group_name, matches=matches)
 
 
-@group.route("/<string:group_name>")
+@group.route("/<string:group_name>/")
 @login_required
 def show_group_matches(group_name):
     """
@@ -107,7 +107,7 @@ def show_group_matches(group_name):
     return render_template("group/match_list.html", group_id=group.group_id, group_name=group_name, matches=matches)
 
 
-@group.route("/<int:group_id>/logs", methods=["GET"])
+@group.route("/<int:group_id>/logs/", methods=["GET"])
 @login_required
 def show_group_logs_by_id(group_id):
     """
@@ -129,7 +129,7 @@ def show_group_logs_by_id(group_id):
     return render_template("group/log_files.html", log_files=log_files, log_directory=log_directory)
 
 
-@group.route("/<string:group_name>/logs", methods=["GET"])
+@group.route("/<string:group_name>/logs/", methods=["GET"])
 @login_required
 def show_group_logs(group_name):
     """
@@ -243,7 +243,7 @@ def reset_match(group_id, match_id):
     return redirect(url_for("group.show_group_matches_by_id", group_id=group_id))
 
 
-@group.route("/<string:group_name>/<int:match_index>/log", methods=["GET"])
+@group.route("/<string:group_name>/<int:match_index>/log/", methods=["GET"])
 @login_required
 def show_match_log(group_name, match_index):
     """
@@ -279,3 +279,5 @@ def show_match_log(group_name, match_index):
         return jsonify({"error": "No matching log files found"}), 404
 
     return render_template("group/log_files.html", log_files=log_files, log_directory=match.log_directory_name)
+
+

@@ -3,7 +3,8 @@ import re
 import secrets
 from flask import jsonify, request
 from rcgame_flask.communication import bp
-from rcgame_flask.models import db, certificate_key
+from rcgame_flask.app import db
+from rcgame_flask.auth.models import APIKey, require_api_key
 from rcgame_flask.group.models import Group, Match
 from datetime import datetime
 from functools import wraps
@@ -16,24 +17,24 @@ def log_file_name(group_id, match_index, host_name,left_team,right_team):
 def generate_api_key():
    return secrets.token_hex(16)
 
-def require_api_key(f):
-   @wraps(f)
-   def decorated_function(*args, **kwargs):
-       api_key = request.headers.get('x-api-key')
-       user = certificate_key.query.filter_by(api_key=api_key).first()
-       if user is None:
-           return jsonify({"error": "認証に失敗しました。無効なAPIキーです。"}), 401
-       return f(*args, **kwargs)
-   return decorated_function
+# def require_api_key(f):
+#    @wraps(f)
+#    def decorated_function(*args, **kwargs):
+#        api_key = request.headers.get('x-api-key')
+#        user = APIKey.query.filter_by(api_key=api_key).first()
+#        if user is None:
+#            return jsonify({"error": "認証に失敗しました。無効なAPIキーです。"}), 401
+#        return f(*args, **kwargs)
+#    return decorated_function
 
 @bp.route("/create_user/<host_name>", methods=["POST"])
 def create_user(host_name):
-    existing_user = certificate_key.query.filter_by(host_name=host_name).first()
+    existing_user = APIKey.query.filter_by(host_name=host_name).first()
     if existing_user:
         return {'error': 'host_name already exists'}, 400
 
     api_key = generate_api_key()
-    new_user = certificate_key(host_name=host_name, api_key=api_key)
+    new_user = APIKey(host_name=host_name, api_key=api_key)
     db.session.add(new_user)
     db.session.commit()
     return {'host_name': host_name, 'api_key': api_key}
@@ -55,7 +56,7 @@ def api():
     if not host_name or not api_key:
         return jsonify({"error": "Host-NameまたはAPI-Keyが不足しています"}), 400
     
-    cert_key = certificate_key.query.filter_by(api_key=api_key).first()
+    cert_key = APIKey.query.filter_by(api_key=api_key).first()
     stop_check_response = cert_key.stop_check
     if cert_key.stop_check is True:
         return jsonify({"stop_check": stop_check_response})

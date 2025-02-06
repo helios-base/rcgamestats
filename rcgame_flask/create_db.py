@@ -1,5 +1,6 @@
 from flask import current_app
-from rcgame_flask.models import db, certificate_key
+from rcgame_flask.app import db
+from rcgame_flask.auth.models import APIKey
 from rcgame_flask.team.models import Team
 import csv
 import click
@@ -22,8 +23,8 @@ def init_db():
                 db.session.add(team)
         db.session.commit()
 
-    default_certificate = certificate_key(api_key="xchuqnjxcnauhnjnxpzsjdiwjksa")
-    db.session.add(default_certificate)
+    default_api_key = APIKey(api_key="xchuqnjxcnauhnjnxpzsjdiwjksa")
+    db.session.add(default_api_key)
     db.session.commit()
 
 

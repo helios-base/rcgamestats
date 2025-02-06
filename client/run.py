@@ -24,25 +24,25 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-def create_user_or_login():
-    while True: 
-        print("新規登録：１")
-        print("登録済み：２")
-        choice = input("選択してください: ")
+# def create_user_or_login():
+#     while True: 
+#         print("新規登録：１")
+#         print("登録済み：２")
+#         choice = input("選択してください: ")
 
-        if choice in ['1', '１']:
-            username = input("Enter a username: ")
-            host_name, api_key = create_user(username)
-            break  
-        elif choice in ['2', '２']:
-            host_name = input("Enter your host_name: ")
-            api_key = input("Enter your API key: ")
-            break 
-        else:
-            print("無効な選択です。もう一度選択してください。")
+#         if choice in ['1', '１']:
+#             username = input("Enter a username: ")
+#             host_name, api_key = create_user(username)
+#             break  
+#         elif choice in ['2', '２']:
+#             host_name = input("Enter your host_name: ")
+#             api_key = input("Enter your API key: ")
+#             break 
+#         else:
+#             print("無効な選択です。もう一度選択してください。")
 
-    print("host_name:",host_name)  
-    return host_name, api_key
+#     print("host_name:",host_name)  
+#     return host_name, api_key
 
 
 def run_game(left_team, right_team, log_file_name):

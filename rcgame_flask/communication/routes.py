@@ -3,7 +3,7 @@ import re
 import secrets
 from flask import jsonify, request
 from rcgame_flask.communication import bp
-from rcgame_flask.app import db
+from rcgame_flask.app import db, csrf
 from rcgame_flask.auth.models import APIKey, require_api_key
 from rcgame_flask.group.models import Group, Match
 from datetime import datetime
@@ -17,15 +17,6 @@ def log_file_name(group_id, match_index, host_name,left_team,right_team):
 def generate_api_key():
    return secrets.token_hex(16)
 
-# def require_api_key(f):
-#    @wraps(f)
-#    def decorated_function(*args, **kwargs):
-#        api_key = request.headers.get('x-api-key')
-#        user = APIKey.query.filter_by(api_key=api_key).first()
-#        if user is None:
-#            return jsonify({"error": "認証に失敗しました。無効なAPIキーです。"}), 401
-#        return f(*args, **kwargs)
-#    return decorated_function
 
 @bp.route("/create_user/<host_name>", methods=["POST"])
 def create_user(host_name):
@@ -34,7 +25,7 @@ def create_user(host_name):
         return {'error': 'host_name already exists'}, 400
 
     api_key = generate_api_key()
-    new_user = APIKey(host_name=host_name, api_key=api_key)
+    new_user = APIKey(key=api_key)
     db.session.add(new_user)
     db.session.commit()
     return {'host_name': host_name, 'api_key': api_key}
@@ -46,33 +37,32 @@ def callback():
     return jsonify({"kekka": "受け取ったよ!"})
 
 @bp.route("/api", methods=["POST"])
+@csrf.exempt
 @require_api_key
 def api():
-
+    csrf_token = request.headers.get('X-CSRFToken')
+    print("call api: CRSF Token:", csrf_token)
     data = request.get_json()
     host_name = data.get("host_name")
     api_key = data.get("api_key")
 
     if not host_name or not api_key:
-        return jsonify({"error": "Host-NameまたはAPI-Keyが不足しています"}), 400
+        return jsonify({"error": "No hostname or API Key."}), 400
     
-    cert_key = APIKey.query.filter_by(api_key=api_key).first()
-    stop_check_response = cert_key.stop_check
-    if cert_key.stop_check is True:
-        return jsonify({"stop_check": stop_check_response})
+    cert_key = APIKey.query.filter_by(key=api_key).first()
+    if not cert_key:
+        return jsonify({"error": "Invalid API Key"}), 400
 
     match = Match.query.filter_by(processed='unexecuted').first()
     
     if match:
         start_time = datetime.now().replace(microsecond=0)
-        
-        
         match.host_name = host_name
         match.start_time = start_time
         match.processed = 'in progress'
         db.session.commit()
         
-        updated_match = matches.query.filter_by(match_id=match.match_id).first()
+        updated_match = Match.query.filter_by(match_id=match.match_id).first()
 
         log_file_name_value = log_file_name(updated_match.group_id, updated_match.match_index, host_name, updated_match.left_team, updated_match.right_team)
 
@@ -93,6 +83,7 @@ def api():
         return jsonify()
 
 @bp.route("/result", methods=["POST"])
+@csrf.exempt
 @require_api_key
 def result():
     data = request.form.to_dict()

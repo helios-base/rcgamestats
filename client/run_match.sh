@@ -83,7 +83,7 @@ opt="$opt server::game_log_compression = 9 server::text_log_compression = 9"
 opt="$opt server::game_log_dir = '$log_dir' server::text_log_dir = '$log_dir'"
 opt="$opt server::log_date_format = '%Y%m%d%H%M%S-'"
 opt="$opt server::nr_normal_halfs = 2 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
-opt="$opt server::half_time = 1 server::extra_half_time = 100"
+opt="$opt server::half_time = 300 server::extra_half_time = 100"
 opt="$opt server::synch_mode = $synch_mode"
 opt="$opt server::auto_mode = true"
 opt="$opt server::team_l_start = '$team_l_start'"
@@ -96,7 +96,8 @@ echo "[$logtime] @$hostname left=$left_name right=$right_name synch_mode=$synch_
 
 start_epochtime=`date "+%s"`
 
-$HOME/local/bin/rcssserver $opt 1> stdout.log 2> stderr.log
+#$HOME/local/bin/rcssserver $opt 1> stdout.log 2> stderr.log
+$HOME/local/bin/rcssserver $opt
 
 #sleep 2
 sleep 1

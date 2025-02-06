@@ -91,20 +91,17 @@ def main(host_name,api_key):
             print("サーバー受信を開始します！")
             time.sleep(3)
 
-            if (response_from_task_post != None):
+            if response_from_task_post is not None:
 
-                #run_game(response_from_task_post.get('left_team'),
-                         #response_from_task_post.get('right_team'),
-                         #response_from_task_post.get('log_file_name'))
+                run_game(response_from_task_post.get('left_team'),
+                         response_from_task_post.get('right_team'),
+                         response_from_task_post.get('log_file_name'))
  
-                #print("Finished the match!")
-                #result_csv = os.path.join(Config.LOG_DIR, response_from_task_post.get('log_file_name') + ".csv")
-                #left_score, right_score = get_score_from_result_file(result_csv)
-                #response_from_task_post["left_score"] = left_score
-                #response_from_task_post["right_score"] = right_score
-
-                response_from_task_post["left_score"] = 0
-                response_from_task_post["right_score"] = 0                
+                print("Finished the match!")
+                result_csv = os.path.join(Config.LOG_DIR, response_from_task_post.get('log_file_name') + ".csv")
+                left_score, right_score = get_score_from_result_file(result_csv)
+                response_from_task_post["left_score"] = left_score
+                response_from_task_post["right_score"] = right_score
 
                 file_paths = [os.path.join(Config.LOG_DIR, file) 
                               for file in os.listdir(Config.LOG_DIR) 
@@ -142,5 +139,9 @@ if __name__ == "__main__":
     if os.path.exists(Config.TEMPORAL_DIR):
         shutil.rmtree(Config.TEMPORAL_DIR)
     os.makedirs(Config.TEMPORAL_DIR)
+
+    if not os.path.exists(Config.LOG_DIR):
+        os.makedirs(Config.LOG_DIR)
+
     #host_name, api_key = create_user_or_login()
     main(Config.NAME, API_KEY)

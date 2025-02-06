@@ -4,13 +4,16 @@ import os
 import shutil
 import re
 from config import Config
+from communication.get_csrf_token import get_csrf_token
+
 
 def result_post_request(response_data, file_paths, api_key, host_name):
+    csrf_token = get_csrf_token()
     log_file = f"{str(response_data['match_index']).zfill(5)}"
 
     headers = {
         'x-api-key': api_key,
-        'X-CSRFToken': 'kwjer283n2k3gpiue9vrdfagb'
+        'X-CSRFToken': csrf_token
     }
 
     log_file_name = response_data["log_file_name"]

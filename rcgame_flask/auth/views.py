@@ -16,7 +16,7 @@ def index():
 @auth.route('/get_csrf_token')
 def get_csrf_token():
     token = generate_csrf()
-    #print(f"CSRF Token: {token}")
+    print(f"CSRF Token: [{token}]")
     return jsonify({'csrf_token': token})
 
 

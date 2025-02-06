@@ -35,10 +35,21 @@ def generate_api_key():
 def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        """
+        Decorator function to check for a valid API key in the request headers.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            Response: JSON response with an error message and a 401 status code if the API key is invalid.
+            Otherwise, it returns the decorated function's response.
+        """
         api_key = request.headers.get("x-api-key")
-        user = APIKey.query.filter_by(api_key=api_key).first()
+        user = APIKey.query.filter_by(key=api_key).first()
         if user is None:
-            return jsonify({"error": "認証に失敗しました。無効なAPIキーです。"}), 401
+             jsonify({"error": "Invalid or missing API key."}), 401
         return f(*args, **kwargs)
 
     return decorated_function

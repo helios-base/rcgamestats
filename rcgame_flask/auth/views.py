@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required
 from flask_wtf.csrf import generate_csrf
-from rcgame_flask.models import db
+from rcgame_flask.app import db
 from rcgame_flask.auth.forms import LoginForm, SignUpForm
 from rcgame_flask.auth.models import User
 
@@ -16,6 +16,7 @@ def index():
 @auth.route('/get_csrf_token')
 def get_csrf_token():
     token = generate_csrf()
+    #print(f"CSRF Token: {token}")
     return jsonify({'csrf_token': token})
 
 

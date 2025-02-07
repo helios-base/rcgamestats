@@ -119,17 +119,20 @@ def show_group_logs_by_id(group_id):
         flash(f"Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
-    log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+    dir_name = group.name
+    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
     if not os.path.exists(log_dir):
         flash(f"Log directory for group [{group.name}] not found.")
         return redirect(url_for("group.index"))
 
     matches_in_group = Match.query.filter_by(group_id=group_id).all()
-    log_files = []
+    log_file_paths = []
     for match in matches_in_group:
-        log_files.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+        log_file_paths.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+    file_names = [os.path.basename(file_path) for file_path in log_file_paths]
+    file_names.sort()
 
-    return render_template("group/log_files.html", log_files=log_files, log_directory=log_dir)
+    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
 
 
 @group.route("/<string:group_name>/logs/", methods=["GET"])
@@ -143,17 +146,20 @@ def show_group_logs(group_name):
         flash(f"Group {group_name} not found.")
         return redirect(url_for("group.index"))
     
-    log_dir = os.path.join(current_app.static_folder, "logs", group_name)
+    dir_name = group_name
+    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
     if not os.path.exists(log_dir):
         flash(f"Log directory for group [{group_name}] not found.")
         return redirect(url_for("group.index"))
 
     matches_in_group = Match.query.filter_by(group_id=group.id).all()
-    log_files = []
+    log_file_paths = []
     for match in matches_in_group:
-        log_files.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+        log_file_paths.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+    file_names = [os.path.basename(file_path) for file_path in log_file_paths]
+    file_names.sort()
 
-    return render_template("group/log_files.html", log_files=log_files, log_directory=log_dir)
+    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
 
 
 @group.route("/<int:group_id>/delete", methods=["POST"])
@@ -258,18 +264,20 @@ def show_match_log(group_name, group_index):
     if match.log_file_name is None:
         return jsonify({"error": "Log file name not found"}), 404
 
-    log_dir = os.path.join(current_app.static_folder, 'logs', group_name)
+    dir_name = group_name
+    log_dir = os.path.join(current_app.static_folder, 'logs', dir_name)
 
     if not os.path.exists(log_dir):
         return jsonify({"error": "Log directory [{log_dir}] not found"}), 404
 
     #log_files = [f for f in os.listdir(this_log_dir_path) if log_file_name in f]
-    log_files = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
-
-    if not log_files:
+    log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
+    if not log_file_paths:
         return jsonify({"error": "No matching log files found"}), 404
+    file_names = [os.path.basename(file_path) for file_path in log_file_paths]
+    file_names.sort()
 
-    return render_template("group/log_files.html", log_files=log_files, log_directory=log_dir)
+    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
 
 
 #

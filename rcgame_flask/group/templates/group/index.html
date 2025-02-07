@@ -7,14 +7,12 @@
 <table>
     <thead>
         <tr>
-            <th>Group ID</th>
-            <th>Group Name</th>
-            <th>Group Time</th>
+            <th>Name</th>
+            <th>Datetime</th>
             <th>Left Team</th>
             <th>Right Team</th>
-            <th>Group Memo</th>
-            <th>Game Count</th>
-            <th>Executed Count</th>
+            <th>Memo</th>
+            <th># of Matches</th>
             <th>Log Files</th> 
             <th>Actions</th>
         </tr>
@@ -22,17 +20,15 @@
     <tbody>
         {% for group in groups %}
         <tr>
-            <td>{{ group.group_id }}</td>
-            <td><a href="{{ url_for('group.show_group_matches', group_name=group.group_name) }}">{{ group.group_name }}</a></td>
-            <td>{{ group.group_time }}</td>
+            <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
+            <td>{{ group.created_at }}</td>
             <td>{{ group.left_team }}</td>
             <td>{{ group.right_team }}</td>
-            <td>{{ group.group_memo }}</td>
-            <td>{{ group.game_count }}</td>
-            <td>{{ group.executed_count }}</td>
-            <td><a href="{{ url_for('group.show_group_logs', group_name=group.group_name) }}">group_log_file</a></td>
+            <td>{{ group.memo }}</td>
+            <td>{{ group.number_of_matches }}</td>
+            <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">group_log_file</a></td>
             <td>
-                <form action="{{ url_for('group.delete_group', group_id=group.group_id) }}" method="post" onsubmit="return confirm('{{group.group_name}}を削除しますか?');">
+                <form action="{{ url_for('group.delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('{{group.name}}を削除しますか?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit">Delete</button>
                 </form>

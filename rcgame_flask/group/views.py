@@ -40,8 +40,8 @@ def create():
     if request.method == "POST":
         team1 = request.form["team_name1"]
         team2 = request.form["team_name2"]
-        match_count = request.form["match_count"]
-        group_memo = request.form["group_memo"]
+        number_of_matches = request.form["number_of_matches"]
+        memo = request.form["memo"]
         error = None
 
         if not team1:
@@ -52,31 +52,31 @@ def create():
             error = "Team 1 and Team 2 cannot be the same."
 
         if error is None:
-            group_time = datetime.now().replace(microsecond=0)
-            group_name = f"{group_time.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
+            now = datetime.now().replace(microsecond=0)
+            group_name = f"{now.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
 
             group = Group(
-                group_name=group_name,
-                group_time=group_time,
+                name=group_name,
+                created_at=now,
                 left_team=team1,
                 right_team=team2,
-                game_count=match_count,
-                group_memo=group_memo
+                number_of_matches=number_of_matches,
+                memo=memo
             )
             db.session.add(group)
             db.session.commit()
 
-            for i in range(int(match_count)):
+            for i in range(int(number_of_matches)):
                 match = Match(
                     group_index=i+1,
-                    group_id=group.group_id,
+                    group_id=group.id,
                     left_team=team1,
                     right_team=team2
                 )
                 db.session.add(match)
             db.session.commit()
 
-            flash(f"Created group {group_name} with {match_count} matches for {team1} vs. {team2}.")
+            flash(f"Created group {group_name} with {number_of_matches} matches for {team1} vs. {team2}.")
             return redirect(url_for("group.index"))
 
     return render_template("group/create.html", teams=team_list)
@@ -90,7 +90,7 @@ def show_group_matches_by_id(group_id):
     """
     group = Group.query.get(group_id)
     matches = Match.query.filter_by(group_id=group_id).all()
-    return render_template("group/match_list.html", group_id=group_id, group_name=group.group_name, matches=matches)
+    return render_template("group/match_list.html", group_id=group_id, group_name=group.name, matches=matches)
 
 
 @group.route("/<string:group_name>/")
@@ -99,13 +99,13 @@ def show_group_matches(group_name):
     """
     Show all matches associated with a group.
     """
-    group = Group.query.filter_by(group_name=group_name).first()
+    group = Group.query.filter_by(name=group_name).first()
     if group is None:
         flash(f"Group {group_name} not found.")
         return redirect(url_for("group.index"))
 
-    matches = Match.query.filter_by(group_id=group.group_id).all()
-    return render_template("group/match_list.html", group_id=group.group_id, group_name=group_name, matches=matches)
+    matches = Match.query.filter_by(group_id=group.id).all()
+    return render_template("group/match_list.html", group_id=group.id, group_name=group_name, matches=matches)
 
 
 @group.route("/<int:group_id>/logs/", methods=["GET"])
@@ -136,12 +136,12 @@ def show_group_logs(group_name):
     """
     Show log files for a group.
     """
-    group = Group.query.filter_by(group_name=group_name).first()
+    group = Group.query.filter_by(name=group_name).first()
     if group is None:
         flash(f"Group {group_name} not found.")
         return redirect(url_for("group.index"))
 
-    matches_in_group = Match.query.filter_by(group_id=group.group_id).all()
+    matches_in_group = Match.query.filter_by(group_id=group.id).all()
     log_files = []
     log_directory = None
 
@@ -178,7 +178,7 @@ def delete_group(group_id):
             db.session.delete(match)
 
     if group_to_delete:
-        group_name = group_to_delete.group_name
+        group_name = group_to_delete.name
         db.session.delete(group_to_delete)
 
     db.session.commit()
@@ -198,15 +198,15 @@ def upload_group_results_to_google_sheet(group_id):
         flash(f"Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
-    group_name = group.group_name
+    group_name = group.name
     if group_name is None:
         flash(f"Group ID {group_id} has no name.")
         return redirect(url_for("group.index"))
 
-    group_time = group.group_time
+    group_time = group.created_at
     left_team = group.left_team
     right_team = group.right_team
-    memo = group.group_memo
+    memo = group.memo
 
     print(f'(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]')
 
@@ -219,7 +219,7 @@ def upload_group_results_to_google_sheet(group_id):
     else:
         flash("Failed to upload the group results to the Google Spreadsheet.")
 
-    return redirect(url_for("group.show_group_matches", group_name=group.group_name))
+    return redirect(url_for("group.show_group_matches", group_name=group.name))
 
 #
 # Match management
@@ -250,11 +250,11 @@ def show_match_log(group_name, group_index):
     """
     Show log files for a match.
     """
-    group = Group.query.filter_by(group_name=group_name).first()
+    group = Group.query.filter_by(name=group_name).first()
     if group is None:
         return jsonify({"error": "Group not found"}), 404
 
-    match = Match.query.filter_by(group_id=group.group_id, group_index=group_index).first()
+    match = Match.query.filter_by(group_id=group.id, group_index=group_index).first()
 
     if match is None:
         return jsonify({"error": "Match not found"}), 404
@@ -355,8 +355,7 @@ def submit_result():
     if group is None:
         return jsonify({"error": "Group not found."}), 404
 
-    group_directory_name = group.group_name
-    executed_count = group.executed_count + 1
+    group_directory_name = group.name
     group_index = match.group_index
     group_index = str(group_index).zfill(5)
 
@@ -378,10 +377,6 @@ def submit_result():
     match.right_score = right_score
     match.processed = "completed"
     match.log_directory_name = group_directory_name
-    db.session.commit()
-
-    # Update the group record
-    group.executed_count = executed_count
     db.session.commit()
 
     return jsonify({"message": "Match result submitted."})

@@ -206,7 +206,7 @@ def upload_group_results(group_name, group_time, left_name, right_name, memo, ma
         )
         local_records.append(
             [
-                str(match.match_index).zfill(5),
+                str(match.group_index).zfill(5),
                 match.host_name,
                 match.start_time.strftime("%Y-%m-%d %H:%M:%S"),
                 match.left_team,

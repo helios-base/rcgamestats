@@ -68,7 +68,7 @@ def create():
 
             for i in range(int(match_count)):
                 match = Match(
-                    match_index=i+1,
+                    group_index=i+1,
                     group_id=group.group_id,
                     left_team=team1,
                     right_team=team2
@@ -237,16 +237,16 @@ def reset_match(group_id, match_id):
         match.start_time = None
         match.processed = "unexecuted"
         db.session.commit()
-        flash(f"Match {match.match_index} has been reset.")
+        flash(f"Match {match.group_index} has been reset.")
     else:
         flash("Match not found or not in progress.")
 
     return redirect(url_for("group.show_group_matches_by_id", group_id=group_id))
 
 
-@group.route("/<string:group_name>/<int:match_index>/log/", methods=["GET"])
+@group.route("/<string:group_name>/<int:group_index>/log/", methods=["GET"])
 @login_required
-def show_match_log(group_name, match_index):
+def show_match_log(group_name, group_index):
     """
     Show log files for a match.
     """
@@ -254,7 +254,7 @@ def show_match_log(group_name, match_index):
     if group is None:
         return jsonify({"error": "Group not found"}), 404
 
-    match = Match.query.filter_by(group_id=group.group_id, match_index=match_index).first()
+    match = Match.query.filter_by(group_id=group.group_id, group_index=group_index).first()
 
     if match is None:
         return jsonify({"error": "Match not found"}), 404
@@ -304,7 +304,7 @@ def request_match():
         return jsonify({"error": "No unexecuted matches found."}), 404
     
     start_time = datetime.now().replace(microsecond=0)
-    log_file_name = f"{str(match.match_index).zfill(5)}-{match.left_team}-{match.right_team}-{host_name}"
+    log_file_name = f"{str(match.group_index).zfill(5)}-{match.left_team}-{match.right_team}-{host_name}"
 
     match.host_name = host_name
     match.start_time = start_time
@@ -314,9 +314,9 @@ def request_match():
     db.session.commit()
 
     return jsonify({
-        "match_id": match.match_id,
+        "match_id": match.id,
         "group_id": match.group_id,
-        "match_index": match.match_index,
+        "group_index": match.group_index,
         "host_name": match.host_name,
         "start_time": start_time,
         "left_team": match.left_team,
@@ -357,8 +357,8 @@ def submit_result():
 
     group_directory_name = group.group_name
     executed_count = group.executed_count + 1
-    match_index = match.match_index
-    match_index = str(match_index).zfill(5)
+    group_index = match.group_index
+    group_index = str(group_index).zfill(5)
 
     # Create the log directory
     logs_dir = os.path.join("rcgame_flask", "static", "logs")

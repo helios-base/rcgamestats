@@ -341,7 +341,6 @@ def submit_result():
     left_score = data.get("left_score")
     right_score = data.get("right_score")
     #processed = data.get("processed")
-    log_file = data.get("log_file")
 
     #start_time = datetime.strptime(start_time_str, "%a, %d %b %Y %H:%M:%S %Z")
     end_time = datetime.now().replace(microsecond=0)
@@ -370,6 +369,7 @@ def submit_result():
     # Save the log files
     for file in request.files.getlist("log_file"):
         if file and file.filename:
+            print(f"Saving log file {file.filename}...")
             file.save(os.path.join(group_directory_path, file.filename))
 
     # Update the match record
@@ -378,7 +378,6 @@ def submit_result():
     match.right_score = right_score
     match.processed = "completed"
     match.log_directory_name = group_directory_name
-    match.log_file = log_file
     db.session.commit()
 
     # Update the group record

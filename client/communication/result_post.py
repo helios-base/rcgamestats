@@ -9,7 +9,6 @@ from communication.get_csrf_token import get_csrf_token
 
 def result_post_request(response_data, file_paths, api_key, host_name):
     csrf_token = get_csrf_token()
-    log_file = f"{str(response_data['match_index']).zfill(5)}"
 
     headers = {
         'x-api-key': api_key,
@@ -44,7 +43,6 @@ def result_post_request(response_data, file_paths, api_key, host_name):
         "right_team": response_data["right_team"],
         "left_score": response_data["left_score"],
         "right_score": response_data["right_score"],
-        "log_file": log_file
     })
     print("result_post_request response status:", result_response.status_code)
     print("result_post_request response text:", result_response.text)

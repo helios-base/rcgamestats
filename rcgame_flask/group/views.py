@@ -151,8 +151,7 @@ def show_group_logs(group_name):
     matches_in_group = Match.query.filter_by(group_id=group.id).all()
     log_files = []
     for match in matches_in_group:
-        if os.path.exists(this_log_dir_path):
-            log_files.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+        log_files.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
 
     return render_template("group/log_files.html", log_files=log_files, log_directory=log_dir)
 

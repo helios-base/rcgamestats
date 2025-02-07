@@ -7,6 +7,7 @@ def current_datetime_str():
 
 
 class Team(db.Model):
+    __tablename__ = 'team'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), unique=True)
     version = db.Column(db.String(32), nullable=False, default=current_datetime_str)

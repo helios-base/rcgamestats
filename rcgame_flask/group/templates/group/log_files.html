@@ -4,9 +4,10 @@
 {% endblock %}
 
 {% block content %}
+<h2>Group Name: {{ dir_name }}</h2>
 <ul>
-  {% for log_file in log_files %}
-    <li><a href="{{ url_for('static', filename='logs/' ~ log_directory ~ '/' ~ log_file) }}">{{ log_file }}</a></li>
+  {% for file_name in file_names %}
+    <li><a href="{{ url_for('static', filename='logs/' ~ dir_name ~ '/' ~ file_name) }}">{{ file_name }}</a></li>
   {% endfor %}
 </ul>
 {% endblock %}

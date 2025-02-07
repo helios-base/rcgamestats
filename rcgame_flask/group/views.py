@@ -40,8 +40,8 @@ def create():
     if request.method == "POST":
         team1 = request.form["team_name1"]
         team2 = request.form["team_name2"]
-        match_count = request.form["match_count"]
-        group_memo = request.form["group_memo"]
+        number_of_matches = request.form["number_of_matches"]
+        memo = request.form["memo"]
         error = None
 
         if not team1:
@@ -52,31 +52,31 @@ def create():
             error = "Team 1 and Team 2 cannot be the same."
 
         if error is None:
-            group_time = datetime.now().replace(microsecond=0)
-            group_name = f"{group_time.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
+            now = datetime.now().replace(microsecond=0)
+            group_name = f"{now.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
 
             group = Group(
-                group_name=group_name,
-                group_time=group_time,
+                name=group_name,
+                created_at=now,
                 left_team=team1,
                 right_team=team2,
-                game_count=match_count,
-                group_memo=group_memo
+                number_of_matches=number_of_matches,
+                memo=memo
             )
             db.session.add(group)
             db.session.commit()
 
-            for i in range(int(match_count)):
+            for i in range(int(number_of_matches)):
                 match = Match(
-                    match_index=i+1,
-                    group_id=group.group_id,
+                    group_index=i+1,
+                    group_id=group.id,
                     left_team=team1,
                     right_team=team2
                 )
                 db.session.add(match)
             db.session.commit()
 
-            flash(f"Created group {group_name} with {match_count} matches for {team1} vs. {team2}.")
+            flash(f"Created group {group_name} with {number_of_matches} matches for {team1} vs. {team2}.")
             return redirect(url_for("group.index"))
 
     return render_template("group/create.html", teams=team_list)
@@ -90,7 +90,7 @@ def show_group_matches_by_id(group_id):
     """
     group = Group.query.get(group_id)
     matches = Match.query.filter_by(group_id=group_id).all()
-    return render_template("group/match_list.html", group_id=group_id, group_name=group.group_name, matches=matches)
+    return render_template("group/match_list.html", group_id=group_id, group_name=group.name, matches=matches)
 
 
 @group.route("/<string:group_name>/")
@@ -99,13 +99,13 @@ def show_group_matches(group_name):
     """
     Show all matches associated with a group.
     """
-    group = Group.query.filter_by(group_name=group_name).first()
+    group = Group.query.filter_by(name=group_name).first()
     if group is None:
         flash(f"Group {group_name} not found.")
         return redirect(url_for("group.index"))
 
-    matches = Match.query.filter_by(group_id=group.group_id).all()
-    return render_template("group/match_list.html", group_id=group.group_id, group_name=group_name, matches=matches)
+    matches = Match.query.filter_by(group_id=group.id).all()
+    return render_template("group/match_list.html", group_id=group.id, group_name=group_name, matches=matches)
 
 
 @group.route("/<int:group_id>/logs/", methods=["GET"])
@@ -114,20 +114,25 @@ def show_group_logs_by_id(group_id):
     """
     Show log files for a group.
     """
+    group = Group.query.get(group_id)
+    if group is None:
+        flash(f"Group ID {group_id} not found.")
+        return redirect(url_for("group.index"))
+
+    dir_name = group.name
+    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
+    if not os.path.exists(log_dir):
+        flash(f"Log directory for group [{group.name}] not found.")
+        return redirect(url_for("group.index"))
+
     matches_in_group = Match.query.filter_by(group_id=group_id).all()
-    log_files = []
-    log_directory = None
-
-    logs_dir = os.path.join(current_app.static_folder, "logs")
+    log_file_paths = []
     for match in matches_in_group:
-        if match.log_directory_name is not None:
-            log_directory = match.log_directory_name
-            this_log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-            if os.path.exists(this_log_dir_path):
-                #log_files.extend([f for f in os.listdir(this_log_dir_path) if match.log_file_name in f])
-                log_files.extend(glob.glob(os.path.join(this_log_dir_path, f"{match.log_file_name}*")))
+        log_file_paths.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+    file_names = [os.path.basename(file_path) for file_path in log_file_paths]
+    file_names.sort()
 
-    return render_template("group/log_files.html", log_files=log_files, log_directory=log_directory)
+    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
 
 
 @group.route("/<string:group_name>/logs/", methods=["GET"])
@@ -136,25 +141,25 @@ def show_group_logs(group_name):
     """
     Show log files for a group.
     """
-    group = Group.query.filter_by(group_name=group_name).first()
+    group = Group.query.filter_by(name=group_name).first()
     if group is None:
         flash(f"Group {group_name} not found.")
         return redirect(url_for("group.index"))
+    
+    dir_name = group_name
+    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
+    if not os.path.exists(log_dir):
+        flash(f"Log directory for group [{group_name}] not found.")
+        return redirect(url_for("group.index"))
 
-    matches_in_group = Match.query.filter_by(group_id=group.group_id).all()
-    log_files = []
-    log_directory = None
-
-    logs_dir = os.path.join(current_app.static_folder, "logs")
+    matches_in_group = Match.query.filter_by(group_id=group.id).all()
+    log_file_paths = []
     for match in matches_in_group:
-        if match.log_directory_name is not None:
-            log_directory = match.log_directory_name
-            this_log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-            if os.path.exists(this_log_dir_path):
-                #log_files.extend([f for f in os.listdir(this_log_dir_path) if match.log_file_name in f])
-                log_files.extend(glob.glob(os.path.join(this_log_dir_path, f"{match.log_file_name}*")))
+        log_file_paths.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+    file_names = [os.path.basename(file_path) for file_path in log_file_paths]
+    file_names.sort()
 
-    return render_template("group/log_files.html", log_files=log_files, log_directory=log_directory)
+    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
 
 
 @group.route("/<int:group_id>/delete", methods=["POST"])
@@ -165,24 +170,21 @@ def delete_group(group_id):
     """
     matches_to_delete = Match.query.filter_by(group_id=group_id).all()
     group_to_delete = Group.query.get(group_id)
+    if group_to_delete is None:
+        flash(f"Group ID {group_id} not found.")
+        return redirect(url_for("group.index"))
+    
+    log_dir = os.path.join(current_app.static_folder, "logs", group_to_delete.name)
+    shutil.rmtree(log_dir)
 
-    logs_dir = os.path.join(current_app.static_folder, "logs")
-    if matches_to_delete:
-        for match in matches_to_delete:
-            # delete the log directory
-            if match.log_directory_name is not None:
-                log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-                if os.path.exists(log_dir_path):
-                    shutil.rmtree(log_dir_path)
-            # delete the record
-            db.session.delete(match)
+    matches_to_delete.delete(synchronize_session=False)
+    # for match in matches_to_delete:
+    #     db.session.delete(match)
 
-    if group_to_delete:
-        group_name = group_to_delete.group_name
-        db.session.delete(group_to_delete)
-
+    group_name = group_to_delete.name
+    db.session.delete(group_to_delete)
     db.session.commit()
-    flash(f"{group_name} has been deleted.")
+    flash(f"The group [{group_name}] has been deleted.")
 
     return redirect(url_for("group.index"))
 
@@ -198,15 +200,15 @@ def upload_group_results_to_google_sheet(group_id):
         flash(f"Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
-    group_name = group.group_name
+    group_name = group.name
     if group_name is None:
         flash(f"Group ID {group_id} has no name.")
         return redirect(url_for("group.index"))
 
-    group_time = group.group_time
+    group_time = group.created_at
     left_team = group.left_team
     right_team = group.right_team
-    memo = group.group_memo
+    memo = group.memo
 
     print(f'(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]')
 
@@ -219,7 +221,7 @@ def upload_group_results_to_google_sheet(group_id):
     else:
         flash("Failed to upload the group results to the Google Spreadsheet.")
 
-    return redirect(url_for("group.show_group_matches", group_name=group.group_name))
+    return redirect(url_for("group.show_group_matches", group_name=group.name))
 
 #
 # Match management
@@ -237,49 +239,45 @@ def reset_match(group_id, match_id):
         match.start_time = None
         match.processed = "unexecuted"
         db.session.commit()
-        flash(f"Match {match.match_index} has been reset.")
+        flash(f"Match {match.group_index} has been reset.")
     else:
         flash("Match not found or not in progress.")
 
     return redirect(url_for("group.show_group_matches_by_id", group_id=group_id))
 
 
-@group.route("/<string:group_name>/<int:match_index>/log/", methods=["GET"])
+@group.route("/<string:group_name>/<int:group_index>/log/", methods=["GET"])
 @login_required
-def show_match_log(group_name, match_index):
+def show_match_log(group_name, group_index):
     """
     Show log files for a match.
     """
-    group = Group.query.filter_by(group_name=group_name).first()
+    group = Group.query.filter_by(name=group_name).first()
     if group is None:
         return jsonify({"error": "Group not found"}), 404
 
-    match = Match.query.filter_by(group_id=group.group_id, match_index=match_index).first()
+    match = Match.query.filter_by(group_id=group.id, group_index=group_index).first()
 
     if match is None:
         return jsonify({"error": "Match not found"}), 404
 
-    if match.log_directory_name is None:
-        return jsonify({"error": "Log directory not found"}), 404
-
     if match.log_file_name is None:
         return jsonify({"error": "Log file name not found"}), 404
 
-    log_file_name = match.log_file_name
-    logs_dir = os.path.join(current_app.static_folder, 'logs')
+    dir_name = group_name
+    log_dir = os.path.join(current_app.static_folder, 'logs', dir_name)
 
-    this_log_dir_path = os.path.join(logs_dir, match.log_directory_name)
-
-    if not os.path.exists(this_log_dir_path):
-        return jsonify({"error": "Log directory not found"}), 404
+    if not os.path.exists(log_dir):
+        return jsonify({"error": "Log directory [{log_dir}] not found"}), 404
 
     #log_files = [f for f in os.listdir(this_log_dir_path) if log_file_name in f]
-    log_files = glob.glob(os.path.join(this_log_dir_path, f"{log_file_name}*"))
-
-    if not log_files:
+    log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
+    if not log_file_paths:
         return jsonify({"error": "No matching log files found"}), 404
+    file_names = [os.path.basename(file_path) for file_path in log_file_paths]
+    file_names.sort()
 
-    return render_template("group/log_files.html", log_files=log_files, log_directory=match.log_directory_name)
+    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
 
 
 #
@@ -304,7 +302,7 @@ def request_match():
         return jsonify({"error": "No unexecuted matches found."}), 404
     
     start_time = datetime.now().replace(microsecond=0)
-    log_file_name = f"{str(match.match_index).zfill(5)}-{match.left_team}-{match.right_team}-{host_name}"
+    log_file_name = f"{str(match.group_index).zfill(5)}-{match.left_team}-{match.right_team}-{host_name}"
 
     match.host_name = host_name
     match.start_time = start_time
@@ -314,9 +312,9 @@ def request_match():
     db.session.commit()
 
     return jsonify({
-        "match_id": match.match_id,
+        "match_id": match.id,
         "group_id": match.group_id,
-        "match_index": match.match_index,
+        "group_index": match.group_index,
         "host_name": match.host_name,
         "start_time": start_time,
         "left_team": match.left_team,
@@ -341,7 +339,6 @@ def submit_result():
     left_score = data.get("left_score")
     right_score = data.get("right_score")
     #processed = data.get("processed")
-    log_file = data.get("log_file")
 
     #start_time = datetime.strptime(start_time_str, "%a, %d %b %Y %H:%M:%S %Z")
     end_time = datetime.now().replace(microsecond=0)
@@ -356,33 +353,27 @@ def submit_result():
     if group is None:
         return jsonify({"error": "Group not found."}), 404
 
-    group_directory_name = group.group_name
-    executed_count = group.executed_count + 1
-    match_index = match.match_index
-    match_index = str(match_index).zfill(5)
+    group_index = match.group_index
+    group_index = str(group_index).zfill(5)
 
     # Create the log directory
-    logs_dir = os.path.join("rcgame_flask", "static", "logs")
-    group_directory_path = os.path.join(logs_dir, group_directory_name)
-    if not os.path.exists(group_directory_path):
-        os.makedirs(group_directory_path)
+    log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+    # logs_dir = os.path.join("rcgame_flask", "static", "logs")
+    # group_directory_path = os.path.join(logs_dir, group.name)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
 
     # Save the log files
     for file in request.files.getlist("log_file"):
         if file and file.filename:
-            file.save(os.path.join(group_directory_path, file.filename))
+            print(f"Saving log file {file.filename}...")
+            file.save(os.path.join(log_dir, file.filename))
 
     # Update the match record
     match.end_time = end_time
     match.left_score = left_score
     match.right_score = right_score
     match.processed = "completed"
-    match.log_directory_name = group_directory_name
-    match.log_file = log_file
-    db.session.commit()
-
-    # Update the group record
-    group.executed_count = executed_count
     db.session.commit()
 
     return jsonify({"message": "Match result submitted."})

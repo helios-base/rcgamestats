@@ -100,57 +100,6 @@ def create():
 
     return render_template("group/create.html", form=form)
 
-    # team_list = Team.query.filter_by(is_active=True).all()
-
-    # if request.method == "POST":
-    #     team1 = request.form["team_name1"]
-    #     team2 = request.form["team_name2"]
-    #     number_of_matches = request.form["number_of_matches"]
-    #     description = request.form["description"]
-    #     error = None
-
-    #     if not team1:
-    #         error = "Team 1 is required."
-    #     elif not team2:
-    #         error = "team select is required."
-    #     elif team1 == team2:
-    #         error = "Team 1 and Team 2 cannot be the same."
-
-    #     if error is not None:
-    #         flash(error)
-    #         return render_template("group/create.html", teams=team_list)
-
-    #     now = datetime.now().replace(microsecond=0)
-    #     group_name = f"{now.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
-
-    #     group = Group(
-    #         name=group_name,
-    #         created_at=now,
-    #         left_team=team1,
-    #         right_team=team2,
-    #         number_of_matches=number_of_matches,
-    #         description=description,
-    #     )
-    #     db.session.add(group)
-    #     db.session.commit()
-
-    #     for i in range(int(number_of_matches)):
-    #         match = Match(
-    #             group_index=i + 1,
-    #             group_id=group.id,
-    #             left_team=team1,
-    #             right_team=team2,
-    #         )
-    #         db.session.add(match)
-    #     db.session.commit()
-
-    #     flash(
-    #         f"Created group {group_name} with {number_of_matches} matches for {team1} vs. {team2}."
-    #     )
-    #     return redirect(url_for("group.index"))
-
-    # return render_template("group/create.html", teams=team_list)
-
 
 @group.route("/<int:group_id>/")
 @login_required

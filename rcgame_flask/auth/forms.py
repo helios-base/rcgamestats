@@ -1,65 +1,94 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Length, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 from rcgame_flask.auth.models import User
 
 
 class LoginForm(FlaskForm):
     """
-    ログイン用入力クラス
+    Login form input class
     """
 
-    username = StringField('ユーザー名：', 
-                           validators=[DataRequired('ユーザー名は必須入力です')])
-    # パスワード：パスワード入力
-    password = PasswordField('パスワード: ',
-                             validators=[Length(4, 10,
-                                    'パスワードの長さは4文字以上10文字以内です')])
-    # ボタン
-    submit = SubmitField('ログイン')
-
-    # カスタムバリデータ
-    # 英数字と記号が含まれているかチェックする
-    def validate_password(self, password):
-        if not (any(c.isalpha() for c in password.data) and \
-            any(c.isdigit() for c in password.data)):
-            raise ValidationError('パスワードには【英数字を含める必要があります')
+    username = StringField(
+        "Username: ", validators=[DataRequired("username is required")]
+    )
+    password = PasswordField(
+        "Password: ",
+        validators=[
+            DataRequired("password is required"),
+            Length(4, 32, "Password must be between 4 and 32 characters")
+        ],
+    )
+    submit = SubmitField("Login")
 
 
-class SignUpForm(LoginForm):
+class SignUpForm(FlaskForm):
     """
-    サインアップ用入力クラス
+    Singup form input class
     """
 
-    # ボタン                               
-    submit = SubmitField('サインアップ')
+    username = StringField(
+        "Username: ", validators=[DataRequired("username is required")]
+    )
+    password = PasswordField(
+        "Password: ",
+        validators=[
+            DataRequired("password is required"),
+            Length(4, 32, "Password must be between 4 and 32 characters"),
+        ],
+    )
+    confirm_password = PasswordField(
+        "Confirm Password: ",
+        validators=[
+            DataRequired("confirm password is required"),
+            EqualTo("password", "Passwords must match"),
+        ],
+    )
+    submit = SubmitField("Sign Up")
 
-    # カスタムバリデータ
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
         if user:
-            raise ValidationError('そのユーザー名は既に使用されています')
+            raise ValidationError("username already exists")
+
+    def validate_password(self, password):
+        self.validate_password_strength(self, password)
+
+    # check if the password contains both letters and numbers
+    @staticmethod
+    def validate_password_strength(password):
+        if not (
+            any(c.isalpha() for c in password.data)
+            and any(c.isdigit() for c in password.data)
+        ):
+            raise ValidationError("Password must contain both letters and numbers")
 
 
+class PasswordChangeForm(FlaskForm):
+    """
+    Password change form input class
+    """
 
+    current_password = StringField(
+        "Current Password: ",
+        validators=[DataRequired("current password is required")],
+    )
+    new_password = PasswordField(
+        "New Password: ",
+        validators=[
+            DataRequired("new password is required"),
+            Length(4, 32, "Password must be between 4 and 32 characters"),
+        ],
+    )
+    confirm_password = PasswordField(
+        "Confirm Password: ",
+        validators=[
+            DataRequired("confirm password is required"),
+            EqualTo("new_password", "Passwords must match"),
+        ],
+    )
+    submit = SubmitField("Change Password")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # check if the password contains both letters and numbers
+    def validate_new_password(self, new_password):
+        SignUpForm.validate_password_strength(new_password)

@@ -3,6 +3,8 @@
     <dd>
         {%if field.type == 'TextAreaField' %}
             {{ field(class_='textarea-field', **kwargs)| safe }}
+        {% elif field.type == 'SelectField' %}
+            {{ field(class_='select-field', **kwargs)| safe }}
         {% else %}
             {{ field(**kwargs)| safe }}
         {% endif %}

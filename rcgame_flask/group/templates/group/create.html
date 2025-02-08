@@ -4,56 +4,16 @@
 {% endblock %}
 
 {% block content %}
-    {% for message in get_flashed_messages() %}
-    {% endfor %}
-    <form id="teamForm" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label for="team_name1">Team 1:</label>
-        <select name="team_name1" id="team_name1">
-            {% for team in teams %}
-            <option value="{{ team.name }}">{{ team.name }}</option>
-            {% endfor %}
-        </select>
+    {% from "_formhelpers.html" import render_field %}
+    <form method="POST" action="{{ url_for('group.create') }}" novalidate>
+        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
+        {{ render_field(form.team_left) }}
+        {{ render_field(form.team_right) }}
+        {{ render_field(form.number_of_matches) }}
+        {{ render_field(form.description) }}
         <br>
-        <label for="team_name2">Team 2:</label>
-        <select name="team_name2" id="team_name2">
-            {% for team in teams %}
-            <option value="{{ team.name }}">{{ team.name }}</option>
-            {% endfor %}
-        </select>
-        <br>
-        <label for="number_of_matches"># of Matches:</label>
-        <input type="number" name="number_of_matches" id="numbaer_of_matches" required>
-        <br>
-        <br>
-        <label for="description">Description:</label>
-        <textarea name="description" id="description" rows="4"></textarea>
-        <br>
-        <button type="submit">Submit</button>
-    </form>
-    
-    <script>
-        document.getElementById('teamForm').onsubmit = function(event) {
-            event.preventDefault(); 
-
-            var team1 = document.getElementById('team_name1').value;
-            var team2 = document.getElementById('team_name2').value;
-            var matchCount = document.getElementById('number_of_matches').value;
-
-            if (team1 === team2) {
-                alert("The same team cannot be selected");');
-                return;
-            }
-            if (matchCount <= 0)
-            {
-                alert("Match count must be greater than 0");
-                return;
-            }
-            var confirmation = confirm(`Are you sure you want to create the following match?\n"${team1}" vs "${team2}" : ${matchCount} matches`);
-
-            if (confirmation) {
-                this.submit();
-            }
-        };
-    </script>
+        {% for message in get_flashed_messages() %}
+        {% endfor %}
+        {{ form.submit }}
 {% endblock %}

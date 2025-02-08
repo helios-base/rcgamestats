@@ -16,6 +16,7 @@ from flask import (
 from flask_login import login_required
 from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match
+from rcgame_flask.group.forms import GroupCreateForm
 from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
 
@@ -44,56 +45,111 @@ def create():
     """
     Create a group.
     """
-    team_list = Team.query.filter_by(is_active=True).all()
+    form = GroupCreateForm()
 
-    if request.method == "POST":
-        team1 = request.form["team_name1"]
-        team2 = request.form["team_name2"]
-        number_of_matches = request.form["number_of_matches"]
-        description = request.form["description"]
-        error = None
+    teams = Team.query.filter_by(is_active=True).all()
+    form.team_left.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
+    form.team_right.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
 
-        if not team1:
-            error = "Team 1 is required."
-        elif not team2:
-            error = "team select is required."
-        elif team1 == team2:
-            error = "Team 1 and Team 2 cannot be the same."
+    if form.validate_on_submit():
+        team_left_id = form.team_left.data
+        team_right_id = form.team_right.data
+        if form.team_left.data == form.team_right.data:
+            flash("The same team cannot be selected for both sides.")
+            return redirect(url_for("group.create"))
 
-        if error is not None:
-            flash(error)
-            return render_template("group/create.html", teams=team_list)
-    
+        team_left = Team.query.get(team_left_id)
+        team_right = Team.query.get(team_right_id)
+        if team_left is None:
+            flash(f"Team ID {team_left_id} not found.")
+            return redirect(url_for("group.create"))
+        if team_right is None:
+            flash(f"Team ID {team_right_id} not found.")
+            return redirect(url_for("group.create"))
+
         now = datetime.now().replace(microsecond=0)
-        group_name = f"{now.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
+        group_name = (
+            f"{now.strftime('%Y%m%d-%H%M%S')}-{team_left.name}-{team_right.name}"
+        )
 
         group = Group(
             name=group_name,
             created_at=now,
-            left_team=team1,
-            right_team=team2,
-            number_of_matches=number_of_matches,
-            description=description,
+            left_team=team_left.name,
+            right_team=team_right.name,
+            number_of_matches=form.number_of_matches.data,
+            description=form.description.data,
         )
         db.session.add(group)
         db.session.commit()
 
-        for i in range(int(number_of_matches)):
+        for i in range(int(form.number_of_matches.data)):
             match = Match(
                 group_index=i + 1,
                 group_id=group.id,
-                left_team=team1,
-                right_team=team2,
+                left_team=team_left.name,
+                right_team=team_right.name,
             )
             db.session.add(match)
         db.session.commit()
 
         flash(
-            f"Created group {group_name} with {number_of_matches} matches for {team1} vs. {team2}."
+            f"Created group {group_name} with {form.number_of_matches.data} matches for {team_left.name} vs. {team_right.name}."
         )
         return redirect(url_for("group.index"))
 
-    return render_template("group/create.html", teams=team_list)
+    return render_template("group/create.html", form=form)
+
+    # team_list = Team.query.filter_by(is_active=True).all()
+
+    # if request.method == "POST":
+    #     team1 = request.form["team_name1"]
+    #     team2 = request.form["team_name2"]
+    #     number_of_matches = request.form["number_of_matches"]
+    #     description = request.form["description"]
+    #     error = None
+
+    #     if not team1:
+    #         error = "Team 1 is required."
+    #     elif not team2:
+    #         error = "team select is required."
+    #     elif team1 == team2:
+    #         error = "Team 1 and Team 2 cannot be the same."
+
+    #     if error is not None:
+    #         flash(error)
+    #         return render_template("group/create.html", teams=team_list)
+
+    #     now = datetime.now().replace(microsecond=0)
+    #     group_name = f"{now.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
+
+    #     group = Group(
+    #         name=group_name,
+    #         created_at=now,
+    #         left_team=team1,
+    #         right_team=team2,
+    #         number_of_matches=number_of_matches,
+    #         description=description,
+    #     )
+    #     db.session.add(group)
+    #     db.session.commit()
+
+    #     for i in range(int(number_of_matches)):
+    #         match = Match(
+    #             group_index=i + 1,
+    #             group_id=group.id,
+    #             left_team=team1,
+    #             right_team=team2,
+    #         )
+    #         db.session.add(match)
+    #     db.session.commit()
+
+    #     flash(
+    #         f"Created group {group_name} with {number_of_matches} matches for {team1} vs. {team2}."
+    #     )
+    #     return redirect(url_for("group.index"))
+
+    # return render_template("group/create.html", teams=team_list)
 
 
 @group.route("/<int:group_id>/")

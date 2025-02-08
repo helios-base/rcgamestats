@@ -36,6 +36,7 @@ def index():
     Show all groups.
     """
     group_list = Group.query.all()
+    group_list.sort(key=lambda x: x.created_at, reverse=True)
     return render_template("group/index.html", groups=group_list)
 
 
@@ -75,8 +76,8 @@ def create():
         group = Group(
             name=group_name,
             created_at=now,
-            left_team=team_left.name,
-            right_team=team_right.name,
+            left_team_id=team_left_id,
+            right_team_id=team_right_id,
             number_of_matches=form.number_of_matches.data,
             description=form.description.data,
         )
@@ -87,8 +88,8 @@ def create():
             match = Match(
                 group_index=i + 1,
                 group_id=group.id,
-                left_team=team_left.name,
-                right_team=team_right.name,
+                left_team_id=team_left_id,
+                right_team_id=team_right_id,
             )
             db.session.add(match)
         db.session.commit()
@@ -107,12 +108,11 @@ def show_group_matches_by_id(group_id):
     """
     Show all matches associated with a group.
     """
-    group = Group.query.get(group_id)
+    group = Group.query.get_or_404(group_id)
     matches = Match.query.filter_by(group_id=group_id).all()
     return render_template(
         "group/match_list.html",
-        group_id=group_id,
-        group_name=group.name,
+        group=group,
         matches=matches,
     )
 
@@ -131,8 +131,7 @@ def show_group_matches(group_name):
     matches = Match.query.filter_by(group_id=group.id).all()
     return render_template(
         "group/match_list.html",
-        group_id=group.id,
-        group_name=group_name,
+        group=group,
         matches=matches,
     )
 
@@ -205,18 +204,17 @@ def delete_group(group_id):
     """
     Delete a group and all matches associated with it.
     """
-    matches_to_delete = Match.query.filter_by(group_id=group_id).all()
     group_to_delete = Group.query.get(group_id)
     if group_to_delete is None:
         flash(f"Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
     log_dir = os.path.join(current_app.static_folder, "logs", group_to_delete.name)
-    shutil.rmtree(log_dir)
+    if os.path.exists(log_dir):
+        shutil.rmtree(log_dir)
 
+    matches_to_delete = Match.query.filter_by(group_id=group_id)
     matches_to_delete.delete(synchronize_session=False)
-    # for match in matches_to_delete:
-    #     db.session.delete(match)
 
     group_name = group_to_delete.name
     db.session.delete(group_to_delete)
@@ -241,14 +239,21 @@ def upload_group_results_to_google_sheet(group_id):
     if group_name is None:
         flash(f"Group ID {group_id} has no name.")
         return redirect(url_for("group.index"))
+    
+    if group.left_team is None:
+        flash(f"Group ID {group_id} has no left team.")
+        return redirect(url_for("group.index"))
+    if group.right_team is None:
+        flash(f"Group ID {group_id} has no right team.")
+        return redirect(url_for("group.index"))
 
     group_time = group.created_at
-    left_team = group.left_team
-    right_team = group.right_team
+    left_team_name = group.left_team.name
+    right_team_name = group.right_team.name
     description = group.description
 
     print(
-        f"(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, description: [{description}]"
+        f"(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team_name}, right_team: {right_team_name}, description: [{description}]"
     )
 
     # Get match records for the group
@@ -256,7 +261,7 @@ def upload_group_results_to_google_sheet(group_id):
 
     # Upload group results to Google Spreadsheet
     if googlesheet.upload_group_results(
-        group_name, group_time, left_team, right_team, description, match_records
+        group_name, group_time, left_team_name, right_team_name, description, match_records
     ):
         flash("Succeeded to upload the group results to the Google Spreadsheet.")
     else:
@@ -346,9 +351,19 @@ def request_match():
     match = Match.query.filter_by(processed="unexecuted").first()
     if match is None:
         return jsonify({"error": "No unexecuted matches found."}), 404
+    
+    if match.left_team is None:
+        return jsonify({"error": "Left team not found."}), 404
+    if match.right_team is None:
+        return jsonify({"error": "Right team not found."}), 404
+
+    left_team_name = match.left_team.name
+    left_team_version = match.left_team.version
+    right_team_name = match.right_team.name
+    right_team_version = match.right_team.version
 
     start_time = datetime.now().replace(microsecond=0)
-    log_file_name = f"{str(match.group_index).zfill(5)}-{match.left_team}-{match.right_team}-{host_name}"
+    log_file_name = f"{str(match.group_index).zfill(5)}-{left_team_name}-{right_team_name}-{host_name}"
 
     match.host_name = host_name
     match.start_time = start_time
@@ -364,8 +379,10 @@ def request_match():
             "group_index": match.group_index,
             "host_name": match.host_name,
             "start_time": start_time,
-            "left_team": match.left_team,
-            "right_team": match.right_team,
+            "left_team_name": left_team_name,
+            "left_team_version": left_team_version,
+            "right_team_name": right_team_name,
+            "right_team_version": right_team_version,
             "log_file_name": log_file_name,
         }
     )
@@ -380,41 +397,37 @@ def submit_result():
     """
     data = request.form.to_dict()
 
-    # start_time_str = data.get("start_time")
     match_id = data.get("match_id")
-    left_team = data.get("left_team")
-    right_team = data.get("right_team")
+    left_team_name = data.get("left_team_name")
+    right_team_name = data.get("right_team_name")
     left_score = data.get("left_score")
     right_score = data.get("right_score")
-    # processed = data.get("processed")
 
-    # start_time = datetime.strptime(start_time_str, "%a, %d %b %Y %H:%M:%S %Z")
     end_time = datetime.now().replace(microsecond=0)
 
     match = Match.query.get(match_id)
     if match is None:
         return jsonify({"error": "Match not found."}), 404
-    if match.left_team != left_team or match.right_team != right_team:
-        return jsonify({"error": "Team names do not match."}), 400
+    if match.left_team is None or match.right_team is None:
+        return jsonify({"error": "Teams not found."}),
+    if match.left_team.name != left_team_name:
+        return jsonify({"error": "Left team name do not match."}), 400
+    if match.right_team.name != right_team_name:
+        return jsonify({"error": "Right team name do not match."}), 400
 
     group = Group.query.get(match.group_id)
     if group is None:
         return jsonify({"error": "Group not found."}), 404
 
-    group_index = match.group_index
-    group_index = str(group_index).zfill(5)
-
     # Create the log directory
     log_dir = os.path.join(current_app.static_folder, "logs", group.name)
-    # logs_dir = os.path.join("rcgame_flask", "static", "logs")
-    # group_directory_path = os.path.join(logs_dir, group.name)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
     # Save the log files
     for file in request.files.getlist("log_file"):
         if file and file.filename:
-            print(f"Saving log file {file.filename}...")
+            #print(f"Saving log file {file.filename}...")
             file.save(os.path.join(log_dir, file.filename))
 
     # Update the match record

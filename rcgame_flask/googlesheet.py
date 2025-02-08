@@ -12,7 +12,7 @@ def _get_spreadsheet():
     """
     scope = ["https://spreadsheets.google.com/feeds"]
 
-    if config.GGOOGLE_DOC_ID is None or config.KEY_PATH is None:
+    if config.GOOGLE_DOC_ID is None or config.GOOGLE_KEY_PATH is None:
         print("Error: DOC_ID or KEY_PATH is not set.")
         return None
     

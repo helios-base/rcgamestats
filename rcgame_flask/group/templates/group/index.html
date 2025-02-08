@@ -22,8 +22,20 @@
         <tr>
             <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
             <td>{{ group.created_at }}</td>
-            <td>{{ group.left_team }}</td>
-            <td>{{ group.right_team }}</td>
+            <td>
+                {% if group.left_team %}
+                    {{ group.left_team.name }}
+                {% else %}
+                    <span class="error">Not found</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if group.right_team %}
+                    {{ group.right_team.name }}
+                {% else %}
+                    <span class="error">Not found</span>
+                {% endif %}
+            </td>
             <td>{{ group.number_of_matches }}</td>
             <td>{{ group.description }}</td>
             <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>

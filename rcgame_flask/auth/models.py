@@ -41,9 +41,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-def generate_api_key():
-    return secrets.token_hex(16)
-
 
 def require_api_key(f):
     @wraps(f)

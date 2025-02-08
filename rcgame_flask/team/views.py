@@ -55,22 +55,21 @@ def upload():
         name = secure_filename(form.team_name.data)
         version = secure_filename(form.version.data)
         # Create a directory for the team with the name and version
-        team_version_dir = os.path.join("teams", name, version)
-        team_dir = os.path.join(current_app.static_folder, team_version_dir)
-        if not os.path.exists(team_dir):
-            os.makedirs(team_dir)
+        archive_dir = os.path.join("teams", name, version)
+        absolute_path = os.path.join(current_app.static_folder, archive_dir)
+        if not os.path.exists(absolute_path):
+            os.makedirs(absolute_path)
 
         # Save the uploaded file
         file = form.archive_file.data
         filename = secure_filename(file.filename)
-        file_path = os.path.join(team_dir, filename)
-        file.save(file_path)
+        file.save(os.path.join(absolute_path, filename))
 
         team = Team(
             name=form.team_name.data,
             version=form.version.data,
             synch_mode=form.synch_mode.data,
-            archive_path=filename,
+            archive_path=os.path.join(archive_dir, filename),
             description=form.description.data,
         )
         db.session.add(team)
@@ -88,12 +87,7 @@ def download(name, version):
     """
     team = Team.query.filter_by(name=name, version=version).first()
     if team:
-        name = secure_filename(team.name)
-        version = secure_filename(team.version)
-        team_dir = os.path.join("teams", name, version)
-        filename = os.path.basename(team.archive_path)
-        file_path = os.path.join(team_dir, filename)
-        print("file_path: ", file_path)
-        return redirect(url_for("static", filename=file_path))
+        print(team.archive_path)
+        return redirect(url_for("static", filename=team.archive_path))
 
     return redirect(url_for("team.index"))

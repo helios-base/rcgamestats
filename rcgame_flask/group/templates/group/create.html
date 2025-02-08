@@ -26,8 +26,8 @@
         <input type="number" name="number_of_matches" id="numbaer_of_matches" required>
         <br>
         <br>
-        <label for="memo">Group Memo:</label>
-        <textarea name="memo" id="memo" rows="4"></textarea>
+        <label for="description">Description:</label>
+        <textarea name="description" id="description" rows="4"></textarea>
         <br>
         <button type="submit">Submit</button>
     </form>
@@ -39,7 +39,6 @@
             var team1 = document.getElementById('team_name1').value;
             var team2 = document.getElementById('team_name2').value;
             var matchCount = document.getElementById('number_of_matches').value;
-            var groupMemo = document.getElementById('memo').value;
 
             if (team1 === team2) {
                 alert("The same team cannot be selected");');

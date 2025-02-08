@@ -11,7 +11,7 @@ class Group(db.Model):
     left_team = db.Column(db.String(30), nullable=False)
     right_team = db.Column(db.String(30), nullable=False)
     number_of_matches = db.Column(db.Integer, nullable=False)
-    memo = db.Column(db.Text)
+    description = db.Column(db.Text)
 
 
 class Match(db.Model):

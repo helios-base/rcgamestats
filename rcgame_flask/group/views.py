@@ -50,7 +50,7 @@ def create():
         team1 = request.form["team_name1"]
         team2 = request.form["team_name2"]
         number_of_matches = request.form["number_of_matches"]
-        memo = request.form["memo"]
+        description = request.form["description"]
         error = None
 
         if not team1:
@@ -73,7 +73,7 @@ def create():
             left_team=team1,
             right_team=team2,
             number_of_matches=number_of_matches,
-            memo=memo,
+            description=description,
         )
         db.session.add(group)
         db.session.commit()
@@ -240,10 +240,10 @@ def upload_group_results_to_google_sheet(group_id):
     group_time = group.created_at
     left_team = group.left_team
     right_team = group.right_team
-    memo = group.memo
+    description = group.description
 
     print(
-        f"(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]"
+        f"(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, description: [{description}]"
     )
 
     # Get match records for the group
@@ -251,7 +251,7 @@ def upload_group_results_to_google_sheet(group_id):
 
     # Upload group results to Google Spreadsheet
     if googlesheet.upload_group_results(
-        group_name, group_time, left_team, right_team, memo, match_records
+        group_name, group_time, left_team, right_team, description, match_records
     ):
         flash("Succeeded to upload the group results to the Google Spreadsheet.")
     else:

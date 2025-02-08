@@ -11,7 +11,7 @@
             <th>Datetime</th>
             <th>Left Team</th>
             <th>Right Team</th>
-            <th>Memo</th>
+            <th>Description</th>
             <th># of Matches</th>
             <th>Log Files</th> 
             <th>Actions</th>
@@ -24,7 +24,7 @@
             <td>{{ group.created_at }}</td>
             <td>{{ group.left_team }}</td>
             <td>{{ group.right_team }}</td>
-            <td>{{ group.memo }}</td>
+            <td>{{ group.description }}</td>
             <td>{{ group.number_of_matches }}</td>
             <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">group_log_file</a></td>
             <td>

@@ -15,3 +15,6 @@ class Config:
     STOP_FILE_PATH = os.getenv("STOP_FILE_PATH", os.path.expandvars('$HOME/rcgamestats/stop.txt'))
     TEMPORAL_DIR = os.getenv("TEMPORAL_DIR", os.path.expandvars('$HOME/rcgamestats/tmp'))
     LOG_DIR = os.getenv("LOG_DIR", os.path.expandvars('$HOME/rcgamestats/log'))
+
+
+config = Config()

@@ -38,9 +38,8 @@ def result_post_request(response_data, file_paths, api_key, host_name):
     result_post_url = f"http://{Config.SERVER_URL}/group/submit_result"
     result_response = requests.post(result_post_url, files=files, headers=headers, data={
         "match_id": response_data["match_id"],
-        "start_time": response_data["start_time"],
-        "left_team": response_data["left_team"],
-        "right_team": response_data["right_team"],
+        "left_team_name": response_data["left_team_name"],
+        "right_team_name": response_data["right_team_name"],
         "left_score": response_data["left_score"],
         "right_score": response_data["right_score"],
     })

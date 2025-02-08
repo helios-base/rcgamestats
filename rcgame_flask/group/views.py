@@ -3,7 +3,16 @@ import shutil
 import glob
 from datetime import datetime
 from rcgame_flask.app import db, csrf
-from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request, current_app
+from flask import (
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    jsonify,
+    request,
+    current_app,
+)
 from flask_login import login_required
 from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match
@@ -51,33 +60,38 @@ def create():
         elif team1 == team2:
             error = "Team 1 and Team 2 cannot be the same."
 
-        if error is None:
-            now = datetime.now().replace(microsecond=0)
-            group_name = f"{now.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
+        if error is not None:
+            flash(error)
+            return render_template("group/create.html", teams=team_list)
+    
+        now = datetime.now().replace(microsecond=0)
+        group_name = f"{now.strftime("%Y%m%d-%H%M%S")}-{team1}-{team2}"
 
-            group = Group(
-                name=group_name,
-                created_at=now,
+        group = Group(
+            name=group_name,
+            created_at=now,
+            left_team=team1,
+            right_team=team2,
+            number_of_matches=number_of_matches,
+            memo=memo,
+        )
+        db.session.add(group)
+        db.session.commit()
+
+        for i in range(int(number_of_matches)):
+            match = Match(
+                group_index=i + 1,
+                group_id=group.id,
                 left_team=team1,
                 right_team=team2,
-                number_of_matches=number_of_matches,
-                memo=memo
             )
-            db.session.add(group)
-            db.session.commit()
+            db.session.add(match)
+        db.session.commit()
 
-            for i in range(int(number_of_matches)):
-                match = Match(
-                    group_index=i+1,
-                    group_id=group.id,
-                    left_team=team1,
-                    right_team=team2
-                )
-                db.session.add(match)
-            db.session.commit()
-
-            flash(f"Created group {group_name} with {number_of_matches} matches for {team1} vs. {team2}.")
-            return redirect(url_for("group.index"))
+        flash(
+            f"Created group {group_name} with {number_of_matches} matches for {team1} vs. {team2}."
+        )
+        return redirect(url_for("group.index"))
 
     return render_template("group/create.html", teams=team_list)
 
@@ -90,7 +104,12 @@ def show_group_matches_by_id(group_id):
     """
     group = Group.query.get(group_id)
     matches = Match.query.filter_by(group_id=group_id).all()
-    return render_template("group/match_list.html", group_id=group_id, group_name=group.name, matches=matches)
+    return render_template(
+        "group/match_list.html",
+        group_id=group_id,
+        group_name=group.name,
+        matches=matches,
+    )
 
 
 @group.route("/<string:group_name>/")
@@ -105,7 +124,12 @@ def show_group_matches(group_name):
         return redirect(url_for("group.index"))
 
     matches = Match.query.filter_by(group_id=group.id).all()
-    return render_template("group/match_list.html", group_id=group.id, group_name=group_name, matches=matches)
+    return render_template(
+        "group/match_list.html",
+        group_id=group.id,
+        group_name=group_name,
+        matches=matches,
+    )
 
 
 @group.route("/<int:group_id>/logs/", methods=["GET"])
@@ -128,11 +152,15 @@ def show_group_logs_by_id(group_id):
     matches_in_group = Match.query.filter_by(group_id=group_id).all()
     log_file_paths = []
     for match in matches_in_group:
-        log_file_paths.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+        log_file_paths.extend(
+            glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
+        )
     file_names = [os.path.basename(file_path) for file_path in log_file_paths]
     file_names.sort()
 
-    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
+    return render_template(
+        "group/log_files.html", dir_name=dir_name, file_names=file_names
+    )
 
 
 @group.route("/<string:group_name>/logs/", methods=["GET"])
@@ -145,7 +173,7 @@ def show_group_logs(group_name):
     if group is None:
         flash(f"Group {group_name} not found.")
         return redirect(url_for("group.index"))
-    
+
     dir_name = group_name
     log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
     if not os.path.exists(log_dir):
@@ -155,11 +183,15 @@ def show_group_logs(group_name):
     matches_in_group = Match.query.filter_by(group_id=group.id).all()
     log_file_paths = []
     for match in matches_in_group:
-        log_file_paths.extend(glob.glob(os.path.join(log_dir, f"{match.log_file_name}*")))
+        log_file_paths.extend(
+            glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
+        )
     file_names = [os.path.basename(file_path) for file_path in log_file_paths]
     file_names.sort()
 
-    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
+    return render_template(
+        "group/log_files.html", dir_name=dir_name, file_names=file_names
+    )
 
 
 @group.route("/<int:group_id>/delete", methods=["POST"])
@@ -173,7 +205,7 @@ def delete_group(group_id):
     if group_to_delete is None:
         flash(f"Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
-    
+
     log_dir = os.path.join(current_app.static_folder, "logs", group_to_delete.name)
     shutil.rmtree(log_dir)
 
@@ -210,22 +242,28 @@ def upload_group_results_to_google_sheet(group_id):
     right_team = group.right_team
     memo = group.memo
 
-    print(f'(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]')
+    print(
+        f"(upload_group_results_to_google_sheet) group_name: {group_name}, time: {group_time}, left_team: {left_team}, right_team: {right_team}, memo: [{memo}]"
+    )
 
     # Get match records for the group
     match_records = Match.query.filter_by(group_id=group_id).all()
 
     # Upload group results to Google Spreadsheet
-    if googlesheet.upload_group_results(group_name, group_time, left_team, right_team, memo, match_records):
+    if googlesheet.upload_group_results(
+        group_name, group_time, left_team, right_team, memo, match_records
+    ):
         flash("Succeeded to upload the group results to the Google Spreadsheet.")
     else:
         flash("Failed to upload the group results to the Google Spreadsheet.")
 
     return redirect(url_for("group.show_group_matches", group_name=group.name))
 
+
 #
 # Match management
 #
+
 
 @group.route("/<int:group_id>/<int:match_id>/reset", methods=["POST"])
 @login_required
@@ -265,24 +303,27 @@ def show_match_log(group_name, group_index):
         return jsonify({"error": "Log file name not found"}), 404
 
     dir_name = group_name
-    log_dir = os.path.join(current_app.static_folder, 'logs', dir_name)
+    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
 
     if not os.path.exists(log_dir):
         return jsonify({"error": "Log directory [{log_dir}] not found"}), 404
 
-    #log_files = [f for f in os.listdir(this_log_dir_path) if log_file_name in f]
+    # log_files = [f for f in os.listdir(this_log_dir_path) if log_file_name in f]
     log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
     if not log_file_paths:
         return jsonify({"error": "No matching log files found"}), 404
     file_names = [os.path.basename(file_path) for file_path in log_file_paths]
     file_names.sort()
 
-    return render_template("group/log_files.html", dir_name=dir_name, file_names=file_names)
+    return render_template(
+        "group/log_files.html", dir_name=dir_name, file_names=file_names
+    )
 
 
 #
 # Client API
 #
+
 
 @group.route("/request_match", methods=["POST"])
 @csrf.exempt
@@ -296,11 +337,11 @@ def request_match():
 
     if host_name is None:
         return jsonify({"error": "Missing host name."}), 400
-    
+
     match = Match.query.filter_by(processed="unexecuted").first()
     if match is None:
         return jsonify({"error": "No unexecuted matches found."}), 404
-    
+
     start_time = datetime.now().replace(microsecond=0)
     log_file_name = f"{str(match.group_index).zfill(5)}-{match.left_team}-{match.right_team}-{host_name}"
 
@@ -311,16 +352,18 @@ def request_match():
 
     db.session.commit()
 
-    return jsonify({
-        "match_id": match.id,
-        "group_id": match.group_id,
-        "group_index": match.group_index,
-        "host_name": match.host_name,
-        "start_time": start_time,
-        "left_team": match.left_team,
-        "right_team": match.right_team,
-        "log_file_name": log_file_name,
-    })
+    return jsonify(
+        {
+            "match_id": match.id,
+            "group_id": match.group_id,
+            "group_index": match.group_index,
+            "host_name": match.host_name,
+            "start_time": start_time,
+            "left_team": match.left_team,
+            "right_team": match.right_team,
+            "log_file_name": log_file_name,
+        }
+    )
 
 
 @group.route("/submit_result", methods=["POST"])
@@ -332,15 +375,15 @@ def submit_result():
     """
     data = request.form.to_dict()
 
-    #start_time_str = data.get("start_time")
+    # start_time_str = data.get("start_time")
     match_id = data.get("match_id")
     left_team = data.get("left_team")
     right_team = data.get("right_team")
     left_score = data.get("left_score")
     right_score = data.get("right_score")
-    #processed = data.get("processed")
+    # processed = data.get("processed")
 
-    #start_time = datetime.strptime(start_time_str, "%a, %d %b %Y %H:%M:%S %Z")
+    # start_time = datetime.strptime(start_time_str, "%a, %d %b %Y %H:%M:%S %Z")
     end_time = datetime.now().replace(microsecond=0)
 
     match = Match.query.get(match_id)

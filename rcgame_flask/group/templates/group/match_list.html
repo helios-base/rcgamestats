@@ -6,6 +6,10 @@
 {% block content %}
 <h2>Group Name: {{ group_name }}</h2>
 
+<div>
+    <a href="{{ url_for('group.show_group_logs', group_name=group_name) }}">All Logs</a>
+</div>
+
 <!-- Googleスプレッドシートへアップロードするボタンを追加 -->
 <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
     <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group_id) }}" method="post">
@@ -13,6 +17,7 @@
         <button type="submit">Upload to Google Spreadsheet</button>
     </form>
 </div>
+
 
 <table>
     <thead>

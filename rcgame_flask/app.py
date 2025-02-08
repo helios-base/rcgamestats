@@ -66,6 +66,10 @@ def create_app(test_config=None):
     def index():
         return render_template('index.html')
 
+    @app.template_filter('basename')
+    def basename(path):
+        return os.path.basename(path)
+
     return app
 
 

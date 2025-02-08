@@ -21,11 +21,13 @@ def init_db():
     with current_app.open_resource("teamlist.csv") as f:
         reader = csv.reader(f.read().decode("utf8").splitlines())
         for row in reader:
-            if len(row) == 3:
+            if len(row) == 5:
                 team = Team(
                     name=row[0],
-                    synch_mode=(row[1].strip().lower() == "true"),
-                    archive_path=row[2],
+                    version=row[1],
+                    synch_mode=(row[2].strip().lower() == "true"),
+                    archive_path=row[3],
+                    description=row[4],
                 )
                 db.session.add(team)
 

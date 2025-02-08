@@ -1,6 +1,12 @@
 {% macro render_field(field) %}
     <dt>{{ field.label }}</dt>
-    <dd>{{ field(**kwargs)| safe }}</dd>
+    <dd>
+        {%if field.type == 'TextAreaField' %}
+            {{ field(class_='textarea-field', **kwargs)| safe }}
+        {% else %}
+            {{ field(**kwargs)| safe }}
+        {% endif %}
+    </dd>
     {% if field.errors %}
     <ul style="color: red;">
         {% for error in field.errors %}

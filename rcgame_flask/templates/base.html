@@ -4,79 +4,119 @@
 <!-- テーブルのデザインを固定 -->
 <style>
   table {
-      width: 100%;
-      border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
   }
-  th, td {
-      border: 1px solid #000000;
-      padding: 8px;
-      word-wrap: break-word;
-      max-width: 200px; 
+
+  th,
+  td {
+    border: 1px solid #000000;
+    padding: 8px;
+    word-wrap: break-word;
+    max-width: 200px;
   }
+
   th {
-      background-color: #f2f2f2;
-      text-align: left;
+    background-color: #f2f2f2;
+    text-align: left;
   }
+
   tr:nth-child(even) {
-      background-color: #f7f5f5;
+    background-color: #f7f5f5;
   }
+
   tr:hover {
-      background-color: #ddd;
+    background-color: #ddd;
   }
+
   .footer-nav {
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            right: -180px; /* 初期位置を画面外に設定 */
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: #ffffff;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            transition: right 0.3s ease; /* アニメーションを追加 */
-        }
-        .footer-nav a {
-            text-decoration: none;
-            color: #377ba8;
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid #f3f3f3; /* 各リンクを線で囲む */
-            border-radius: 4px; /* 角を丸くする */
-            font-weight: bold; /* フォントを太くする */
-            font-size: 1.1em; /* フォントサイズを大きくする */
-        }
-        .footer-nav a:hover {
-            background-color: #ddd; /* ホバー時の背景色を変更 */
-            color: #000; /* ホバー時の文字色を変更 */
-        }
-        .footer-nav:hover {
-            right: 0; /* カーソルが近づくと表示 */
-        }
-        .footer-nav::before {
-        content: '';
-        position: absolute;
-        left: -40px; /* 少し出ている部分の幅 */
-        top: 50%;
-        transform: translateY(-50%);
-        width: 40px; /* 少し出ている部分の幅 */
-        height: 100%;
-        background-color: #377ba8; /* 装飾の背景色 */
-        border-top-left-radius: 4px; /* 角を丸くする */
-        border-bottom-left-radius: 4px; /* 角を丸くする */
-        }
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: -180px;
+    /* 初期位置を画面外に設定 */
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #ffffff;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    transition: right 0.3s ease;
+    /* アニメーションを追加 */
+  }
+
+  .footer-nav a {
+    text-decoration: none;
+    color: #377ba8;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #f3f3f3;
+    /* 各リンクを線で囲む */
+    border-radius: 4px;
+    /* 角を丸くする */
+    font-weight: bold;
+    /* フォントを太くする */
+    font-size: 1.1em;
+    /* フォントサイズを大きくする */
+  }
+
+  .footer-nav a:hover {
+    background-color: #ddd;
+    /* ホバー時の背景色を変更 */
+    color: #000;
+    /* ホバー時の文字色を変更 */
+  }
+
+  .footer-nav:hover {
+    right: 0;
+    /* カーソルが近づくと表示 */
+  }
+
+  .footer-nav::before {
+    content: '';
+    position: absolute;
+    left: -40px;
+    /* 少し出ている部分の幅 */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    /* 少し出ている部分の幅 */
+    height: 100%;
+    background-color: #377ba8;
+    /* 装飾の背景色 */
+    border-top-left-radius: 4px;
+    /* 角を丸くする */
+    border-bottom-left-radius: 4px;
+    /* 角を丸くする */
+  }
+
+  .description {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 16ch;
+    display: inline-block;
+    position: relative;
+  }
+
+  .textarea-field {
+    width: 80%;
+    box-sizing: border-box;
+    /* パディングとボーダーを含めて幅を計算 */
+  }
 </style>
 <nav>
   <h1><a href="{{ url_for('index') }}">RCgame</a></h1>
   <ul>
     {% if current_user.is_authenticated %}
-      {% if current_user['type'] == 'admin' %}
-        <li><a href="{{ url_for('auth.register') }}">New User</a>
+    {% if current_user['type'] == 'admin' %}
+    <li><a href="{{ url_for('auth.register') }}">New User</a>
       {% endif %}
-        <li><span>{{ current_user['username'] }}</span></li>
-        <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
-        <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+    <li><span>{{ current_user['username'] }}</span></li>
+    <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
+    <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
     {% else %}
-      <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
+    <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
     {% endif %}
   </ul>
 </nav>
@@ -85,7 +125,7 @@
     {% block header %}{% endblock %}
   </header>
   {% for message in get_flashed_messages() %}
-    <div class="flash">{{ message }}</div>
+  <div class="flash">{{ message }}</div>
   {% endfor %}
   {% block content %}{% endblock %}
 </section>
@@ -98,6 +138,6 @@
     <a href="{{ url_for('group.index') }}">Groups</a>
     <a href="{{ url_for('team.index') }}">Teams</a>
     <a href="{{ url_for('host.index') }}">Hosts</a>
-</div>
+  </div>
 </footer>
 {% endif %}

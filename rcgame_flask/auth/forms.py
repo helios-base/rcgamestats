@@ -6,60 +6,32 @@ from rcgame_flask.auth.models import User
 
 class LoginForm(FlaskForm):
     """
-    ログイン用入力クラス
+    Login form input class
     """
-
-    username = StringField('ユーザー名：', 
-                           validators=[DataRequired('ユーザー名は必須入力です')])
-    # パスワード：パスワード入力
-    password = PasswordField('パスワード: ',
-                             validators=[Length(4, 10,
-                                    'パスワードの長さは4文字以上10文字以内です')])
-    # ボタン
-    submit = SubmitField('ログイン')
-
-    # カスタムバリデータ
-    # 英数字と記号が含まれているかチェックする
-    def validate_password(self, password):
-        if not (any(c.isalpha() for c in password.data) and \
-            any(c.isdigit() for c in password.data)):
-            raise ValidationError('パスワードには【英数字を含める必要があります')
-
+    username = StringField(
+        "Username: ", validators=[DataRequired("username is required")]
+    )
+    password = PasswordField(
+        "Password: ",
+        validators=[Length(4, 10, "Password must be between 4 and 10 characters")],
+    )
+    submit = SubmitField("Login")
 
 class SignUpForm(LoginForm):
     """
-    サインアップ用入力クラス
+    Singup form input class
     """
+    submit = SubmitField("Sign Up")
 
-    # ボタン                               
-    submit = SubmitField('サインアップ')
-
-    # カスタムバリデータ
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
         if user:
-            raise ValidationError('そのユーザー名は既に使用されています')
+            raise ValidationError("username already exists")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # check if the password contains both letters and numbers
+    def validate_password(self, password):
+        if not (
+            any(c.isalpha() for c in password.data)
+            and any(c.isdigit() for c in password.data)
+        ):
+            raise ValidationError("Password must contain both letters and numbers")

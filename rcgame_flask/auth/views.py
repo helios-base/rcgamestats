@@ -61,7 +61,7 @@ def login():
             # 画面遷移
             return redirect(url_for("index"))
         # 失敗
-        flash("認証不備です")
+        flash("authentication failed")
     # GET時
     # 画面遷移
     return render_template("auth/login.html", form=form)
@@ -74,7 +74,7 @@ def logout():
     # 現在ログインしているユーザーをログアウトする
     logout_user()
     # フラッシュメッセージ
-    flash("ログアウトしました")   
+    flash("logout done")   
     # 画面遷移
     return redirect(url_for("auth.login"))
 
@@ -96,7 +96,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         # フラッシュメッセージ
-        flash("ユーザー登録しました")  
+        flash("user registered")  
         # 画面遷移 
         return redirect(url_for("auth.login"))
     # GET時

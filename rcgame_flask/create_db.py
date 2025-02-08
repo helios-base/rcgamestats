@@ -12,6 +12,7 @@ def init_db():
     db.create_all()
 
     initial_password = secrets.token_urlsafe(8)
+    #initial_password = "admin"
     admin = User(username="admin", type="admin")
     admin.set_password(initial_password)
     db.session.add(admin)

@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Length, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 from rcgame_flask.auth.models import User
 
 
@@ -8,19 +8,42 @@ class LoginForm(FlaskForm):
     """
     Login form input class
     """
+
     username = StringField(
         "Username: ", validators=[DataRequired("username is required")]
     )
     password = PasswordField(
         "Password: ",
-        validators=[Length(4, 10, "Password must be between 4 and 10 characters")],
+        validators=[
+            DataRequired("password is required"),
+            Length(4, 32, "Password must be between 4 and 32 characters")
+        ],
     )
     submit = SubmitField("Login")
 
-class SignUpForm(LoginForm):
+
+class SignUpForm(FlaskForm):
     """
     Singup form input class
     """
+
+    username = StringField(
+        "Username: ", validators=[DataRequired("username is required")]
+    )
+    password = PasswordField(
+        "Password: ",
+        validators=[
+            DataRequired("password is required"),
+            Length(4, 32, "Password must be between 4 and 32 characters"),
+        ],
+    )
+    confirm_password = PasswordField(
+        "Confirm Password: ",
+        validators=[
+            DataRequired("confirm password is required"),
+            EqualTo("password", "Passwords must match"),
+        ],
+    )
     submit = SubmitField("Sign Up")
 
     def validate_username(self, username):

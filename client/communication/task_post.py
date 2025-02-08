@@ -3,10 +3,9 @@ from config import Config
 from communication.get_csrf_token import get_csrf_token
 
 def task_post_request(host_name,api_key):
-    csrf_token = get_csrf_token()
+    #csrf_token = get_csrf_token()
+    #print(f"csrf_token:[{csrf_token}]")
     post_url = f"http://{Config.SERVER_URL}/group/request_match"
-
-    print(f"csrf_token:[{csrf_token}]")
 
     # POST したいデータ
     data = {
@@ -14,7 +13,7 @@ def task_post_request(host_name,api_key):
         "api_key": api_key
     }
     headers = {
-        'X-CSRFToken': csrf_token,
+        #'X-CSRFToken': csrf_token,
         'x-api-key': api_key
     }
 

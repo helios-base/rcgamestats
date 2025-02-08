@@ -8,11 +8,11 @@ from communication.get_csrf_token import get_csrf_token
 
 
 def result_post_request(response_data, file_paths, api_key, host_name):
-    csrf_token = get_csrf_token()
+    #csrf_token = get_csrf_token()
 
     headers = {
         'x-api-key': api_key,
-        'X-CSRFToken': csrf_token
+        #'X-CSRFToken': csrf_token
     }
 
     log_file_name = response_data["log_file_name"]

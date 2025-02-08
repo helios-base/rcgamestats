@@ -12,12 +12,12 @@ def _get_spreadsheet():
     """
     scope = ["https://spreadsheets.google.com/feeds"]
 
-    if config.DOC_ID is None or config.KEY_PATH is None:
+    if config.GGOOGLE_DOC_ID is None or config.KEY_PATH is None:
         print("Error: DOC_ID or KEY_PATH is not set.")
         return None
     
-    doc_id = config.DOC_ID
-    key_path = os.path.expanduser(config.KEY_PATH)
+    doc_id = config.GOOGLE_DOC_ID
+    key_path = os.path.expanduser(config.GOOGLE_KEY_PATH)
 
     try:
         credentials = ServiceAccountCredentials.from_json_keyfile_name(key_path, scope)

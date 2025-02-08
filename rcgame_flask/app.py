@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from rcgame_flask.config import config
 
 
 db = SQLAlchemy()
@@ -19,18 +20,16 @@ login_manager.login_message = "Please log in to access this page."
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SECRET_KEY='kcairenkczczp93qhjnba;8ia',
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'rcgame_flask.sqlite'),
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        WTF_CSRF_ENABLED=True,
-        WTF_CSRF_SECRET_KEY='kwjer283n2k3gpiue9vrdfagb',
-        )
+    # app.config.from_mapping(
+    #     SECRET_KEY='kcairenkczczp93qhjnba;8ia',
+    #     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'rcgame_flask.sqlite'),
+    #     SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    #     WTF_CSRF_ENABLED=True,
+    #     WTF_CSRF_SECRET_KEY='kwjer283n2k3gpiue9vrdfagb',
+    #     )
+    app.config.from_object(config)
 
-    if test_config is None:
-        # load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
+    if test_config is not None:
         # load the test config if passed in
         app.config.from_mapping(test_config)
 

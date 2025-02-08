@@ -1,10 +1,10 @@
+import csv
+import click
+import secrets
 from flask import current_app
 from rcgame_flask.app import db
 from rcgame_flask.auth.models import User, APIKey
 from rcgame_flask.team.models import Team
-import csv
-import click
-import secrets
 
 
 def init_db():

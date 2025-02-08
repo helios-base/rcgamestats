@@ -72,10 +72,11 @@
       {% if current_user['type'] == 'admin' %}
         <li><a href="{{ url_for('auth.register') }}">New User</a>
       {% endif %}
-        <li><span>{{ current_user['username'] }}</span>
-        <li><a href="{{ url_for('auth.logout') }}">Log Out</a>
+        <li><span>{{ current_user['username'] }}</span></li>
+        <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
+        <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
     {% else %}
-      <li><a href="{{ url_for('auth.login') }}">Log In</a>
+      <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
     {% endif %}
   </ul>
 </nav>

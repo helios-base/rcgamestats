@@ -51,10 +51,44 @@ class SignUpForm(FlaskForm):
         if user:
             raise ValidationError("username already exists")
 
-    # check if the password contains both letters and numbers
     def validate_password(self, password):
+        self.validate_password_strength(self, password)
+
+    # check if the password contains both letters and numbers
+    @staticmethod
+    def validate_password_strength(password):
         if not (
             any(c.isalpha() for c in password.data)
             and any(c.isdigit() for c in password.data)
         ):
             raise ValidationError("Password must contain both letters and numbers")
+
+
+class PasswordChangeForm(FlaskForm):
+    """
+    Password change form input class
+    """
+
+    current_password = StringField(
+        "Current Password: ",
+        validators=[DataRequired("current password is required")],
+    )
+    new_password = PasswordField(
+        "New Password: ",
+        validators=[
+            DataRequired("new password is required"),
+            Length(4, 32, "Password must be between 4 and 32 characters"),
+        ],
+    )
+    confirm_password = PasswordField(
+        "Confirm Password: ",
+        validators=[
+            DataRequired("confirm password is required"),
+            EqualTo("new_password", "Passwords must match"),
+        ],
+    )
+    submit = SubmitField("Change Password")
+
+    # check if the password contains both letters and numbers
+    def validate_new_password(self, new_password):
+        SignUpForm.validate_password_strength(new_password)

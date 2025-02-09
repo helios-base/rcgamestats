@@ -450,3 +450,29 @@ def submit_result():
     db.session.commit()
 
     return jsonify({"message": "Match result submitted."})
+
+
+@group.route("/decline_assignment", methods=["POST"])
+@csrf.exempt
+@require_api_key
+def decline_assignment():
+    """
+    Decline an assigned match.
+    """
+    data = request.form.to_dict()
+    match_id = data.get("match_id")
+    token = data.get("token")
+
+    match = Match.query.get(match_id)
+    if match is None:
+        return jsonify({"error": "Match not found."}), 404
+
+    # if match.token != token:
+    #     return jsonify({"error": "Token does not match."}), 400
+
+    match.host_name = None
+    match.start_time = None
+    match.processed = "unexecuted"
+    db.session.commit()
+
+    return jsonify({"message": "Match declined."})

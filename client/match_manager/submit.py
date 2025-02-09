@@ -5,7 +5,7 @@ from datetime import datetime
 from config import config
 
 
-def move_log_files(file_paths, log_dir):
+def __move_log_files(file_paths, log_dir):
     """
     Move log files from temporal directory to log directory.
     """
@@ -14,9 +14,10 @@ def move_log_files(file_paths, log_dir):
         os.makedirs(log_dir)
 
     for file_path in file_paths:
-        log_file_path = os.path.join(log_dir, os.path.basename(file_path))
         if os.path.exists(file_path):
-            os.rename(file_path, log_file_path)
+            new_file_path = os.path.join(log_dir, os.path.basename(file_path))
+            os.rename(file_path, new_file_path)
+
 
 def submit_result(match):
     """
@@ -52,5 +53,5 @@ def submit_result(match):
     response.raise_for_status()
 
     print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Response content:", response.text)
-    move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+    __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
     return response.json()

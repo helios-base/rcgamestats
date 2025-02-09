@@ -2,6 +2,7 @@ import os
 import time
 import signal
 import match_manager
+import team_manager
 from config import config
 
 
@@ -28,16 +29,28 @@ def remove_temporal_files():
             os.remove(file_path)
 
 
-def create_log_dir(group_name):
-    log_dir = os.path.join(config.LOG_DIR, group_name)
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-
-
 def remove_stop_file():
     if os.path.exists(config.STOP_FILE_PATH):
         os.remove(config.STOP_FILE_PATH)
 
+
+def check_download_teams(match):
+    if not team_manager.exist_team(match.left_team_name, match.left_team_version):
+        if not team_manager.download_team(match.left_team_name, match.left_team_version):
+            return False
+    if not team_manager.exist_team(match.right_team_name, match.right_team_version):
+        if not team_manager.download_team(match.right_team_name, match.right_team_version):
+            return False
+
+    if not team_manager.exist_team(match.left_team_name, match.left_team_version):
+        print("(check_download_teams) No left team.")
+        return False
+
+    if not team_manager.exist_team(match.right_team_name, match.right_team_version):
+        print("(check_download_teams) No right team.")
+        return False
+
+    return True
 
 def main():
     remove_stop_file()
@@ -52,11 +65,18 @@ def main():
         match = match_manager.request_match()
         if match:
             print("RECV:", match)
-            match.run()
-            match_manager.submit_result(match)
+            if not check_download_teams(match):
+                print("Failed to download teams.")
+                match_manager.decline_match(match)
+                print("Sleep for", config.SLEEP_TIME, "seconds.")
+                time.sleep(config.SLEEP_TIME)
+            else:
+                match.run()
+                match_manager.submit_result(match)
 
         print("Sleep for", config.SLEEP_TIME, "seconds.")
         time.sleep(config.SLEEP_TIME)
+
 
 if __name__ == "__main__":
     main()

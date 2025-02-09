@@ -1,9 +1,11 @@
 import os
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
+from flask import send_file, abort
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from rcgame_flask.app import db
 from rcgame_flask.config import config
+from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.team.forms import TeamUploadForm
 from rcgame_flask.team.models import Team
 
@@ -88,6 +90,32 @@ def download(name, version):
     team = Team.query.filter_by(name=name, version=version).first()
     if team:
         print(team.archive_path)
-        return redirect(url_for("static", filename=team.archive_path))
+        abs_path = os.path.join(current_app.static_folder, team.archive_path)
+        try:
+            return send_file(abs_path, as_attachment=True)
+        except FileNotFoundError:
+            abort(404)
+        # The folloing code causes a problem for transferring a gzipped file.
+        # return redirect(url_for("static", filename=team.archive_path))
+
+    return redirect(url_for("team.index"))
+
+
+@team.route("/api_download/<string:name>/<string:version>", methods=["GET"])
+@require_api_key
+def api_download(name, version):
+    """
+    Download the team archive.
+    """
+    team = Team.query.filter_by(name=name, version=version).first()
+    if team:
+        print(team.archive_path)
+        abs_path = os.path.join(current_app.static_folder, team.archive_path)
+        try:
+            return send_file(abs_path, as_attachment=True)
+        except FileNotFoundError:
+            abort(404)
+        # The folloing code causes a problem for transferring a gzipped file.
+        # return redirect(url_for("static", filename=team.archive_path))
 
     return redirect(url_for("team.index"))

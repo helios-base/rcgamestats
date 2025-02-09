@@ -1,6 +1,7 @@
 import os
 import shutil
 import glob
+import re
 from datetime import datetime
 from rcgame_flask.app import db, csrf
 from flask import (
@@ -352,6 +353,8 @@ def request_match():
     if match is None:
         return jsonify({"error": "No unexecuted matches found."}), 404
     
+    if match.group is None:
+        return jsonify({"error": "Group name found."}), 404
     if match.left_team is None:
         return jsonify({"error": "Left team not found."}), 404
     if match.right_team is None:
@@ -376,6 +379,7 @@ def request_match():
         {
             "match_id": match.id,
             "group_id": match.group_id,
+            "group_name": match.group.name,
             "group_index": match.group_index,
             "host_name": match.host_name,
             "start_time": start_time,
@@ -395,7 +399,10 @@ def submit_result():
     """
     Submit a match result.
     """
+    print("(submit_result) request.form:", request.form)
     data = request.form.to_dict()
+    print("(submit_result) match_result:", data)
+    print("(submit_result) files:", request.files)
 
     match_id = data.get("match_id")
     left_team_name = data.get("left_team_name")
@@ -415,6 +422,8 @@ def submit_result():
     if match.right_team.name != right_team_name:
         return jsonify({"error": "Right team name do not match."}), 400
 
+    print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.group_index)
+
     group = Group.query.get(match.group_id)
     if group is None:
         return jsonify({"error": "Group not found."}), 404
@@ -425,10 +434,13 @@ def submit_result():
         os.makedirs(log_dir)
 
     # Save the log files
+    common_name = match.log_file_name
     for file in request.files.getlist("log_file"):
         if file and file.filename:
-            #print(f"Saving log file {file.filename}...")
-            file.save(os.path.join(log_dir, file.filename))
+            #file.save(os.path.join(log_dir, file.filename))
+            new_file_name = re.sub(r'^[^.]+', common_name, file.filename)
+            print(f"Saving log file {file.filename} as {new_file_name} ...")
+            file.save(os.path.join(log_dir, new_file_name))
 
     # Update the match record
     match.end_time = end_time

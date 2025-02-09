@@ -1,8 +1,8 @@
 import os
-from config import config
+from config import config    
 
 
-def get_start_path(team_name, version):
+def get_team_path(team_name, version):
     """
     Check if the team directory exists and contains a valid start script.
     Return the path to the start script if it exists, otherwise return None.
@@ -16,7 +16,7 @@ def get_start_path(team_name, version):
 
     # Check if the team directory exists
     if not os.path.exists(team_dir) or not os.path.isdir(team_dir):
-        print(f"(get_start_path) Team directory not found: {team_dir}")
+        print(f"(get_team_path) Team directory not found: {team_dir}")
         return None
 
     # Check if the team directory contains a directory
@@ -26,13 +26,13 @@ def get_start_path(team_name, version):
         if os.path.isdir(entry_path):
             # Check if the directory contains 'start.sh'
             start_script = os.path.join(entry_path, "start.sh")
-            print(f"(get_start_path) Checking start script: {start_script}")
+            #print(f"(get_team_path) Checking start script: {start_script}")
             if (
                 os.path.exists(start_script)
                 and os.path.isfile(start_script)
                 and os.access(start_script, os.X_OK)
             ):
-                return start_script
+                return entry_path
 
     return None
 
@@ -46,4 +46,4 @@ def exist_team(team_name, version):
     Returns:
         True if the team start script exists, otherwise False.
     """
-    return get_start_path(team_name, version) is not None
+    return get_team_path(team_name, version) is not None

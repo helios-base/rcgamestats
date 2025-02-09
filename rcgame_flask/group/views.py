@@ -351,7 +351,7 @@ def request_match():
 
     match = Match.query.filter_by(processed="unexecuted").first()
     if match is None:
-        return jsonify({"error": "No unexecuted matches found."}), 404
+        return jsonify({"message": "No unexecuted matches found."}), 200
     
     if match.group is None:
         return jsonify({"error": "Group name found."}), 404
@@ -375,6 +375,8 @@ def request_match():
 
     db.session.commit()
 
+    synch_mode = match.left_team.synch_mode and match.right_team.synch_mode
+
     return jsonify(
         {
             "match_id": match.id,
@@ -388,6 +390,7 @@ def request_match():
             "right_team_name": right_team_name,
             "right_team_version": right_team_version,
             "log_file_name": log_file_name,
+            "synch_mode": synch_mode,
         }
     )
 

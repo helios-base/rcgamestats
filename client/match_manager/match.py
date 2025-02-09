@@ -4,6 +4,7 @@ import csv
 # import subprocess
 from datetime import datetime
 from config import config
+from team_manager import get_team_path
 
 
 class Match:
@@ -25,6 +26,7 @@ class Match:
         self.left_score = -1
         self.right_score = -1
         self.log_file_name = log_file_name
+        self.synch_mode = True
 
 
     def __str__(self):
@@ -46,6 +48,7 @@ class Match:
             left_score = json_data.get("left_score", -1)
             right_score = json_data.get("right_score", -1)
             log_file_name = json_data["log_file_name"]
+            synch_mode = json_data.get("synch_mode", True)
         except KeyError:
             return None
 
@@ -55,6 +58,7 @@ class Match:
         match.right_team_version = right_team_version
         match.left_score = left_score
         match.right_score = right_score
+        match.synch_mode = synch_mode
         return match
 
     def to_json(self):
@@ -71,7 +75,8 @@ class Match:
             "right_team_version": self.right_team_version,
             "left_score": self.left_score,
             "right_score": self.right_score,
-            "log_file_name": self.log_file_name
+            "log_file_name": self.log_file_name,
+            "synch_mode": self.synch_mode,
         }
 
     def set_result(self, result_csv):
@@ -109,18 +114,28 @@ class Match:
         # def preexec_function():
         #     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        #log_dir = os.path.join(config.LOG_DIR, self.group_name)
+        # log_dir = os.path.join(config.LOG_DIR, self.group_name)
         log_dir = config.TEMPORAL_DIR
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-        
+
         # args = [self.left_team_name, self.right_team_name, log_dir, self.log_file_name]
         # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (Match::run) args:", args)
         # process = subprocess.Popen([config.RUN_SCRIPT] + args, preexec_fn=preexec_function)
         # process.wait()
-        os.system(
-            f"{config.RUN_SCRIPT} {self.left_team_name} {self.right_team_name} {log_dir} {self.log_file_name}"
-        )
+
+        # command = f"{config.RUN_SCRIPT} {self.left_team_name} {self.right_team_name} {log_dir} {self.log_file_name}"
+        left_path = get_team_path(self.left_team_name, self.left_team_version)
+        right_path = get_team_path(self.right_team_name, self.right_team_version)
+        synch_mode_str = "1" if self.synch_mode else "0"
+
+        command = f"{config.RUN_SCRIPT} {left_path} {right_path} {synch_mode_str} {log_dir} {self.log_file_name}"
+        exit_code = os.system(command)
+
+        if exit_code != 0:
+            print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (Match::run) Error running the match.")
+            return False
 
         result_csv = os.path.join(log_dir, f"{self.log_file_name}.csv")
         self.set_result(result_csv)
+        return True

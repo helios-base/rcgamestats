@@ -21,7 +21,16 @@ def request_match():
     }
 
     response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP error occurred: {e}")
+        return None
+
+    # レスポンスに含まれるjsonデータに "message" が含まれている場合はエラーとして処理する
+    if "message" in response.json():
+        print(f"INFO: {response.json()['message']}")
+        return None
 
     print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}]((request_post) Response content:", response.text)
     match = Match.from_json(response.json())

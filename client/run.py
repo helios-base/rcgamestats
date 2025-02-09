@@ -71,8 +71,10 @@ def main():
                 print("Sleep for", config.SLEEP_TIME, "seconds.")
                 time.sleep(config.SLEEP_TIME)
             else:
-                match.run()
-                match_manager.submit_result(match)
+                if match.run():
+                    match_manager.submit_result(match)
+                else:
+                    match_manager.decline_match(match)
 
         print("Sleep for", config.SLEEP_TIME, "seconds.")
         time.sleep(config.SLEEP_TIME)

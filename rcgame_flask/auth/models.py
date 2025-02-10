@@ -34,7 +34,7 @@ class APIKey(db.Model):
 
     @staticmethod
     def generate_api_key():
-        return secrets.token_hex(32)
+        return secrets.token_hex(16)
     
     def is_expired(self):
         return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at

@@ -21,26 +21,24 @@ def get_csrf_token():
     return jsonify({'csrf_token': token})
 
 
-@auth.route("/create_api_key", methods=["POST"])
+@auth.route("/create_api_key", methods=["GET"])
 def create_api_key():
-    user_id = request.json.get('user_id')
-    scope = request.json.get('scope')
-    expires_in = request.json.get('expires_in')  # 有効期限（秒）
-
-    if not user_id:
-        return jsonify({'error': 'User ID is required'}), 400
+    """
+    Create API key
+    """
+    scope = current_user.type
+    expires_in = None
 
     api_key = APIKey(
         key=APIKey.generate_api_key(),
-        user_id=user_id,
+        user_id=current_user.id,
         scope=scope,
         expires_at=datetime.now(timezone.utc) + timedelta(seconds=expires_in) if expires_in else None
     )
     db.session.add(api_key)
     db.session.commit()
 
-    return jsonify({'api_key': api_key.key})
-
+    return redirect(url_for('auth.api_keys'))
 
 @auth.route("/login", methods=["GET", "POST"])
 def login():

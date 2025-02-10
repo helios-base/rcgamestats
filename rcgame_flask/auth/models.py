@@ -8,10 +8,11 @@ from rcgame_flask.app import db, login_manager
 
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    type = db.Column(db.String(50), nullable=False, default="user")
+    type = db.Column(db.String(50), nullable=False, default='user')
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -21,16 +22,19 @@ class User(UserMixin, db.Model):
 
 
 class APIKey(db.Model):
+    __tablename__ = 'api_key'
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(32), unique=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     expires_at = db.Column(db.DateTime, nullable=True)
     scope = db.Column(db.String(255), nullable=True)
 
+    user = db.relationship('User', backref=db.backref('api_keys', lazy='dynamic'))
+
     @staticmethod
     def generate_api_key():
-        return secrets.token_hex(32)
+        return secrets.token_hex(16)
     
     def is_expired(self):
         return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at

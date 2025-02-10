@@ -16,6 +16,7 @@ def init_db():
     admin = User(username="admin", type="admin")
     admin.set_password(initial_password)
     db.session.add(admin)
+    db.session.commit()
 
     # teamlist.csvのデータを挿入
     with current_app.open_resource("teamlist.csv") as f:
@@ -31,12 +32,14 @@ def init_db():
                 )
                 db.session.add(team)
 
-    default_api_key = APIKey(key="xchuqnjxcnauhnjnxpzsjdiwjksa")
+    default_api_key = APIKey(key="xchuqnjxcnauhnjnxpzsjdiwjksa", user_id=admin.id)
     db.session.add(default_api_key)
 
     db.session.commit()
 
     print(f"Admin user created with password: {initial_password}")
+    print(f"Admin user: {admin.username}")
+    print(f"Admin API key: {admin.api_keys.all()}")
 
 @click.command("init-db")
 def init_db_command():

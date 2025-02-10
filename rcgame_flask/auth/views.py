@@ -121,4 +121,39 @@ def dashboard():
     """
     Dashboard
     """
-    return render_template("auth/dashboard.html", user=current_user)
+    print(f"Current user: {current_user.username}")
+    print(f"API keys: {len(current_user.api_keys.all())}")
+    for key in current_user.api_keys:
+        print(f"API key: {key.key}")
+    return render_template("auth/dashboard.html")
+
+
+@auth.route("/api_keys")
+@login_required
+def api_keys():
+    """
+    API keys
+    """
+    return render_template("auth/api_keys.html", user=current_user)
+
+
+@auth.route("/api_keys/<int:key_id>/delete", methods=["POST"])
+@login_required
+def delete_api_key(key_id):
+    """
+    Delete API key
+    """
+    user_api_keys = current_user.api_keys.all()
+    if len(user_api_keys) == 1:
+        flash("At least one API key is required")
+        return redirect(url_for("auth.api_keys"))
+
+    api_key = APIKey.query.get(key_id)
+    if api_key is None:
+        flash("API key not found")
+        return redirect(url_for("auth.api_keys"))
+
+    db.session.delete(api_key)
+    db.session.commit()
+    flash("API key deleted")
+    return redirect(url_for("auth.api_keys"))

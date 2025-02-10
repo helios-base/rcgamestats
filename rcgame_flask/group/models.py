@@ -31,6 +31,6 @@ class Match(db.Model):
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(16))
 
-    group = db.relationship('Group', backref=db.backref('matches', lazy='dynamic'))
+    group = db.relationship('Group', foreign_keys=[group_id])
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])

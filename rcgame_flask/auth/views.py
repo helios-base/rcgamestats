@@ -113,3 +113,12 @@ def change_password():
         return redirect(url_for("index"))
 
     return render_template("auth/change_password.html", form=form)
+
+
+@auth.route("/dashboard")
+@login_required
+def dashboard():
+    """
+    Dashboard
+    """
+    return render_template("auth/dashboard.html", user=current_user)

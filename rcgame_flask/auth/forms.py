@@ -52,7 +52,7 @@ class SignUpForm(FlaskForm):
             raise ValidationError("username already exists")
 
     def validate_password(self, password):
-        self.validate_password_strength(self, password)
+        SignUpForm.validate_password_strength(password)
 
     # check if the password contains both letters and numbers
     @staticmethod

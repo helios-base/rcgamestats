@@ -2,6 +2,7 @@ import os
 import shutil
 import glob
 import re
+import secrets
 from datetime import datetime
 from rcgame_flask.app import db, csrf
 from flask import (
@@ -240,7 +241,7 @@ def upload_group_results_to_google_sheet(group_id):
     if group_name is None:
         flash(f"Group ID {group_id} has no name.")
         return redirect(url_for("group.index"))
-    
+
     if group.left_team is None:
         flash(f"Group ID {group_id} has no left team.")
         return redirect(url_for("group.index"))
@@ -287,6 +288,8 @@ def reset_match(group_id, match_id):
         match.host_name = None
         match.start_time = None
         match.processed = "unexecuted"
+        match.log_file_name = None
+        match.token = None
         db.session.commit()
         flash(f"Match {match.group_index} has been reset.")
     else:
@@ -372,6 +375,7 @@ def request_match():
     match.start_time = start_time
     match.processed = "in progress"
     match.log_file_name = log_file_name
+    match.token = secrets.token_hex(16)
 
     db.session.commit()
 
@@ -390,6 +394,7 @@ def request_match():
             "right_team_name": right_team_name,
             "right_team_version": right_team_version,
             "log_file_name": log_file_name,
+            "token": match.token,
             "synch_mode": synch_mode,
         }
     )
@@ -407,11 +412,15 @@ def submit_result():
     print("(submit_result) match_result:", data)
     print("(submit_result) files:", request.files)
 
-    match_id = data.get("match_id")
-    left_team_name = data.get("left_team_name")
-    right_team_name = data.get("right_team_name")
-    left_score = data.get("left_score")
-    right_score = data.get("right_score")
+    try:
+        match_id = data.get("match_id")
+        left_team_name = data.get("left_team_name")
+        right_team_name = data.get("right_team_name")
+        left_score = data.get("left_score")
+        right_score = data.get("right_score")
+        token = data.get("token")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
     end_time = datetime.now().replace(microsecond=0)
 
@@ -426,6 +435,9 @@ def submit_result():
         return jsonify({"error": "Right team name do not match."}), 400
 
     print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.group_index)
+
+    if match.token != token:
+        return jsonify({"error": "Token does not match."}), 401
 
     group = Group.query.get(match.group_id)
     if group is None:
@@ -470,12 +482,14 @@ def decline_assignment():
     if match is None:
         return jsonify({"error": "Match not found."}), 404
 
-    # if match.token != token:
-    #     return jsonify({"error": "Token does not match."}), 400
+    if match.token != token:
+        return jsonify({"error": "Token does not match."}), 401
 
     match.host_name = None
     match.start_time = None
     match.processed = "unexecuted"
+    match.log_file_name = None
+    match.token = None
     db.session.commit()
 
     return jsonify({"message": "Match declined."})

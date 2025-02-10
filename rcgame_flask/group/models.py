@@ -29,6 +29,7 @@ class Match(db.Model):
     right_score = db.Column(db.Integer)
     processed = db.Column(db.String(15), default='unexecuted')
     log_file_name = db.Column(db.String(255))
+    token = db.Column(db.String(16))
 
     group = db.relationship('Group', backref=db.backref('matches', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])

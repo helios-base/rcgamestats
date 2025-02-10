@@ -110,13 +110,15 @@
   }
 </style>
 <nav>
-  <h1><a href="{{ url_for('index') }}">RCgame</a></h1>
+  <h1>RCgame</h1>
   <ul>
     {% if current_user.is_authenticated %}
+      <li><a href="{{ url_for('index') }}">Top</a></li>
+      <li><a href="{{ url_for('group.index') }}">Groups</a></li>
+      <li><a href="{{ url_for('team.index') }}">Teams</a></li>
+      <li><span> | </span></li>
       <li><a href="{{ url_for('auth.dashboard') }}">{{ current_user['username'] }}</a></li>
       <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
-    {% else %}
-      <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
     {% endif %}
   </ul>
 </nav>

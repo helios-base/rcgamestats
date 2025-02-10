@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Team Upload{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div>(*) fields are mandatory.</div>
+{% from "_formhelpers.html" import render_field %}
+<form method="POST" action="{{ url_for('team.upload') }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    {{ render_field(form.team_name) }}
+    {{ render_field(form.synch_mode) }}
+    {{ render_field(form.version) }}
+    {{ render_field(form.description) }}
+    {{ render_field(form.archive_file) }}
+    <br>
+    {% for message in get_flashed_messages() %}
+    <div style="color: blue;">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {{ form.submit }}
+</form>
+{% endblock %}

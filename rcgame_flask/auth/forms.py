@@ -69,7 +69,7 @@ class PasswordChangeForm(FlaskForm):
     Password change form input class
     """
 
-    current_password = StringField(
+    current_password = PasswordField(
         "Current Password: ",
         validators=[DataRequired("current password is required")],
     )

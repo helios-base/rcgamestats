@@ -8,11 +8,11 @@
     <thead>
         <tr>
             <th>Name</th>
-            <th>Datetime</th>
+            <th>Created At</th>
             <th>Left Team</th>
             <th>Right Team</th>
-            <th>Memo</th>
             <th># of Matches</th>
+            <th>Description</th>
             <th>Log Files</th> 
             <th>Actions</th>
         </tr>
@@ -22,11 +22,23 @@
         <tr>
             <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
             <td>{{ group.created_at }}</td>
-            <td>{{ group.left_team }}</td>
-            <td>{{ group.right_team }}</td>
-            <td>{{ group.memo }}</td>
+            <td>
+                {% if group.left_team %}
+                    {{ group.left_team.name }}
+                {% else %}
+                    <span class="error">Not found</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if group.right_team %}
+                    {{ group.right_team.name }}
+                {% else %}
+                    <span class="error">Not found</span>
+                {% endif %}
+            </td>
             <td>{{ group.number_of_matches }}</td>
-            <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">group_log_file</a></td>
+            <td>{{ group.description }}</td>
+            <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
             <td>
                 <form action="{{ url_for('group.delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('{{group.name}}を削除しますか?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

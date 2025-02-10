@@ -12,7 +12,7 @@ def _get_spreadsheet():
     """
     scope = ["https://spreadsheets.google.com/feeds"]
 
-    if config.GGOOGLE_DOC_ID is None or config.KEY_PATH is None:
+    if config.GOOGLE_DOC_ID is None or config.GOOGLE_KEY_PATH is None:
         print("Error: DOC_ID or KEY_PATH is not set.")
         return None
     
@@ -72,14 +72,14 @@ def _get_or_create_summary_sheet(spreadsheet):
             "R#ofScored",
             "LScoredRate",
             "RScoredRate",
-            "Memo",
+            "Description",
         ]
         summary_sheet.append_row(header)
 
     return summary_sheet
 
 
-def _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, right_name, memo):
+def _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, right_name, desc):
     """
     Insert a new row into the summary worksheet.
 
@@ -89,7 +89,7 @@ def _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, ri
         group_time (str): The date and time of the group creation.
         left_name (str): The name of the left team.
         right_name (str): The name of the right team.
-        memo (str): The memo for the group.
+        desc (str): The description for the group.
     """
     if spreadsheet is None:
         print("Error: spread_sheet is None")
@@ -129,7 +129,7 @@ def _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, ri
         group_time.strftime("%Y-%m-%d %H:%M:%S"),
         left_name,
         right_name,
-        memo,
+        desc,
         num_match,
         l_win,
         draw,
@@ -153,7 +153,7 @@ def _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, ri
     summary_sheet.insert_row(values=data, index=2, value_input_option="USER_ENTERED")
 
 
-def get_or_create_group_sheet(group_name, group_time, left_name, right_name, memo):
+def get_or_create_group_sheet(group_name, group_time, left_name, right_name, desc):
     """
     Get the worksheet for the group.
     If the group worksheet does not exist, create a new one.
@@ -163,7 +163,7 @@ def get_or_create_group_sheet(group_name, group_time, left_name, right_name, mem
         group_time (str): The date and time of the group creation
         left_name (str): The name of the left team.
         right_name (str): The name of the right team.
-        memo (str): The memo for the group.
+        desc (str): The description for the group.
 
     :return: group_sheet
     """
@@ -178,16 +178,16 @@ def get_or_create_group_sheet(group_name, group_time, left_name, right_name, mem
         print("create a new group sheet " + group_name)
         group_sheet = spreadsheet.add_worksheet(group_name, 100, 8)
 
-    _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, right_name, memo)
+    _insert_group_summary_row(spreadsheet, group_name, group_time, left_name, right_name, desc)
 
     return group_sheet
 
 
-def upload_group_results(group_name, group_time, left_name, right_name, memo, match_records):
+def upload_group_results(group_name, group_time, left_name, right_name, desc, match_records):
     """
     Upload the match results to the Google Spreadsheet.
     """
-    group_sheet = get_or_create_group_sheet(group_name, group_time, left_name, right_name, memo)
+    group_sheet = get_or_create_group_sheet(group_name, group_time, left_name, right_name, desc)
     if group_sheet is None:
         print(f"Error: Failed to get a group sheet for {group_name}")
         return False

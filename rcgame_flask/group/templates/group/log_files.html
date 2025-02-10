@@ -5,6 +5,9 @@
 
 {% block content %}
 <h2>Group Name: {{ dir_name }}</h2>
+<div>
+  <a href="{{ url_for('group.show_group_matches', group_name=dir_name) }}">Back to Group</a>
+  </a>
 <ul>
   {% for file_name in file_names %}
     <li><a href="{{ url_for('static', filename='logs/' ~ dir_name ~ '/' ~ file_name) }}">{{ file_name }}</a></li>

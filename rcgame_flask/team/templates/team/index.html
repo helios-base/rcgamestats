@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block header %}
 <h1>{% block title %}Teams{% endblock %}</h1>
-<a class="action" href="{{ url_for('group.create') }}">Create a new group</a>
 <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
     {% if active_only %}
     <a href="{{ url_for('team.index', active_only=False) }}">Show All</a>
@@ -26,6 +25,9 @@
             <th>Archive File</th>
             <th>Description</th>
             <th>Is Active</th>
+            {% if not active_only %}
+            <th>Delete</th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -51,6 +53,18 @@
                     onclick="event.preventDefault(); document.getElementById('toggle-form-{{ team.id }}').submit();">{{
                     team.is_active }}</a>
             </td>
+            {% if not active_only %}
+            <td>
+                {% if not team.is_active %}
+                <form id="delete-form-{{ team.id }}" action="{{ url_for('team.delete', team_id=team.id) }}"
+                    method="post" style="display:none;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+                <a href="#"
+                    onclick="event.preventDefault(); if (confirm('Delete {{ team.name }}?')) { document.getElementById('delete-form-{{ team.id }}').submit(); }">Delete</a>
+                {% endif %}
+            </td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>

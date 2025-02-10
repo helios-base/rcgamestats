@@ -1,4 +1,5 @@
 import os
+import shutil
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
 from flask import send_file, abort
 from flask_login import login_required
@@ -36,6 +37,25 @@ def toggle_active(team_id):
     """
     team = Team.query.get(team_id)
     team.is_active = not team.is_active
+    db.session.commit()
+    return redirect(url_for("team.index"))
+
+
+@team.route("/<int:team_id>/delete", methods=["POST"])
+@login_required
+def delete(team_id):
+    """
+    Delete a team.
+    """
+    team = Team.query.get(team_id)
+    if team:
+        # Delete the archive file
+        abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
+        if os.path.exists(abs_path):
+            print(f"Delete {abs_path}")
+            shutil.rmtree(abs_path)
+
+    db.session.delete(team)
     db.session.commit()
     return redirect(url_for("team.index"))
 

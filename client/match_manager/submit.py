@@ -50,7 +50,12 @@ def submit_result(match):
     print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Result match_data:", match_data)
     print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Result files:", files)
     response = requests.post(url, headers=headers, data=match_data, files=files)
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) HTTPError:", e)
+        print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Response content:", response.text)
+        return None
 
     print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Response content:", response.text)
     __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))

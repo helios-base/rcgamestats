@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
 {% block header %}
   <h1>{% block title %}Group Matches{% endblock %}</h1>
+
+  <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
+    <a class="action" href="{{ url_for('group.create') }}">Create a new group</a>
+</div>
 {% endblock %}
 
 {% block content %}
+<p></p>
 <table>
     <thead>
         <tr>

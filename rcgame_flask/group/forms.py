@@ -38,3 +38,22 @@ class GroupCreateForm(FlaskForm):
     def validate_number_of_matches(self, number_of_matches):
         if number_of_matches.data < 1:
             raise ValidationError("Number of matches must be at least 1")
+
+
+class GroupEditForm(FlaskForm):
+    """
+    Form for users to edit a group
+    """
+    additional_matches = IntegerField(
+        "Additional Matches",
+        validators=[DataRequired("Please enter the number of matches")]
+    )
+    description = TextAreaField(
+        "Description",
+        validators=[Length(min=0, max=256)]
+    )
+    submit = SubmitField("Submit")
+
+    def validate_additional_matches(self, additional_matches):
+        if additional_matches.data < 1:
+            raise ValidationError("Number of matches must be at least 1")

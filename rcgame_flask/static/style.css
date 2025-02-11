@@ -112,3 +112,13 @@ tr:hover { background-color: #ddd; }
 .select-field {
     width: 80%;
 }
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+.button-container button {
+    margin-left: 10px;
+    padding: 5px 10px;
+}

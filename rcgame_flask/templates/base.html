@@ -1,114 +1,13 @@
-<!doctype html>
-<title>{% block title %}{% endblock %} - RCgame</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<!-- テーブルのデザインを固定 -->
-<style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
+<!DOCTYPE html>
+<html lang="en">
 
-  th,
-  td {
-    border: 1px solid #000000;
-    padding: 8px;
-    word-wrap: break-word;
-    max-width: 200px;
-  }
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}{% endblock %} - RCgame</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">  
+</head>
 
-  th {
-    background-color: #f2f2f2;
-    text-align: left;
-  }
-
-  tr:nth-child(even) {
-    background-color: #f7f5f5;
-  }
-
-  tr:hover {
-    background-color: #ddd;
-  }
-
-  .footer-nav {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    right: -180px;
-    /* 初期位置を画面外に設定 */
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: #ffffff;
-    padding: 1rem;
-    border: 1px solid #ddd;
-    transition: right 0.3s ease;
-    /* アニメーションを追加 */
-  }
-
-  .footer-nav a {
-    text-decoration: none;
-    color: #377ba8;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    border: 1px solid #f3f3f3;
-    /* 各リンクを線で囲む */
-    border-radius: 4px;
-    /* 角を丸くする */
-    font-weight: bold;
-    /* フォントを太くする */
-    font-size: 1.1em;
-    /* フォントサイズを大きくする */
-  }
-
-  .footer-nav a:hover {
-    background-color: #ddd;
-    /* ホバー時の背景色を変更 */
-    color: #000;
-    /* ホバー時の文字色を変更 */
-  }
-
-  .footer-nav:hover {
-    right: 0;
-    /* カーソルが近づくと表示 */
-  }
-
-  .footer-nav::before {
-    content: '';
-    position: absolute;
-    left: -40px;
-    /* 少し出ている部分の幅 */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    /* 少し出ている部分の幅 */
-    height: 100%;
-    background-color: #377ba8;
-    /* 装飾の背景色 */
-    border-top-left-radius: 4px;
-    /* 角を丸くする */
-    border-bottom-left-radius: 4px;
-    /* 角を丸くする */
-  }
-
-  .description {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-    max-width: 16ch;
-    display: inline-block;
-    position: relative;
-  }
-
-  .textarea-field {
-    width: 80%;
-    box-sizing: border-box;
-    /* パディングとボーダーを含めて幅を計算 */
-  }
-
-  .select-field {
-    width: 80%;
-  }
-</style>
+<body>
 <nav>
   <h1>RCgame</h1>
   <ul>
@@ -131,7 +30,8 @@
   {% endfor %}
   {% block content %}{% endblock %}
 </section>
-<!-- index.html 以外の画面に表示されるフッター -->
+
+<!-- floating menu as footer -->
 {% if request.path not in ['/', '/auth/login', '/auth/register', '/auth/logout'] %}
 <footer>
   <div class="footer-nav">
@@ -143,3 +43,7 @@
   </div>
 </footer>
 {% endif %}
+
+</body>
+
+</html>

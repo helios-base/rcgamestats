@@ -35,9 +35,10 @@ group = Blueprint("group", __name__, template_folder="templates", url_prefix="/g
 @login_required
 def index():
     """
-    Show all groups.
+    Show active groups.
     """
-    group_list = Group.query.all()
+    # group_list = Group.query.all()
+    group_list = Group.query.filter_by(is_archived=False).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
     return render_template("group/index.html", groups=group_list)
 
@@ -102,6 +103,17 @@ def create():
         return redirect(url_for("group.index"))
 
     return render_template("group/create.html", form=form)
+
+
+@group.route("/archived/")
+@login_required
+def show_archived_groups():
+    """
+    Show all archived groups.
+    """
+    group_list = Group.query.filter_by(is_archived=True).all()
+    group_list.sort(key=lambda x: x.created_at, reverse=True)
+    return render_template("group/archived_groups.html", groups=group_list)
 
 
 @group.route("/<int:group_id>/")
@@ -198,6 +210,30 @@ def show_group_logs(group_name):
     return render_template(
         "group/log_files.html", dir_name=dir_name, file_names=file_names
     )
+
+
+@group.route("/<int:group_id>/archive", methods=["POST"])
+@login_required
+def archive_group(group_id):
+    """
+    Archive a group.
+    """
+    group = Group.query.get(group_id)
+    if group is None:
+        flash(f"Group ID {group_id} not found.")
+        return redirect(url_for("group.index"))
+
+    group.is_archived = True
+
+    matches_in_group = Match.query.filter_by(group_id=group_id).all()
+    for match in matches_in_group:
+        if match.processed == "in progress" or match.processed == "unexecuted":
+            match.processed = "archived"
+
+    db.session.commit()
+    flash(f"Group [{group.name}] has been archived.")
+
+    return redirect(url_for("group.index"))
 
 
 @group.route("/<int:group_id>/delete", methods=["POST"])

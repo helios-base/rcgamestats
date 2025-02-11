@@ -1,15 +1,11 @@
 {% extends 'base.html' %}
 {% block header %}
-  <h1>{% block title %}Groups{% endblock %}</h1>
-
-  <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
-    <a class="action" href="{{ url_for('group.create') }}">Create a new group</a>
-</div>
+  <h1>{% block title %}Archived Groups{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
 <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-    <a href="{{ url_for('group.show_archived_groups') }}">Archived Groups</a>
+    <a href="{{ url_for('group.index') }}">Active Groups</a>
 </div>
 
 <table>
@@ -26,7 +22,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for group in groups if not group.is_archived %}
+        {% for group in groups if group.is_archived %}
         <tr>
             <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
             <td>{{ group.created_at }}</td>
@@ -48,9 +44,9 @@
             <td>{{ group.description }}</td>
             <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
             <td>
-                <form action="{{ url_for('group.archive_group', group_id=group.id) }}" method="post"">
+                <form action="{{ url_for('group.delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('Delete {{group.name}}?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit">Archive</button>
+                    <button type="submit">Delete</button>
                 </form>
             </td>
         </tr>

@@ -439,7 +439,22 @@ def reset_match(group_id, match_id):
     Reset a match.
     """
     match = Match.query.get(match_id)
-    if match and match.processed == "in progress":
+    if match and match.processed == "completed":
+        log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
+        log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
+        for log_file_path in log_file_paths:
+            print(f"Removing log file {log_file_path} ...")
+            os.remove(log_file_path)
+
+        match.host_name = None
+        match.start_time = None
+        match.end_time = None
+        match.processed = "unexecuted"
+        match.log_file_name = None
+        match.token = None
+        db.session.commit()
+        flash(f"Match {match.group_index} has been reset.")
+    elif match and match.processed == "in progress":
         match.host_name = None
         match.start_time = None
         match.processed = "unexecuted"
@@ -448,7 +463,7 @@ def reset_match(group_id, match_id):
         db.session.commit()
         flash(f"Match {match.group_index} has been reset.")
     else:
-        flash("Match not found or not in progress.")
+        flash("Match not found or not in progress or completed.")
 
     return redirect(url_for("group.show_group_matches_by_id", group_id=group_id))
 

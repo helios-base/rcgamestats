@@ -4,7 +4,12 @@
 
   <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
     <a class="action" href="{{ url_for('group.create') }}">Create a new group</a>
-</div>
+  </div>
+
+  <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
+    <a class="action" href="{{ url_for('group.create_roundrobin') }}">Create round robin</a>
+  </div>
+
 {% endblock %}
 
 {% block content %}

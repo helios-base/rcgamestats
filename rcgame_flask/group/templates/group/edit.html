@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Edit Group{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h2>Group Name: {{ group.name }}</h2>
+  <div class="matchup-info">
+      {% if group.left_team %}
+      {{ group.left_team.name }} 
+      ({{ group.left_team.version }})
+      {% else %}
+          <span class="error">Not found</span>
+      {% endif %}
+      vs.
+      {% if group.right_team %}
+      {{ group.right_team.name }}
+      ({{ group.left_team.version }})
+      {% else %}
+          <span class="error">Not found</span>
+      {% endif %}
+  </div> 
+
+  <div style="font-size: 1.0em; margin-bottom: 0.5em; ">
+    Current number of matches: {{ group.number_of_matches }}
+  </div>
+
+  {% from "_formhelpers.html" import render_field %}
+  <form method="POST" action="{{ url_for('group.edit_group', group_id=group.id) }}" novalidate>
+      {{ form.csrf_token }}
+      {{ form.hidden_tag() }}
+      <input type="" name="group_id" value="{{ group.id }}" style="display: none;">
+      {{ render_field(form.additional_matches) }}
+      {{ render_field(form.description) }}
+      <br>
+      {% for message in get_flashed_messages() %}
+      {% endfor %}
+      {{ form.submit }}
+  </form>
+{% endblock %}

@@ -18,7 +18,7 @@ from flask import (
 from flask_login import login_required
 from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match
-from rcgame_flask.group.forms import GroupCreateForm
+from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm
 from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
 
@@ -196,7 +196,8 @@ def show_group_logs(group_name):
     log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
     if not os.path.exists(log_dir):
         flash(f"Log directory for group [{group_name}] not found.")
-        return redirect(url_for("group.index"))
+        #return redirect(url_for("group.index"))
+        return redirect(url_for("group.show_group_matches", group_name=group_name))
 
     matches_in_group = Match.query.filter_by(group_id=group.id).all()
     log_file_paths = []
@@ -210,6 +211,42 @@ def show_group_logs(group_name):
     return render_template(
         "group/log_files.html", dir_name=dir_name, file_names=file_names
     )
+
+
+@group.route("/<int:group_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_group(group_id):
+    """
+    Edit a group.
+    """
+    group = Group.query.get(group_id)
+    if group is None:
+        flash(f"Group ID {group_id} not found.")
+        return redirect(url_for("group.index"))
+
+    form = GroupEditForm(obj=group)
+
+    if form.validate_on_submit():
+        for i in range(int(form.additional_matches.data)):
+            match = Match(
+                group_index=group.number_of_matches + i + 1,
+                group_id=group.id,
+                left_team_id=group.left_team_id,
+                right_team_id=group.right_team_id,
+            )
+            db.session.add(match)
+        group.number_of_matches += form.additional_matches.data
+        group.description = form.description.data
+        db.session.commit()
+
+        flash(
+            f"Updated group {group.name} with {form.additional_matches.data} matches."
+        )
+        return redirect(url_for("group.index"))
+
+    form.description.data = group.description
+
+    return render_template("group/edit.html", form=form, group=group)
 
 
 @group.route("/<int:group_id>/archive", methods=["POST"])
@@ -473,7 +510,7 @@ def request_match():
     match = Match.query.filter_by(processed="unexecuted").first()
     if match is None:
         return jsonify({"message": "No unexecuted matches found."}), 200
-    
+
     if match.group is None:
         return jsonify({"error": "Group name found."}), 404
     if match.left_team is None:

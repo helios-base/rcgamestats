@@ -8,21 +8,24 @@
 <div class="matchup-info">
     {% if group.left_team %}
     {{ group.left_team.name }}
+    ({{ group.left_team.version }})
     {% else %}
         <span class="error">Not found</span>
     {% endif %}
     vs.
     {% if group.right_team %}
     {{ group.right_team.name }}
+    ({{ group.right_team.version }})
     {% else %}
         <span class="error">Not found</span>
     {% endif %}
 </div> 
+
 <div>
+    <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a> / 
     <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
 </div>
 
-<!-- Googleスプレッドシートへアップロードするボタンを追加 -->
 <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
     <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -10,6 +10,7 @@ class Group(db.Model):
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     number_of_matches = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
+    is_archived = db.Column(db.Boolean, default=False)
 
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])

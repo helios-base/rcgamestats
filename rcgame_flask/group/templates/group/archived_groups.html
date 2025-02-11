@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Archived Groups{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+    <a href="{{ url_for('group.index') }}">Active Groups</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Created At</th>
+            <th>Left Team</th>
+            <th>Right Team</th>
+            <th># of Matches</th>
+            <th>Description</th>
+            <th>Log Files</th> 
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for group in groups if group.is_archived %}
+        <tr>
+            <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
+            <td>{{ group.created_at }}</td>
+            <td>
+                {% if group.left_team %}
+                    {{ group.left_team.name }}
+                {% else %}
+                    <span class="error">Not found</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if group.right_team %}
+                    {{ group.right_team.name }}
+                {% else %}
+                    <span class="error">Not found</span>
+                {% endif %}
+            </td>
+            <td>{{ group.number_of_matches }}</td>
+            <td>{{ group.description }}</td>
+            <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
+            <td>
+                <form action="{{ url_for('group.delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('Delete {{group.name}}?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

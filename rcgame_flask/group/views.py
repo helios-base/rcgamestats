@@ -266,6 +266,31 @@ def bulk_archive_groups():
     return redirect(url_for("group.index"))
 
 
+@group.route("/bulk_unarchive_groups", methods=["POST"])
+@login_required
+def bulk_unarchive_groups():
+    """
+    Bulk unarchive groups.
+    """
+    group_ids = request.form.getlist('group_ids')
+    if not group_ids:
+        flash("No groups selected for unarchiving.")
+        return redirect(url_for("group.show_archived_groups"))
+
+    for group_id in group_ids:
+        group = Group.query.get(group_id)
+        if group:
+            group.is_archived = False
+            matches_in_group = Match.query.filter_by(group_id=group_id).all()
+            for match in matches_in_group:
+                if match.processed == "archived":
+                    match.processed = "unexecuted"
+
+    db.session.commit()
+    flash(f"Unarchived {len(group_ids)} groups.")
+    return redirect(url_for("group.show_archived_groups"))
+
+
 @group.route("/<int:group_id>/delete", methods=["POST"])
 @login_required
 def delete_group(group_id):
@@ -282,7 +307,7 @@ def delete_group(group_id):
         shutil.rmtree(log_dir)
 
     matches_to_delete = Match.query.filter_by(group_id=group_id)
-    matches_to_delete.delete(synchronize_session=False)
+    matches_to_delete.delete()
 
     group_name = group_to_delete.name
     db.session.delete(group_to_delete)
@@ -290,6 +315,33 @@ def delete_group(group_id):
     flash(f"The group [{group_name}] has been deleted.")
 
     return redirect(url_for("group.index"))
+
+
+@group.route("/bulk_delete_groups", methods=["POST"])
+@login_required
+def bulk_delete_groups():
+    """
+    Bulk delete groups.
+    """
+    group_ids = request.form.getlist('group_ids')
+    if not group_ids:
+        flash("No groups selected for deletion.")
+        return redirect(url_for("group.show_archived_groups"))
+
+    for group_id in group_ids:
+        group = Group.query.get(group_id)
+        if group:
+            log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+            if os.path.exists(log_dir):
+                print(f"Delete {log_dir}")
+                shutil.rmtree(log_dir)
+            matches = Match.query.filter_by(group_id=group_id)
+            matches.delete()
+            db.session.delete(group)
+
+    db.session.commit()
+    flash(f"Deleted {len(group_ids)} groups.")
+    return redirect(url_for("group.show_archived_groups"))
 
 
 @group.route("/<int:group_id>/upload_to_google", methods=["POST"])

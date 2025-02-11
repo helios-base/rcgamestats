@@ -8,49 +8,78 @@
     <a href="{{ url_for('group.index') }}">Active Groups</a>
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Created At</th>
-            <th>Left Team</th>
-            <th>Right Team</th>
-            <th># of Matches</th>
-            <th>Description</th>
-            <th>Log Files</th> 
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for group in groups if group.is_archived %}
-        <tr>
-            <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
-            <td>{{ group.created_at }}</td>
-            <td>
-                {% if group.left_team %}
-                    {{ group.left_team.name }}
-                {% else %}
-                    <span class="error">Not found</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if group.right_team %}
-                    {{ group.right_team.name }}
-                {% else %}
-                    <span class="error">Not found</span>
-                {% endif %}
-            </td>
-            <td>{{ group.number_of_matches }}</td>
-            <td>{{ group.description }}</td>
-            <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
-            <td>
-                <form action="{{ url_for('group.delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('Delete {{group.name}}?');">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<form id="bulk-action-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('group.bulk_unarchive_groups') }}" disabled>Unarchive</button>
+        <button id="bulk-delete-button" type="submit" formaction="{{ url_for('group.bulk_delete_groups') }}" disabled>Delete</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th>Name</th>
+                <th>Created At</th>
+                <th>Left Team</th>
+                <th>Right Team</th>
+                <th># of Matches</th>
+                <th>Description</th>
+                <th>Log Files</th> 
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups if group.is_archived %}
+            <tr>
+                <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
+                <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
+                <td>{{ group.created_at }}</td>
+                <td>
+                    {% if group.left_team %}
+                        {{ group.left_team.name }}
+                    {% else %}
+                        <span class="error">Not found</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if group.right_team %}
+                        {{ group.right_team.name }}
+                    {% else %}
+                        <span class="error">Not found</span>
+                    {% endif %}
+                </td>
+                <td>{{ group.number_of_matches }}</td>
+                <td>{{ group.description }}</td>
+                <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+
+<script>
+    function toggleCheckboxes(source) {
+        checkboxes = document.getElementsByName('group_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        var checkboxes = document.getElementsByName('group_ids');
+        var anyChecked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                anyChecked = true;
+                break;
+            }
+        }
+        document.getElementById('bulk-unarchive-button').disabled = !anyChecked;
+        document.getElementById('bulk-delete-button').disabled = !anyChecked;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        checkCheckboxes();
+    });
+</script>
 {% endblock %}

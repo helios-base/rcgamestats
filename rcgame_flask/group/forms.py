@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, SelectField, IntegerField, TextAreaField
+from wtforms import SubmitField, SelectField, IntegerField, TextAreaField, SelectMultipleField
 from wtforms.validators import DataRequired, Length, ValidationError
 
 
@@ -56,4 +56,28 @@ class GroupEditForm(FlaskForm):
 
     def validate_additional_matches(self, additional_matches):
         if additional_matches.data < 1:
+            raise ValidationError("Number of matches must be at least 1")
+
+
+class RoundrobinCreateForm(FlaskForm):
+    left_teams = SelectMultipleField(
+        "Left Teams",
+        choices=[],
+        coerce=int,
+        validators=[DataRequired("Please select at least one team for the left column")]
+    )
+    right_teams = SelectMultipleField(
+        "Right Teams",
+        choices=[],
+        coerce=int,
+        validators=[DataRequired("Please select at least one team for the right column")]
+    )
+    number_of_matches = IntegerField(
+        "# of Matches for Each Pair",
+        validators=[DataRequired("Please enter the number of matches")]
+    )
+    submit = SubmitField("Submit")
+
+    def validate_number_of_matches(self, number_of_matches):
+        if number_of_matches.data < 1:
             raise ValidationError("Number of matches must be at least 1")

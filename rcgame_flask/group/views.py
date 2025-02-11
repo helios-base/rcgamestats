@@ -18,7 +18,7 @@ from flask import (
 from flask_login import login_required
 from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match
-from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm
+from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
 from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
 
@@ -103,6 +103,69 @@ def create():
         return redirect(url_for("group.index"))
 
     return render_template("group/create.html", form=form)
+
+
+@group.route("/create_roundrobin", methods=["GET", "POST"])
+@login_required
+def create_roundrobin():
+    """
+    Create round-robin groups.
+    """
+    form = RoundrobinCreateForm()
+
+    teams = Team.query.filter_by(is_active=True).all()
+    form.left_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
+    form.right_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
+
+    if form.validate_on_submit():
+        created_count = 0
+        for left_id, _ in form.left_teams.choices:
+            for right_id, _ in form.right_teams.choices:
+                if left_id == right_id:
+                    continue
+
+                team_left = Team.query.get(left_id)
+                team_right = Team.query.get(right_id)
+                if team_left is None:
+                    flash(f"Team ID {left_id} not found.")
+                    return redirect(url_for("group.create_roundrobin"))
+                if team_right is None:
+                    flash(f"Team ID {right_id} not found.")
+                    return redirect(url_for("group.create_roundrobin"))
+
+                if team_left.name == team_right.name:
+                    continue
+
+                now = datetime.now().replace(microsecond=0)
+                group_name = (
+                    f"{now.strftime('%Y%m%d-%H%M%S')}-{team_left.name}-{team_right.name}"
+                )
+
+                group = Group(
+                    name=group_name,
+                    created_at=now,
+                    left_team_id=left_id,
+                    right_team_id=right_id,
+                    number_of_matches=form.number_of_matches.data,
+                    #description="",
+                )
+                db.session.add(group)
+                db.session.commit()
+
+                for i in range(int(form.number_of_matches.data)):
+                    match = Match(
+                        group_index=i + 1,
+                        group_id=group.id,
+                        left_team_id=left_id,
+                        right_team_id=right_id,
+                    )
+                    db.session.add(match)
+                db.session.commit()
+                created_count += 1
+        flash(f"Created {created_count} round-robin groups with {form.number_of_matches.data} matches each.")
+        return redirect(url_for("group.index"))
+
+    return render_template("group/create_roundrobin.html", form=form)
 
 
 @group.route("/archived/")

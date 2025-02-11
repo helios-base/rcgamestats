@@ -236,6 +236,36 @@ def archive_group(group_id):
     return redirect(url_for("group.index"))
 
 
+@group.route("/bulk_archive_groups", methods=["POST"])
+@login_required
+def bulk_archive_groups():
+    """
+    Archive selected groups.
+    """
+    group_ids = request.form.getlist("group_ids")
+    if not group_ids:
+        flash("No groups selected for archiving.")
+        return redirect(url_for("group.index"))
+
+    for group_id in group_ids:
+        group = Group.query.get(group_id)
+        if group is None:
+            flash(f"Group ID {group_id} not found.")
+            return redirect(url_for("group.index"))
+
+        group.is_archived = True
+
+        matches_in_group = Match.query.filter_by(group_id=group_id).all()
+        for match in matches_in_group:
+            if match.processed == "in progress" or match.processed == "unexecuted":
+                match.processed = "archived"
+
+        db.session.commit()
+        flash(f"Group [{group.name}] has been archived.")
+
+    return redirect(url_for("group.index"))
+
+
 @group.route("/<int:group_id>/delete", methods=["POST"])
 @login_required
 def delete_group(group_id):

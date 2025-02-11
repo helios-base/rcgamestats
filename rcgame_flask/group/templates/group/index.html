@@ -12,49 +12,75 @@
     <a href="{{ url_for('group.show_archived_groups') }}">Archived Groups</a>
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Created At</th>
-            <th>Left Team</th>
-            <th>Right Team</th>
-            <th># of Matches</th>
-            <th>Description</th>
-            <th>Log Files</th> 
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for group in groups if not group.is_archived %}
-        <tr>
-            <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
-            <td>{{ group.created_at }}</td>
-            <td>
-                {% if group.left_team %}
-                    {{ group.left_team.name }}
-                {% else %}
-                    <span class="error">Not found</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if group.right_team %}
-                    {{ group.right_team.name }}
-                {% else %}
-                    <span class="error">Not found</span>
-                {% endif %}
-            </td>
-            <td>{{ group.number_of_matches }}</td>
-            <td>{{ group.description }}</td>
-            <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
-            <td>
-                <form action="{{ url_for('group.archive_group', group_id=group.id) }}" method="post"">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit">Archive</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<form action="{{ url_for('group.bulk_archive_groups') }}" method="post" style="display: flex; align-items: flex-end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button id="bulk-archive-button" type="submit" style="margin-right: 10px; margin-bottom: 10px; padding: 5px 10px;" disabled>Archive</button>
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th>Name</th>
+                <th>Created At</th>
+                <th>Left Team</th>
+                <th>Right Team</th>
+                <th># of Matches</th>
+                <th>Description</th>
+                <th>Log Files</th> 
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups if not group.is_archived %}
+            <tr>
+                <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
+                <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
+                <td>{{ group.created_at }}</td>
+                <td>
+                    {% if group.left_team %}
+                        {{ group.left_team.name }}
+                    {% else %}
+                        <span class="error">Not found</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if group.right_team %}
+                        {{ group.right_team.name }}
+                    {% else %}
+                        <span class="error">Not found</span>
+                    {% endif %}
+                </td>
+                <td>{{ group.number_of_matches }}</td>
+                <td>{{ group.description }}</td>
+                <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+
+<script>
+    function toggleCheckboxes(source) {
+        checkboxes = document.getElementsByName('group_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        var checkboxes = document.getElementsByName('group_ids');
+        var button = document.getElementById('bulk-archive-button');
+        var anyChecked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                anyChecked = true;
+                break;
+            }
+        }
+        button.disabled = !anyChecked;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        checkCheckboxes();
+    });
+</script>
 {% endblock %}

@@ -1,6 +1,13 @@
 # from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, TextAreaField, FileField, BooleanField
+from wtforms import (
+    StringField,
+    SubmitField,
+    TextAreaField,
+    FileField,
+    BooleanField,
+    SelectField,
+)
 from wtforms.validators import DataRequired, Optional, Regexp, Length, ValidationError
 
 
@@ -13,10 +20,15 @@ class TeamUploadForm(FlaskForm):
     #     super(TeamUploadForm, self).__init__(*args, **kwargs)
     #     self.version.data = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    team_name = StringField(
-        "Team Name(*): ",
+    existing_team_name = SelectField(
+        "Existing Team Name: ",
+        choices=[],
+        validators=[Optional()],
+    )
+    new_team_name = StringField(
+        "New Team Name: ",
         validators=[
-            DataRequired("team name is required"),
+            Optional(),
             Length(4, 32, "team name must be between 4 and 32 characters"),
             Regexp(r"^(?!-)[a-zA-Z0-9_-]+$", message="team name must be alphanumeric"),
         ],
@@ -37,9 +49,20 @@ class TeamUploadForm(FlaskForm):
         "Archive File(*): ", validators=[DataRequired("team archive is required")]
     )
     description = TextAreaField(
-        "Description: ", validators=[Length(0, 512, "description must be less than 512 characters")]
+        "Description: ",
+        validators=[Length(0, 512, "description must be less than 512 characters")],
     )
     submit = SubmitField("Submit")
+
+    def valiate(self):
+        if not super(TeamUploadForm, self).validate():
+            return False
+        if (
+            not self.existing_team_name.data or self.existing_team_name.data == ""
+        ) and not self.new_team_name.data:
+            self.new_team_name.errors.append("Team name is required")
+            return False
+        return True
 
     def validate_archive_file(self, archive_file):
         """

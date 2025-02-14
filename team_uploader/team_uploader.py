@@ -65,7 +65,7 @@ with open(TEAM_CSV_FILE, newline='') as csvfile:
 
             upload_url = f"{BASE_URL}/team/upload"
             form_data = {
-                "team_name": team_name,
+                "new_team_name": team_name,
                 "version": version,
                 "synch_mode": synch_mode,
                 "description": description,

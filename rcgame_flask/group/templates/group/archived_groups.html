@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
-  <h1>{% block title %}Archived Groups{% endblock %}</h1>
+<h1>{% block title %}Archived Groups{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -11,20 +11,22 @@
 <form id="bulk-action-form" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
-        <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('group.bulk_unarchive_groups') }}" disabled>Unarchive</button>
-        <button id="bulk-delete-button" type="submit" formaction="{{ url_for('group.bulk_delete_groups') }}" disabled>Delete</button>
+        <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('group.bulk_unarchive_groups') }}"
+            disabled>Unarchive</button>
+        <button id="bulk-delete-button" type="submit" formaction="{{ url_for('group.bulk_delete_groups') }}"
+            disabled>Delete</button>
     </div>
-    <table>
+    <table class="tablesorter">
         <thead>
             <tr>
-                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th class="sorter-false"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Name</th>
                 <th>Created At</th>
                 <th>Left Team</th>
                 <th>Right Team</th>
-                <th># of Matches</th>
-                <th>Description</th>
-                <th>Log Files</th> 
+                <th class="sorter-false"># of Matches</th>
+                <th class="sorter-false">Description</th>
+                <th class="sorter-false">Log Files</th>
             </tr>
         </thead>
         <tbody>
@@ -35,16 +37,16 @@
                 <td>{{ group.created_at }}</td>
                 <td>
                     {% if group.left_team %}
-                        {{ group.left_team.name }}
+                    {{ group.left_team.name }}
                     {% else %}
-                        <span class="error">Not found</span>
+                    <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>
                     {% if group.right_team %}
-                        {{ group.right_team.name }}
+                    {{ group.right_team.name }}
                     {% else %}
-                        <span class="error">Not found</span>
+                    <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>{{ group.number_of_matches }}</td>
@@ -57,6 +59,10 @@
 </form>
 
 <script>
+    $(function () {
+        $('table').tablesorter();
+    });
+
     function toggleCheckboxes(source) {
         checkboxes = document.getElementsByName('group_ids');
         for (var i = 0; i < checkboxes.length; i++) {
@@ -78,7 +84,7 @@
         document.getElementById('bulk-delete-button').disabled = !anyChecked;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         checkCheckboxes();
     });
 </script>

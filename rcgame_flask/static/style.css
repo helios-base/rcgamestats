@@ -142,3 +142,50 @@ tr:hover { background-color: #ddd; }
     margin-right: 10px;
     padding: 5px 10px;
 }
+
+
+.tablesorter th{
+    position: relative;
+    cursor: pointer;
+    text-align: left;
+}
+.tablesorter th::before, .tablesorter th::after{
+    content: '';
+    position: absolute;
+    z-index: 2;
+    right: 7px;
+    width: 0;
+    height: 0;
+    border: 4px dashed;
+    border-color: #333 transparent;
+    pointer-events: none;
+}
+.tablesorter th::before{
+    border-bottom-style: solid;
+    border-top: none;
+    top: 30%;
+}
+.tablesorter th::after{
+    border-top-style: solid;
+    border-bottom: none;
+    bottom: 30%;
+}
+.tablesorter th.tablesorter-headerAsc:after{
+    border: none;
+}
+.tablesorter th.tablesorter-headerAsc:before{
+    top: 50%;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+}
+.tablesorter th.tablesorter-headerDesc:before{
+    border: none;
+}
+.tablesorter th.tablesorter-headerDesc:after{
+    top: 50%;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+}
+.tablesorter th.sorter-false:before, .tablesorter th.sorter-false:after{
+    border: none;
+}

@@ -1,36 +1,37 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
-  <h1>{% block title %}Groups{% endblock %}</h1>
+<h1>{% block title %}Groups{% endblock %}</h1>
 
-  <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
+<div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
     <a class="action" href="{{ url_for('group.create') }}">Create a new group</a>
-  </div>
+</div>
 
-  <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
+<div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
     <a class="action" href="{{ url_for('group.create_roundrobin') }}">Create round robin</a>
-  </div>
+</div>
 
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+<div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
     <a href="{{ url_for('group.show_archived_groups') }}">Archived Groups</a>
 </div>
 
 <form action="{{ url_for('group.bulk_archive_groups') }}" method="post" style="display: flex; align-items: flex-end;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button id="bulk-archive-button" type="submit" style="margin-right: 10px; margin-bottom: 10px; padding: 5px 10px;" disabled>Archive</button>
-    <table>
+    <button id="bulk-archive-button" type="submit" style="margin-right: 10px; margin-bottom: 10px; padding: 5px 10px;"
+        disabled>Archive</button>
+    <table class="tablesorter">
         <thead>
             <tr>
-                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th class="sorter-false"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Name</th>
                 <th>Created At</th>
                 <th>Left Team</th>
                 <th>Right Team</th>
-                <th># of Matches</th>
-                <th>Description</th>
-                <th>Log Files</th> 
+                <th class="sorter-false"># of Matches</th>
+                <th class="sorter-false">Description</th>
+                <th class="sorter-false">Log Files</th>
             </tr>
         </thead>
         <tbody>
@@ -41,18 +42,18 @@
                 <td>{{ group.created_at }}</td>
                 <td>
                     {% if group.left_team %}
-                        {{ group.left_team.name }} <br />
-                        {{ group.left_team.version }}
+                    {{ group.left_team.name }} <br />
+                    {{ group.left_team.version }}
                     {% else %}
-                        <span class="error">Not found</span>
+                    <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>
                     {% if group.right_team %}
-                        {{ group.right_team.name }} <br />
-                        {{ group.right_team.version }}
+                    {{ group.right_team.name }} <br />
+                    {{ group.right_team.version }}
                     {% else %}
-                        <span class="error">Not found</span>
+                    <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>{{ group.number_of_matches }}</td>
@@ -65,6 +66,10 @@
 </form>
 
 <script>
+    $(function() {
+      $('table').tablesorter();
+    });
+
     function toggleCheckboxes(source) {
         checkboxes = document.getElementsByName('group_ids');
         for (var i = 0; i < checkboxes.length; i++) {
@@ -86,8 +91,9 @@
         button.disabled = !anyChecked;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         checkCheckboxes();
     });
+
 </script>
 {% endblock %}

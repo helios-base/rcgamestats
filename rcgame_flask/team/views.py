@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, curren
 from flask import send_file, abort
 from flask_login import login_required
 from werkzeug.utils import secure_filename
+from sqlalchemy.exc import IntegrityError
 from rcgame_flask.app import db
 from rcgame_flask.config import config
 from rcgame_flask.auth.models import require_api_key
@@ -73,11 +74,13 @@ def upload():
         version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M")
         version = secure_filename(version)
 
+        print("upload", name, version) 
         # check if the team name and the version already exist
         team = Team.query.filter_by(name=name, version=version).first()
-        if team:
+        if team is not None:
+            print("team name and version already exist")
             form.team_name.errors.append("team name and version already exist")
-            return render_template("team/upload.html", form=form)
+            return render_template("team/upload.html", form=form), 409
 
         # Create a directory for the team with the name and version
         archive_dir = os.path.join("teams", name, version)
@@ -98,9 +101,15 @@ def upload():
             description=form.description.data,
         )
         db.session.add(team)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            form.team_name.errors.append("team name and version already exist")
+            return render_template("team/upload.html", form=form)
+
         return redirect(url_for("team.index"))
-    
+
     return render_template("team/upload.html", form=form)
 
 

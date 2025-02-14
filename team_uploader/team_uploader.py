@@ -72,13 +72,15 @@ with open(TEAM_CSV_FILE, newline='') as csvfile:
                 "csrf_token": csrf_token
             }
 
-            print(f"form_data: {form_data}")
+            # print(f"form_data: {form_data}")
 
             with open(archive_file_path, 'rb') as file:
                 files = {'archive_file': file}
                 response = session.post(upload_url, data=form_data, files=files)
                 if response.status_code == 200:
                     print(f"Successfully uploaded team: {team_name} {version}")
+                elif response.status_code == 409:
+                    print(f"Team already exists: {team_name} {version}")
                 else:
                     print(f"Failed to upload team: {team_name} {version}, Status Code: {response.status_code}")
                     print(f" response.text: {response.text}")

@@ -8,6 +8,9 @@ def current_datetime_str():
 
 class Team(db.Model):
     __tablename__ = 'team'
+    __table_args__ = (
+        db.UniqueConstraint('name', 'version', name='unique_name_version'),
+    )
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     version = db.Column(db.String(32), nullable=False, default=current_datetime_str)

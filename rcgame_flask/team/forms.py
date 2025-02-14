@@ -1,7 +1,7 @@
 # from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, FileField, BooleanField
-from wtforms.validators import DataRequired, Regexp, Length, ValidationError
+from wtforms.validators import DataRequired, Optional, Regexp, Length, ValidationError
 
 
 class TeamUploadForm(FlaskForm):
@@ -25,7 +25,8 @@ class TeamUploadForm(FlaskForm):
         "Version: (Empty for auto-generated with timestamp)",
         validators=[
             # DataRequired("team version is required"),
-            Length(4, 32, "team version must be between 4 and 32 characters"),
+            Optional(),
+            Length(0, 16, "team version must be less than 16 characters"),
             Regexp(
                 r"^(?!-)[a-zA-Z0-9_-]+$", message="team version must be alphanumeric"
             ),

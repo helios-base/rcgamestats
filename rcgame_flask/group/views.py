@@ -16,6 +16,7 @@ from flask import (
     current_app,
 )
 from flask_login import login_required
+from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
@@ -29,6 +30,12 @@ group = Blueprint("group", __name__, template_folder="templates", url_prefix="/g
 #
 # Group management
 #
+
+def create_group_name(created_at, team_left, team_right, use_version=False):
+    time_str = created_at.strftime('%Y%m%d-%H%M%S')
+    if not use_version:
+        return f"{time_str}-{team_left.name}-{team_right.name}"
+    return f"{time_str}-{team_left.name}_{team_left.version}-{team_right.name}_{team_right.version}"
 
 
 @group.route("/")
@@ -72,9 +79,7 @@ def create():
             return redirect(url_for("group.create"))
 
         now = datetime.now().replace(microsecond=0)
-        group_name = (
-            f"{now.strftime('%Y%m%d-%H%M%S')}-{team_left.name}-{team_right.name}"
-        )
+        group_name = create_group_name(now, team_left, team_right)
 
         group = Group(
             name=group_name,
@@ -85,7 +90,12 @@ def create():
             description=form.description.data,
         )
         db.session.add(group)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Group name [{group_name}] already exists.")
+            return redirect(url_for("group.create"))
 
         for i in range(int(form.number_of_matches.data)):
             match = Match(
@@ -119,8 +129,9 @@ def create_roundrobin():
 
     if form.validate_on_submit():
         created_count = 0
-        for left_id, _ in form.left_teams.choices:
-            for right_id, _ in form.right_teams.choices:
+        for left_id in form.left_teams.data:
+            for right_id in form.right_teams.data:
+                print(f"trying to create pair of left_id: {left_id}, right_id: {right_id}")
                 if left_id == right_id:
                     continue
 
@@ -137,9 +148,7 @@ def create_roundrobin():
                     continue
 
                 now = datetime.now().replace(microsecond=0)
-                group_name = (
-                    f"{now.strftime('%Y%m%d-%H%M%S')}-{team_left.name}-{team_right.name}"
-                )
+                group_name = create_group_name(now, team_left, team_right, use_version=True)
 
                 group = Group(
                     name=group_name,
@@ -150,7 +159,12 @@ def create_roundrobin():
                     #description="",
                 )
                 db.session.add(group)
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except IntegrityError:
+                    db.session.rollback()
+                    flash(f"Group name [{group_name}] already exists.")
+                    continue
 
                 for i in range(int(form.number_of_matches.data)):
                     match = Match(
@@ -407,7 +421,8 @@ def delete_group(group_id):
         shutil.rmtree(log_dir)
 
     matches_to_delete = Match.query.filter_by(group_id=group_id)
-    matches_to_delete.delete()
+    if matches_to_delete:
+        matches_to_delete.delete()
 
     group_name = group_to_delete.name
     db.session.delete(group_to_delete)
@@ -436,8 +451,9 @@ def bulk_delete_groups():
                 print(f"Delete {log_dir}")
                 shutil.rmtree(log_dir)
             matches = Match.query.filter_by(group_id=group_id)
-            matches.delete()
-            db.session.delete(group)
+            if matches:
+                matches.delete()
+                db.session.delete(group)
 
     db.session.commit()
     flash(f"Deleted {len(group_ids)} groups.")

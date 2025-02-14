@@ -41,14 +41,16 @@
                 <td>{{ group.created_at }}</td>
                 <td>
                     {% if group.left_team %}
-                        {{ group.left_team.name }}
+                        {{ group.left_team.name }} <br />
+                        {{ group.left_team.version }}
                     {% else %}
                         <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>
                     {% if group.right_team %}
-                        {{ group.right_team.name }}
+                        {{ group.right_team.name }} <br />
+                        {{ group.right_team.version }}
                     {% else %}
                         <span class="error">Not found</span>
                     {% endif %}

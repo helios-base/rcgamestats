@@ -65,7 +65,7 @@ def require_api_key(f):
             return jsonify({"error": "Missing API key."}), 401
         record = APIKey.query.filter_by(key=api_key).first()
         if record is None:
-            jsonify({"error": "Invalid or missing API key."}), 401
+            return jsonify({"error": "Invalid or missing API key."}), 401
         if record.is_expired():
             return jsonify({"error": "API key has expired."}), 401
         return f(*args, **kwargs)

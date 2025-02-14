@@ -1,5 +1,6 @@
 import os
 import shutil
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
 from flask import send_file, abort
 from flask_login import login_required
@@ -68,14 +69,16 @@ def upload():
     """
     form = TeamUploadForm()
     if form.validate_on_submit():
+        name = secure_filename(form.team_name.data)
+        version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M%S")
+        version = secure_filename(version)
+
         # check if the team name and the version already exist
-        team = Team.query.filter_by(name=form.team_name.data, version=form.version.data).first()
+        team = Team.query.filter_by(name=name, version=version).first()
         if team:
             form.team_name.errors.append("team name and version already exist")
             return render_template("team/upload.html", form=form)
 
-        name = secure_filename(form.team_name.data)
-        version = secure_filename(form.version.data)
         # Create a directory for the team with the name and version
         archive_dir = os.path.join("teams", name, version)
         absolute_path = os.path.join(current_app.static_folder, archive_dir)

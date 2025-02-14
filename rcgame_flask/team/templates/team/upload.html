@@ -9,13 +9,19 @@
 {% from "_formhelpers.html" import render_field %}
 <form method="POST" action="{{ url_for('team.upload') }}" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
-    {{ render_field(form.existing_team_name) }}
-    {{ render_field(form.new_team_name) }}
+    <div class="form-group">
+        <label for="existing_team_name">Existing Team Name or New Team Name (*):</label>
+        <div class="input-group">
+            {{ render_field(form.existing_team_name) }}
+            <span class="or-text">or</span>
+            {{ render_field(form.new_team_name) }}
+        </div>
+    </div>
     {{ render_field(form.synch_mode) }}
     {{ render_field(form.version) }}
     {{ render_field(form.description) }}
     {{ render_field(form.archive_file) }}
-    <br>
+    <br />
     {% for message in get_flashed_messages() %}
     <div style="color: blue;">
         {{ message }}

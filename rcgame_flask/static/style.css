@@ -109,8 +109,28 @@ tr:hover { background-color: #ddd; }
     /* パディングとボーダーを含めて幅を計算 */
 }
 
+.form-group {
+    margin-bottom: 1px;
+}
+
+.input-group {
+    margin-top: 10px;
+    margin-left: 2em;
+    display: flex;
+    align-items: center;
+}
+
 .select-field {
-    width: 80%;
+    display: block;
+    width: fit-content;
+    min-width: 16em;
+    box-sizing: border-box;
+    margin-bottom: 1px;
+}
+
+.or-text {
+    margin: 0 10px;
+    font-weight: bold;
 }
 
 .button-container {

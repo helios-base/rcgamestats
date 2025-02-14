@@ -60,7 +60,7 @@ with open(TEAM_CSV_FILE, newline='') as csvfile:
             team_name = row['team_name']
             version = row['version']
             synch_mode = row['synch_mode']
-            archive_file_path = row['archive_file']
+            archive_file_path = row['archive_path']
             description = row['description']
 
             upload_url = f"{BASE_URL}/team/upload"

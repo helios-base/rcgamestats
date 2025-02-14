@@ -20,15 +20,21 @@ team = Blueprint("team", __name__, template_folder="templates", url_prefix="/tea
 @login_required
 def index():
     """
-    Show all teams.
+    Show active teams.
     """
-    active_only = request.args.get('active_only', 'true').lower() == 'true'
-    if active_only:
-        teams = Team.query.filter_by(is_active=True).all()
-    else:
-        teams = Team.query.all()
+    teams = Team.query.filter_by(is_active=True).all()
+   
+    return render_template("team/index.html", teams=teams)
 
-    return render_template("team/index.html", teams=teams, active_only=active_only)
+
+@team.route("/archived")
+@login_required
+def show_archived():
+    """
+    Show archived teams.
+    """
+    teams = Team.query.filter_by(is_active=False).all()
+    return render_template("team/archived.html", teams=teams)
 
 
 @team.route("/<int:team_id>/toggle_active", methods=["POST"])
@@ -51,6 +57,9 @@ def delete(team_id):
     """
     team = Team.query.get(team_id)
     if team:
+        if team.is_active:
+            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
+            return redirect(url_for("team.index"))
         # Delete the archive file
         abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
         if os.path.exists(abs_path):
@@ -60,6 +69,110 @@ def delete(team_id):
     db.session.delete(team)
     db.session.commit()
     return redirect(url_for("team.index"))
+
+
+@team.route("/bulk_archive", methods=["POST"])
+@login_required
+def bulk_archive():
+    """
+    Archive selected teams.
+    """
+    team_ids = request.form.getlist("team_ids")
+    for team_id in team_ids:
+        team = Team.query.get(team_id)
+        if team is None:
+            flash(f"Team {team_id} not found.")
+            continue
+
+        team.is_active = False
+        db.session.commit()
+        flash(f"Team {team.name} ({team.version}) archived.")
+
+    return redirect(url_for("team.index"))
+
+
+@team.route("/bulk_activate", methods=["POST"])
+@login_required
+def bulk_activate():
+    """
+    Activate selected teams.
+    """
+    team_ids = request.form.getlist("team_ids")
+    for team_id in team_ids:
+        team = Team.query.get(team_id)
+        if team is None:
+            flash(f"Team {team_id} not found.")
+            continue
+
+        if team.is_active:
+            flash(f"Team {team.name} ({team.version}) is already active.")
+            continue
+
+        team.is_active = True
+        db.session.commit()
+        flash(f"Team {team.name} ({team.version}) activated.")
+
+    return redirect(url_for("team.show_archived"))
+
+
+@team.route("/bulk_delete_active", methods=["POST"])
+@login_required
+def bulk_delete():
+    """
+    Delete selected teams.
+    """
+    team_ids = request.form.getlist("team_ids")
+    for team_id in team_ids:
+        team = Team.query.get(team_id)
+        if team is None:
+            flash(f"Team {team_id} not found.")
+            continue
+
+        if team.is_active:
+            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
+            continue
+
+        # Delete the archive file
+        abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
+        if os.path.exists(abs_path):
+            print(f"Delete {abs_path}")
+            shutil.rmtree(abs_path)
+
+        db.session.delete(team)
+        db.session.commit()
+        flash(f"Team {team.name} ({team.version}) deleted.")
+
+    return redirect(url_for("team.show_archived"))
+
+
+@team.route("/bulk_delete", methods=["POST"])
+@login_required
+def bulk_delete_teams():
+    """
+    Delete selected teams.
+    """
+    team_ids = request.form.getlist("team_ids")
+    for team_id in team_ids:
+        team = Team.query.get(team_id)
+        if team is None:
+            flash(f"Team {team_id} not found.")
+            continue
+
+        if team.is_active:
+            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
+            continue
+
+        # Delete the archive file
+        abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
+        if os.path.exists(abs_path):
+            print(f"Delete {abs_path}")
+            shutil.rmtree(abs_path)
+
+        db.session.delete(team)
+        db.session.commit()
+        flash(f"Team {team.name} ({team.version}) deleted.")
+
+    return redirect(url_for("team.show_archived"))
 
 
 @team.route("/upload", methods=["GET", "POST"])

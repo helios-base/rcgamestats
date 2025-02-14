@@ -91,8 +91,8 @@ def upload():
         file.save(os.path.join(absolute_path, filename))
 
         team = Team(
-            name=form.team_name.data,
-            version=form.version.data,
+            name=name,
+            version=version,
             synch_mode=form.synch_mode.data,
             archive_path=os.path.join(archive_dir, filename),
             description=form.description.data,

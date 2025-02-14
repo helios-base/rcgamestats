@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>{% block title %}Archived Teams{% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+
+<div style="display: flex; justify-content: flex-strt; margin-top: 5px; margin-bottom: 5px;">
+    <a href="{{ url_for('team.index') }}">Show Active Teams</a>
+</div>
+
+<form id="bulk-action-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('team.bulk_activate') }}" disabled>Unarchive</button>
+        <button id="bulk-delete-button" type="submit" formaction="{{ url_for('team.bulk_delete') }}" disabled>Delete</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th>Team Name</th>
+                <th>Version</th>
+                <th>Synch Mode</th>
+                <th>Archive File</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+            <tr>
+                <td><input type="checkbox" name="team_ids" value="{{ team.id }}" onclick="checkCheckboxes()"></td>
+                <td>{{ team.name }}</td>
+                <td>{{ team.version }}</td>
+                <td class="{% if team.synch_mode %}bg-true{% else %}bg-false{% endif %}">{{ team.synch_mode }}</td>
+                <td>
+                    <a href="{{ url_for('team.download', name=team.name, version=team.version) }}">
+                        {{ team.archive_path | basename }}
+                    </a>
+                </td>
+                <td>
+                    {{ team.description }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+
+<script>
+    function toggleCheckboxes(source) {
+        checkboxes = document.getElementsByName('team_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        checkboxes = document.getElementsByName('team_ids');
+        bulkUnarchiveButton = document.getElementById('bulk-unarchive-button');
+        bulkDeleteButton = document.getElementById('bulk-delete-button');
+        var checked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                checked = true;
+                break;
+            }
+        }
+        bulkUnarchiveButton.disabled = !checked;
+        bulkDeleteButton.disabled = !checked;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        checkCheckboxes();
+    });
+</script>
+{% endblock %}
+

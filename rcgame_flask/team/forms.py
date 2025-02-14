@@ -1,6 +1,6 @@
 # from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, TextAreaField, FileField, BooleanField
+from wtforms import StringField, SubmitField, TextAreaField, FileField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Optional, Regexp, Length, ValidationError
 
 
@@ -13,8 +13,13 @@ class TeamUploadForm(FlaskForm):
     #     super(TeamUploadForm, self).__init__(*args, **kwargs)
     #     self.version.data = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    team_name = StringField(
-        "Team Name(*): ",
+    existing_team_name = SelectField(
+        "Existing Team Name: ",
+        choices=[],
+        validators=[Optional()],
+    )
+    new_team_name = StringField(
+        "New Team Name: ",
         validators=[
             DataRequired("team name is required"),
             Length(4, 32, "team name must be between 4 and 32 characters"),

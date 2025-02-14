@@ -9,7 +9,8 @@
 {% from "_formhelpers.html" import render_field %}
 <form method="POST" action="{{ url_for('team.upload') }}" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
-    {{ render_field(form.team_name) }}
+    {{ render_field(form.existing_team_name) }}
+    {{ render_field(form.new_team_name) }}
     {{ render_field(form.synch_mode) }}
     {{ render_field(form.version) }}
     {{ render_field(form.description) }}

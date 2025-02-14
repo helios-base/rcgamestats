@@ -2,7 +2,7 @@ import os
 import shutil
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
-from flask import send_file, abort
+from flask import send_file, abort, flash
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
@@ -69,8 +69,22 @@ def upload():
     Upload team data.
     """
     form = TeamUploadForm()
+
+    ative_teams = Team.query.filter_by(is_active=True).all()
+    teams_by_name = [""]
+    for t in ative_teams:
+        if t.name not in teams_by_name:
+            teams_by_name.append(t.name)
+    form.existing_team_name.choices = teams_by_name
+
     if form.validate_on_submit():
-        name = secure_filename(form.team_name.data)
+        name = form.new_team_name.data if form.new_team_name.data else form.existing_team_name.data
+        if name == "":
+            form.team_name.errors.append("team name is required")
+            flash("team name is required")
+            return render_template("team/upload.html", form=form), 400
+
+        name = secure_filename(name)
         version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M")
         version = secure_filename(version)
 
@@ -78,8 +92,8 @@ def upload():
         # check if the team name and the version already exist
         team = Team.query.filter_by(name=name, version=version).first()
         if team is not None:
-            print("team name and version already exist")
             form.team_name.errors.append("team name and version already exist")
+            flash("team name and version already exist")
             return render_template("team/upload.html", form=form), 409
 
         # Create a directory for the team with the name and version
@@ -106,6 +120,7 @@ def upload():
         except IntegrityError:
             db.session.rollback()
             form.team_name.errors.append("team name and version already exist")
+            flash("team name and version already exist")
             return render_template("team/upload.html", form=form)
 
         return redirect(url_for("team.index"))

@@ -70,7 +70,7 @@ def upload():
     form = TeamUploadForm()
     if form.validate_on_submit():
         name = secure_filename(form.team_name.data)
-        version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M%S")
+        version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M")
         version = secure_filename(version)
 
         # check if the team name and the version already exist

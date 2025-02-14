@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
   <h1>{% block title %}Group Matches Detail{% endblock %}</h1>
 {% endblock %}
@@ -37,7 +37,7 @@
     </form>
 </div>
 
-<table>
+<table class="tablesorter">
     <thead>
         <tr>
             <th>Match Index</th>
@@ -78,4 +78,17 @@
         {% endfor %}
     </tbody>
 </table>
+
+<script>
+    $(function () {
+        $('table').tablesorter(
+            {
+                headers: {
+                    7: { sorter: false }
+                },
+                sortList: [[0, 0]] // sort by first column in ascending order
+            }
+        );
+    });
+</script>
 {% endblock %}

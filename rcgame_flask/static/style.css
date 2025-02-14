@@ -135,10 +135,10 @@ tr:hover { background-color: #ddd; }
 
 .button-container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     margin-bottom: 10px;
 }
 .button-container button {
-    margin-left: 10px;
+    margin-right: 10px;
     padding: 5px 10px;
 }

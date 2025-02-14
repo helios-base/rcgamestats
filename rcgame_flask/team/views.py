@@ -80,7 +80,7 @@ def upload():
     if form.validate_on_submit():
         name = form.new_team_name.data if form.new_team_name.data else form.existing_team_name.data
         if name == "":
-            form.team_name.errors.append("team name is required")
+            form.new_team_name.errors.append("team name is required")
             flash("team name is required")
             return render_template("team/upload.html", form=form), 400
 

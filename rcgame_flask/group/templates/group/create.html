@@ -4,6 +4,8 @@
 {% endblock %}
 
 {% block content %}
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+</div>
     {% from "_formhelpers.html" import render_field %}
     <form method="POST" action="{{ url_for('group.create') }}" novalidate>
         {{ form.csrf_token }}

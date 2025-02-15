@@ -24,7 +24,7 @@
     Description: {{ group.description }}
 </div>
 
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 0px;">
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
     <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a>
 </div>
 <div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 0px;">
@@ -37,8 +37,7 @@
     </form>
 </div>
 
-
-<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 10px;">Matches: 0</div>
+<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 0px;">Matches: 0</div>
 
 <table id="match-table" class="tablesorter">
     <thead>
@@ -59,8 +58,8 @@
             <td>{{ match.group_index }}</td>
             <td>{{ match.start_time }}</td>
             <td>{{ match.end_time }}</td>
-            <td>{{ match.left_score }}</td>
-            <td>{{ match.right_score }}</td>
+            <td style="text-align: right; padding-right: 10px;">{{ match.left_score }}</td>
+            <td style="text-align: right; padding-right: 10px;">{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
             <td>
                 {% if match.processed == 'in progress' or match.processed == 'completed' %}

@@ -5,12 +5,14 @@
 {% endblock %}
 
 {% block content %}
-<div>(*) fields are mandatory.</div>
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    (*) fields are mandatory.
+</div>
 {% from "_formhelpers.html" import render_field %}
 <form method="POST" action="{{ url_for('team.upload') }}" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <div class="form-group">
-        <label for="existing_team_name">Existing Team Name or New Team Name (*):</label>
+        <label for="existing_team_name">Team Name(*):</label>
         <div class="input-group">
             {{ render_field(form.existing_team_name) }}
             <span class="or-text">or</span>

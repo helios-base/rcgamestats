@@ -37,6 +37,9 @@
     </form>
 </div>
 
+
+<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 10px;">Matches: 0</div>
+
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
@@ -102,7 +105,10 @@
 
                 }
             }
-        );
+        ).bind('filterEnd', function(event, config) {
+            var totalRows = config.$tbodies.find('tr:visible').length;
+            $('#record-count').text('Matches: ' + totalRows);
+        });
     });
 </script>
 {% endblock %}

@@ -16,7 +16,7 @@
         <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('team.bulk_activate') }}" disabled>Unarchive</button>
         <button id="bulk-delete-button" type="submit" formaction="{{ url_for('team.bulk_delete') }}" disabled>Delete</button>
     </div>
-    <table class="tablesorter">
+    <table id="team-table" class="tablesorter">
         <thead>
             <tr>
                 <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
@@ -49,18 +49,24 @@
 </form>
 
 <script>
-    $(function() {
-      $('table').tablesorter(
-        {
-          headers: {
-            0: { sorter: false },
-            3: { sorter: false },
-            4: { sorter: false },
-            5: { sorter: false }
-          },
-          sortList: [[1, 0]] // sort by second column in ascending order
-        }
-      );
+    $(function () {
+        $('#team-table').tablesorter({
+            headers: {
+                0: { sorter: false, filter: false },
+                3: { sorter: false, filter: false },
+                4: { sorter: false, filter: false },
+                5: { sorter: false }
+            },
+            sortList: [[1, 0]], // sort by second column in ascending order
+            widgets: ['filter'],
+            widgetOptions: {
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
     });
 
     function toggleCheckboxes(source) {

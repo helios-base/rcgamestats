@@ -1,6 +1,6 @@
 {% extends 'table-base.html' %}
 {% block header %}
-  <h1>{% block title %}Group Matches Detail{% endblock %}</h1>
+<h1>{% block title %}Group Matches Detail{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -10,16 +10,16 @@
     {{ group.left_team.name }}
     ({{ group.left_team.version }})
     {% else %}
-        <span class="error">Not found</span>
+    <span class="error">Not found</span>
     {% endif %}
     vs.
     {% if group.right_team %}
     {{ group.right_team.name }}
     ({{ group.right_team.version }})
     {% else %}
-        <span class="error">Not found</span>
+    <span class="error">Not found</span>
     {% endif %}
-</div> 
+</div>
 <div>
     Description: {{ group.description }}
 </div>
@@ -37,7 +37,7 @@
     </form>
 </div>
 
-<table class="tablesorter">
+<table id="match-table" class="tablesorter">
     <thead>
         <tr>
             <th>Match Index</th>
@@ -47,7 +47,7 @@
             <th>Right Score</th>
             <th>Host Name</th>
             <th>Processed</th>
-            <th>Log File</th> 
+            <th>Log File</th>
         </tr>
     </thead>
     <tbody>
@@ -60,18 +60,23 @@
             <td>{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
             <td>
-                {% if match.processed == 'in progress' or match.processed == 'completed' %} 
-                <form id="reset-form-{{ match.id }}" action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post" style="display:none;">
+                {% if match.processed == 'in progress' or match.processed == 'completed' %}
+                <form id="reset-form-{{ match.id }}"
+                    action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post"
+                    style="display:none;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 </form>
-                <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{ match.processed }}</a>
+                <a href="#"
+                    onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{
+                    match.processed }}</a>
                 {% else %}
-                    {{ match.processed }}
+                {{ match.processed }}
                 {% endif %}
             </td>
             <td>
                 {%if match.processed == 'completed' %}
-                <a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}" target="_blank">Log</a>
+                <a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}"
+                    target="_blank">Log</a>
                 {% endif %}
             </td>
         </tr>
@@ -84,9 +89,18 @@
         $('table').tablesorter(
             {
                 headers: {
-                    7: { sorter: false }
+                    7: { sorter: false, filter: false }
                 },
-                sortList: [[0, 0]] // sort by first column in ascending order
+                sortList: [[0, 0]], // sort by first column in ascending order
+                widgets: ['filter'],
+                widgetOptions: {
+                    filter_columnFilters: true,
+                    // class name applied to filter row and each input
+                    filter_cssFilter: 'tablesorter-filter',
+                    // Set this option to false to make the searches case sensitive
+                    filter_ignoreCase: true,
+
+                }
             }
         );
     });

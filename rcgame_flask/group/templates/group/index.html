@@ -1,26 +1,24 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
-  <h1>{% block title %}Groups{% endblock %}</h1>
-
-  <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
-    <a class="action" href="{{ url_for('group.create') }}">Create a new group</a>
-  </div>
-
-  <div style="display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px;">
-    <a class="action" href="{{ url_for('group.create_roundrobin') }}">Create round robin</a>
-  </div>
-
+<h1>{% block title %}Groups{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-    <a href="{{ url_for('group.show_archived_groups') }}">Archived Groups</a>
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    <a href="{{ url_for('group.create') }}">Create a new group</a>
+    <span style="margin: 0 5px;">/</span>
+    <a href="{{ url_for('group.create_roundrobin') }}">Create round robin</a>
+</div>
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    <a href="{{ url_for('group.show_archived_groups') }}">Show Archived Groups</a>
 </div>
 
-<form action="{{ url_for('group.bulk_archive_groups') }}" method="post" style="display: flex; align-items: flex-end;">
+<form action="{{ url_for('group.bulk_archive_groups') }}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button id="bulk-archive-button" type="submit" style="margin-right: 10px; margin-bottom: 10px; padding: 5px 10px;" disabled>Archive</button>
-    <table>
+    <div class="button-container">
+        <button id="bulk-archive-button" type="submit" disabled>Archive</button>
+    </div>
+    <table id="group-table" class="tablesorter">
         <thead>
             <tr>
                 <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
@@ -30,7 +28,7 @@
                 <th>Right Team</th>
                 <th># of Matches</th>
                 <th>Description</th>
-                <th>Log Files</th> 
+                <th>Log Files</th>
             </tr>
         </thead>
         <tbody>
@@ -41,18 +39,18 @@
                 <td>{{ group.created_at }}</td>
                 <td>
                     {% if group.left_team %}
-                        {{ group.left_team.name }} <br />
-                        {{ group.left_team.version }}
+                    {{ group.left_team.name }} <br />
+                    {{ group.left_team.version }}
                     {% else %}
-                        <span class="error">Not found</span>
+                    <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>
                     {% if group.right_team %}
-                        {{ group.right_team.name }} <br />
-                        {{ group.right_team.version }}
+                    {{ group.right_team.name }} <br />
+                    {{ group.right_team.version }}
                     {% else %}
-                        <span class="error">Not found</span>
+                    <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>{{ group.number_of_matches }}</td>
@@ -65,6 +63,27 @@
 </form>
 
 <script>
+    $(function () {
+        $('#group-table').tablesorter({
+            headers: {
+                0: { sorter: false, filter: false },
+                6: { sorter: false },
+                7: { sorter: false, filter: false }
+            },
+            sortList: [[1, 0]], // sort by second column in ascending order
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
+    });
+
+
     function toggleCheckboxes(source) {
         checkboxes = document.getElementsByName('group_ids');
         for (var i = 0; i < checkboxes.length; i++) {
@@ -86,8 +105,9 @@
         button.disabled = !anyChecked;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         checkCheckboxes();
     });
+
 </script>
 {% endblock %}

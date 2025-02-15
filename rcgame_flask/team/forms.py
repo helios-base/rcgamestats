@@ -30,7 +30,9 @@ class TeamUploadForm(FlaskForm):
         validators=[
             Optional(),
             Length(4, 32, "team name must be between 4 and 32 characters"),
-            Regexp(r"^(?!-)[a-zA-Z0-9_-]+$", message="team name must be alphanumeric"),
+            Regexp(
+                r"^[a-zA-Z0-9][a-zA-Z0-9+-_]*$", message="team name must start with an alphanumeric and be alphanumeric and +, - or _"
+            ),
         ],
     )
     version = StringField(
@@ -40,7 +42,7 @@ class TeamUploadForm(FlaskForm):
             Optional(),
             Length(0, 16, "team version must be less than 16 characters"),
             Regexp(
-                r"^(?!-)[a-zA-Z0-9_-]+$", message="team version must be alphanumeric"
+                r"^[a-zA-Z0-9][a-zA-Z0-9+-_]*$", message="team version must start with an alphanumeric and be alphanumeric and +, - or _"
             ),
         ],
     )

@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
-  <h1>{% block title %}Group Matches Detail{% endblock %}</h1>
+<h1>{% block title %}Group Matches Detail{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -10,24 +10,27 @@
     {{ group.left_team.name }}
     ({{ group.left_team.version }})
     {% else %}
-        <span class="error">Not found</span>
+    <span class="error">Not found</span>
     {% endif %}
     vs.
     {% if group.right_team %}
     {{ group.right_team.name }}
     ({{ group.right_team.version }})
     {% else %}
-        <span class="error">Not found</span>
+    <span class="error">Not found</span>
     {% endif %}
-</div> 
-
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 5px;">
-    <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a>
-    <span style="margin: 0 5px;">/</span>
-    <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
+</div>
+<div>
+    Description: {{ group.description }}
 </div>
 
-<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 0px;">
+    <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a>
+</div>
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 0px;">
+    <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
+</div>
+<div class="button-container">
     <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit">Upload to Google Spreadsheet</button>
@@ -35,7 +38,9 @@
 </div>
 
 
-<table>
+<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 10px;">Matches: 0</div>
+
+<table id="match-table" class="tablesorter">
     <thead>
         <tr>
             <th>Match Index</th>
@@ -45,7 +50,7 @@
             <th>Right Score</th>
             <th>Host Name</th>
             <th>Processed</th>
-            <th>Log File</th> 
+            <th>Log File</th>
         </tr>
     </thead>
     <tbody>
@@ -58,22 +63,52 @@
             <td>{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
             <td>
-                {% if match.processed == 'in progress' or match.processed == 'completed' %} 
-                <form id="reset-form-{{ match.id }}" action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post" style="display:none;">
+                {% if match.processed == 'in progress' or match.processed == 'completed' %}
+                <form id="reset-form-{{ match.id }}"
+                    action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post"
+                    style="display:none;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 </form>
-                <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{ match.processed }}</a>
+                <a href="#"
+                    onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{
+                    match.processed }}</a>
                 {% else %}
-                    {{ match.processed }}
+                {{ match.processed }}
                 {% endif %}
             </td>
             <td>
                 {%if match.processed == 'completed' %}
-                <a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}" target="_blank">Log</a>
+                <a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}"
+                    target="_blank">Log</a>
                 {% endif %}
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<script>
+    $(function () {
+        $('table').tablesorter(
+            {
+                headers: {
+                    7: { sorter: false, filter: false }
+                },
+                sortList: [[0, 0]], // sort by first column in ascending order
+                widgets: ['filter'],
+                widgetOptions: {
+                    filter_columnFilters: true,
+                    // class name applied to filter row and each input
+                    filter_cssFilter: 'tablesorter-filter',
+                    // Set this option to false to make the searches case sensitive
+                    filter_ignoreCase: true,
+
+                }
+            }
+        ).bind('filterEnd', function(event, config) {
+            var totalRows = config.$tbodies.find('tr:visible').length;
+            $('#record-count').text('Matches: ' + totalRows);
+        });
+    });
+</script>
 {% endblock %}

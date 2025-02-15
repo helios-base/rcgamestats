@@ -50,10 +50,10 @@
                     <span class="error">Not found</span>
                     {% endif %}
                 </td>
-                <td>{{ group.number_of_matches }}</td>
+                <td>{{ group.matches.count() }}</td>
                 <td>
                     {% set completed_count = completed_counts.get(group.id, 0) %}
-                    {% if completed_count == group.number_of_matches %}
+                    {% if completed_count == group.matches.count() %}
                     <span class="success">{{ completed_count }}</span>
                     {% else %}
                     <span class="error">{{ completed_count }}</span>

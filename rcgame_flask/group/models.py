@@ -8,7 +8,6 @@ class Group(db.Model):
     created_at = db.Column(db.DateTime, nullable=False)
     left_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
-    number_of_matches = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
     is_archived = db.Column(db.Boolean, default=False)
 
@@ -32,7 +31,7 @@ class Match(db.Model):
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(16))
 
-    group = db.relationship('Group', foreign_keys=[group_id])
-    # group = db.relationship('Group', backref=db.backref('matches', lazy='dynamic'))
+    #group = db.relationship('Group', foreign_keys=[group_id])
+    group = db.relationship('Group', backref=db.backref('matches', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])

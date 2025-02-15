@@ -34,6 +34,8 @@
         </thead>
         <tbody>
             {% for group in groups if not group.is_archived %}
+            {% set scheduled_count = group.matches.count() %}
+            {% set completed_count = completed_counts.get(group.id, 0) %}
             <tr>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
@@ -54,10 +56,9 @@
                     <span class="error">Not found</span>
                     {% endif %}
                 </td>
-                <td>{{ group.number_of_matches }}</td>
+                <td>{{ scheduled_count}}</td>
                 <td>
-                    {% set completed_count = completed_counts.get(group.id, 0) %}
-                    {% if completed_count == group.number_of_matches %}
+                    {% if completed_count == scheduled_count %}
                     <span class="success">{{ completed_count }}</span>
                     {% else %}
                     <span class="error">{{ completed_count }}</span>

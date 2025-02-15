@@ -87,7 +87,6 @@ def create():
             created_at=now,
             left_team_id=team_left_id,
             right_team_id=team_right_id,
-            number_of_matches=form.number_of_matches.data,
             description=form.description.data,
         )
         db.session.add(group)
@@ -156,7 +155,6 @@ def create_roundrobin():
                     created_at=now,
                     left_team_id=left_id,
                     right_team_id=right_id,
-                    number_of_matches=form.number_of_matches.data,
                     description="",
                 )
                 db.session.add(group)
@@ -306,15 +304,15 @@ def edit_group(group_id):
     form = GroupEditForm(obj=group)
 
     if form.validate_on_submit():
+        number_of_matches = group.number_of_matches.count()
         for i in range(int(form.additional_matches.data)):
             match = Match(
-                group_index=group.number_of_matches + i + 1,
+                group_index=number_of_matches + i + 1,
                 group_id=group.id,
                 left_team_id=group.left_team_id,
                 right_team_id=group.right_team_id,
             )
             db.session.add(match)
-        group.number_of_matches += form.additional_matches.data
         group.description = form.description.data
         db.session.commit()
 

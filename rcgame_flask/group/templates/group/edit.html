@@ -27,7 +27,7 @@
   <hr />
 
   <div style="font-size: 1.0em; margin-top: 10px; margin-bottom: 0.5em; ">
-    Current number of matches: {{ group.number_of_matches }}
+    Current scheduled matches: {{ group.matches.count() }}
   </div>
 
   {% from "_formhelpers.html" import render_field %}

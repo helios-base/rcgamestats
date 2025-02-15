@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
 <h1>{% block title %}Teams{% endblock %}</h1>
 
@@ -16,7 +16,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button id="bulk-archive-button" type="submit" style="margin-right: 10px; margin-bottom: 10px; padding: 5px 10px;"
         disabled>Archive</button>
-    <table>
+    <table class="tablesorter">
         <thead>
             <tr>
                 <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
@@ -49,6 +49,20 @@
 </form>
 
 <script>
+    $(function() {
+      $('table').tablesorter(
+        {
+          headers: {
+            0: { sorter: false },
+            3: { sorter: false },
+            4: { sorter: false },
+            5: { sorter: false }
+          },
+          sortList: [[1, 0]] // sort by second column in ascending order
+        }
+      );
+    });
+
     function toggleCheckboxes(source) {
         checkboxes = document.getElementsByName('team_ids');
         for (var i = 0; i < checkboxes.length; i++) {

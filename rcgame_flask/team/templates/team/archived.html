@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
 <h1>{% block title %}Archived Teams{% endblock %}</h1>
 
@@ -16,7 +16,7 @@
         <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('team.bulk_activate') }}" disabled>Unarchive</button>
         <button id="bulk-delete-button" type="submit" formaction="{{ url_for('team.bulk_delete') }}" disabled>Delete</button>
     </div>
-    <table>
+    <table class="tablesorter">
         <thead>
             <tr>
                 <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
@@ -49,6 +49,20 @@
 </form>
 
 <script>
+    $(function() {
+      $('table').tablesorter(
+        {
+          headers: {
+            0: { sorter: false },
+            3: { sorter: false },
+            4: { sorter: false },
+            5: { sorter: false }
+          },
+          sortList: [[1, 0]] // sort by second column in ascending order
+        }
+      );
+    });
+
     function toggleCheckboxes(source) {
         checkboxes = document.getElementsByName('team_ids');
         for (var i = 0; i < checkboxes.length; i++) {

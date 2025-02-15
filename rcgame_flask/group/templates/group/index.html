@@ -21,12 +21,13 @@
     <table id="group-table" class="tablesorter">
         <thead>
             <tr>
-                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Name</th>
                 <th>Created At</th>
                 <th>Left Team</th>
                 <th>Right Team</th>
-                <th># of Matches</th>
+                <th>Scheduled</th>
+                <th>Completed</th>
                 <th>Description</th>
                 <th>Log Files</th>
             </tr>
@@ -35,11 +36,11 @@
             {% for group in groups if not group.is_archived %}
             <tr>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
-                <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
-                <td>{{ group.created_at }}</td>
+                <td class="group-name"><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
+                <td class="time">{{ group.created_at }}</td>
                 <td>
                     {% if group.left_team %}
-                    {{ group.left_team.name }} <br />
+                    {{ group.left_team.name }},
                     {{ group.left_team.version }}
                     {% else %}
                     <span class="error">Not found</span>
@@ -47,14 +48,22 @@
                 </td>
                 <td>
                     {% if group.right_team %}
-                    {{ group.right_team.name }} <br />
+                    {{ group.right_team.name }},
                     {{ group.right_team.version }}
                     {% else %}
                     <span class="error">Not found</span>
                     {% endif %}
                 </td>
                 <td>{{ group.number_of_matches }}</td>
-                <td>{{ group.description }}</td>
+                <td>
+                    {% set completed_count = completed_counts.get(group.id, 0) %}
+                    {% if completed_count == group.number_of_matches %}
+                    <span class="success">{{ completed_count }}</span>
+                    {% else %}
+                    <span class="error">{{ completed_count }}</span>
+                    {% endif %}
+                </td>
+                <td class="description">{{ group.description }}</td>
                 <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
             </tr>
             {% endfor %}
@@ -67,10 +76,10 @@
         $('#group-table').tablesorter({
             headers: {
                 0: { sorter: false, filter: false },
-                6: { sorter: false },
-                7: { sorter: false, filter: false }
+                7: { sorter: false },
+                8: { sorter: false, filter: false }
             },
-            sortList: [[1, 0]], // sort by second column in ascending order
+            sortList: [[2, 1]], // sort by the third column in descending order
             widgets: ['filter'],
             widgetOptions: {
                 filter_columnFilters: true,

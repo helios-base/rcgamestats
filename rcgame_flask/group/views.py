@@ -47,7 +47,8 @@ def index():
     # group_list = Group.query.all()
     group_list = Group.query.filter_by(is_archived=False).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    return render_template("group/index.html", groups=group_list)
+    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
+    return render_template("group/index.html", groups=group_list, completed_counts=completed_counts)
 
 
 @group.route("/create", methods=["GET", "POST"])
@@ -156,7 +157,7 @@ def create_roundrobin():
                     left_team_id=left_id,
                     right_team_id=right_id,
                     number_of_matches=form.number_of_matches.data,
-                    #description="",
+                    description="",
                 )
                 db.session.add(group)
                 try:
@@ -190,7 +191,8 @@ def show_archived_groups():
     """
     group_list = Group.query.filter_by(is_archived=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    return render_template("group/archived_groups.html", groups=group_list)
+    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
+    return render_template("group/archived_groups.html", groups=group_list, completed_counts=completed_counts)
 
 
 @group.route("/<int:group_id>/")
@@ -271,10 +273,10 @@ def show_group_logs(group_name):
 
     dir_name = group_name
     log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
-    if not os.path.exists(log_dir):
-        flash(f"Log directory for group [{group_name}] not found.")
-        #return redirect(url_for("group.index"))
-        return redirect(url_for("group.show_group_matches", group_name=group_name))
+    # if not os.path.exists(log_dir):
+    #     flash(f"Log directory for group [{group_name}] not found.")
+    #     #return redirect(url_for("group.index"))
+    #     return redirect(url_for("group.show_group_matches", group_name=group_name))
 
     matches_in_group = Match.query.filter_by(group_id=group.id).all()
     log_file_paths = []

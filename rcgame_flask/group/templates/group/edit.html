@@ -21,7 +21,12 @@
       {% endif %}
   </div> 
 
-  <div style="font-size: 1.0em; margin-bottom: 0.5em; ">
+  <div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 0px;">
+    <a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">Back to Group</a>
+  </div>
+  <hr />
+
+  <div style="font-size: 1.0em; margin-top: 10px; margin-bottom: 0.5em; ">
     Current number of matches: {{ group.number_of_matches }}
   </div>
 

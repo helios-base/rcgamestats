@@ -30,21 +30,44 @@ input[type=submit] { align-self: start; min-width: 10em; }
 .bg-false { background: #f8d7da; }
 
 .matchup-info { font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em; }
+.success { font-weight: bold; color: #4f8a10; }
 .error { color: #cc2f2e; }
 
 table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid #000000; padding: 8px; word-wrap: break-word; max-width: 200px; }
+th, td { border: 1px solid #000000; padding: 1px 4px; word-wrap: break-word; max-width: 200px; }
 th { background-color: #f2f2f2; text-align: left; }
 tr:nth-child(even) { background-color: #f7f5f5; }
 tr:hover { background-color: #ddd; }
-.description {
+
+/* thやtd内の特定の要素の余白を調整する場合 */
+td *:first-child {
+    margin-top: 0; /* 最初の子要素の上の余白を0に設定 */
+}
+td *:last-child {
+    margin-bottom: 0; /* 最後の子要素の下の余白を0に設定 */
+}
+
+.table-cb { width: 1%; white-space: nowrap; }
+td.time {
+    word-wrap: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: middle;
-    max-width: 16ch;
-    display: inline-block;
-    position: relative;
+}
+td.group-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 20ch;
+}
+td.description {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 10ch;
 }
 
 .footer-nav { 

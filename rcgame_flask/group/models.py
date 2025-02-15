@@ -33,5 +33,6 @@ class Match(db.Model):
     token = db.Column(db.String(16))
 
     group = db.relationship('Group', foreign_keys=[group_id])
+    # group = db.relationship('Group', backref=db.backref('matches', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])

@@ -30,14 +30,21 @@ input[type=submit] { align-self: start; min-width: 10em; }
 .bg-false { background: #f8d7da; }
 
 .matchup-info { font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em; }
-.success { font-weight: bold; color: #4f8a10; }
-.error { color: #cc2f2e; }
+.success { font-weight: bold; }
+.error { color: #910101; background-color: white; }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { border: 1px solid #000000; padding: 1px 4px; word-wrap: break-word; max-width: 200px; }
 th { background-color: #f2f2f2; text-align: left; }
 tr:nth-child(even) { background-color: #f7f5f5; }
 tr:hover { background-color: #ddd; }
+
+tr.approved { background-color: #5cb167; }
+tr.approved:hover { background-color: #00ff00; }
+tr.under_review { background-color: #e7bb7c; }
+tr.under_review:hover { background-color: #eeff7c; }
+tr.rejected { background-color: #c00000; }
+tr.rejected:hover { background-color: #ff0000; }
 
 /* thやtd内の特定の要素の余白を調整する場合 */
 td *:first-child {

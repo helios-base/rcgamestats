@@ -31,8 +31,8 @@
             </tr>
         </thead>
         <tbody>
-            {% for group in groups if group.is_archived %}
-            <tr>
+            {% for group in groups if not group.is_active %}
+            <tr{% if group.status.value == 'approved' %} class="approved"{%elif group.status.value == 'rejected' %} class="rejected"{% elif group.status.value == 'under_review' %} class="under_review"{% endif %}>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>
                 <td>{{ group.created_at }}</td>

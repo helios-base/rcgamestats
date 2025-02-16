@@ -18,7 +18,7 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
-from rcgame_flask.group.models import Group, Match, GroupStats
+from rcgame_flask.group.models import Group, Match, GroupStats, GroupStatus, MatchStatus
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
 from rcgame_flask.team.models import Team
 from rcgame_flask.config import config
@@ -46,9 +46,12 @@ def index():
     Show active groups.
     """
     # group_list = Group.query.all()
-    group_list = Group.query.filter_by(is_archived=False).all()
+    group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
+    print(f"Group list: {group_list}")
+    for group in group_list:
+        print(f"Group: {group.name}, {group.created_at}, {group.left_team}, {group.right_team}")
+    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed=MatchStatus.COMPLETED).count() for group in group_list}
     return render_template("group/index.html", groups=group_list, completed_counts=completed_counts)
 
 
@@ -58,7 +61,7 @@ def show_summaries():
     """
     Show summary of all groups.
     """
-    group_list = Group.query.filter_by(is_archived=False).all()
+    group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
     summary_list = [GroupStats(group.id) for group in group_list]
     return render_template("group/summary.html", summary_list=summary_list)
@@ -70,9 +73,9 @@ def show_archived_groups():
     """
     Show all archived groups.
     """
-    group_list = Group.query.filter_by(is_archived=True).all()
+    group_list = Group.query.filter_by(is_active=False).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
+    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed=MatchStatus.COMPLETED).count() for group in group_list}
     return render_template("group/archived_groups.html", groups=group_list, completed_counts=completed_counts)
 
 
@@ -324,13 +327,13 @@ def edit_group(group_id):
     """
     group = Group.query.get(group_id)
     if group is None:
-        flash(f"Group ID {group_id} not found.")
+        flash(f"Group ID {group_id} not found.", "error")
         return redirect(url_for("group.index"))
 
     form = GroupEditForm(obj=group)
 
     if form.validate_on_submit():
-        number_of_matches = group.number_of_matches.count()
+        number_of_matches = group.matches.count()
         for i in range(int(form.additional_matches.data)):
             match = Match(
                 group_index=number_of_matches + i + 1,
@@ -338,7 +341,9 @@ def edit_group(group_id):
                 left_team_id=group.left_team_id,
                 right_team_id=group.right_team_id,
             )
+            print(f"Adding match {match.group_index} to group {group.name}")
             db.session.add(match)
+        print(f"Old description: {group.description}, New description: {form.description.data}")
         group.description = form.description.data
         db.session.commit()
 
@@ -363,12 +368,12 @@ def archive_group(group_id):
         flash(f"Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
-    group.is_archived = True
+    group.is_active = False
 
     matches_in_group = Match.query.filter_by(group_id=group_id).all()
     for match in matches_in_group:
-        if match.processed == "in progress" or match.processed == "unexecuted":
-            match.processed = "archived"
+        if match.processed == MatchStatus.IN_PROGRESS or match.processed == MatchStatus.UNEXECUTED:
+            match.processed = MatchStatus.ARCHIVED
 
     db.session.commit()
     flash(f"Group [{group.name}] has been archived.")
@@ -376,29 +381,67 @@ def archive_group(group_id):
     return redirect(url_for("group.index"))
 
 
-@group.route("/bulk_archive_groups", methods=["POST"])
+@group.route("/bulk_action", methods=["POST"])
 @login_required
-def bulk_archive_groups():
+def bulk_action():
     """
     Archive selected groups.
     """
+
+    action = request.form.get("action")
     group_ids = request.form.getlist("group_ids")
     if not group_ids:
-        flash("No groups selected for archiving.")
+        flash("No groups selected.", "error")
         return redirect(url_for("group.index"))
 
+    if action == "archive":
+        return bulk_archive_groups(group_ids)
+    elif action == "approve":
+        return bulk_set_status_groups(group_ids, GroupStatus.APPROVED)
+    elif action == "reject":
+        return bulk_set_status_groups(group_ids, GroupStatus.REJECTED)
+    elif action == "under_review":
+        return bulk_set_status_groups(group_ids, GroupStatus.UNDER_REVIEW)
+    elif action == "reset_status":
+        return bulk_set_status_groups(group_ids, GroupStatus.NORMAL)
+
+    flash(f"Unknown action [{action}].", "error")
+    return redirect(url_for("group.index"))
+
+
+def bulk_set_status_groups(group_ids, status):
+    """
+    Bulk approve groups.
+    """
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group is None:
-            flash(f"Group ID {group_id} not found.")
+            flash(f"Group ID {group_id} not found.", "error")
             return redirect(url_for("group.index"))
 
-        group.is_archived = True
+        group.status = status
+        db.session.commit()
+        flash(f"Group [{group.name}] has been set to [{status.value}].")
+
+    return redirect(url_for("group.index"))
+
+
+def bulk_archive_groups(group_ids):
+    """
+    Bulk archive groups.
+    """
+    for group_id in group_ids:
+        group = Group.query.get(group_id)
+        if group is None:
+            flash(f"Group ID {group_id} not found.", "error")
+            return redirect(url_for("group.index"))
+
+        group.is_active = False
 
         matches_in_group = Match.query.filter_by(group_id=group_id).all()
         for match in matches_in_group:
-            if match.processed == "in progress" or match.processed == "unexecuted":
-                match.processed = "archived"
+            if match.processed == MatchStatus.IN_PROGRESS or match.processed == MatchStatus.UNEXECUTED:
+                match.processed = MatchStatus.ARCHIVED
 
         db.session.commit()
         flash(f"Group [{group.name}] has been archived.")
@@ -420,11 +463,11 @@ def bulk_unarchive_groups():
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group:
-            group.is_archived = False
+            group.is_active = True
             matches_in_group = Match.query.filter_by(group_id=group_id).all()
             for match in matches_in_group:
-                if match.processed == "archived":
-                    match.processed = "unexecuted"
+                if match.processed == MatchStatus.ARCHIVED:
+                    match.processed = MatchStatus.UNEXECUTED
 
     db.session.commit()
     flash(f"Unarchived {len(group_ids)} groups.")
@@ -544,7 +587,7 @@ def reset_match(group_id, match_id):
     Reset a match.
     """
     match = Match.query.get(match_id)
-    if match and match.processed == "completed":
+    if match and match.processed == MatchStatus.COMPLETED:
         log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
         log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
         for log_file_path in log_file_paths:
@@ -554,15 +597,15 @@ def reset_match(group_id, match_id):
         match.host_name = None
         match.start_time = None
         match.end_time = None
-        match.processed = "unexecuted"
+        match.processed = MatchStatus.UNEXECUTED
         match.log_file_name = None
         match.token = None
         db.session.commit()
         flash(f"Match {match.group_index} has been reset.")
-    elif match and match.processed == "in progress":
+    elif match and match.processed == MatchStatus.IN_PROGRESS:
         match.host_name = None
         match.start_time = None
-        match.processed = "unexecuted"
+        match.processed = MatchStatus.UNEXECUTED
         match.log_file_name = None
         match.token = None
         db.session.commit()
@@ -627,7 +670,7 @@ def request_match():
     if host_name is None:
         return jsonify({"error": "Missing host name."}), 400
 
-    match = Match.query.filter_by(processed="unexecuted").first()
+    match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
     if match is None:
         return jsonify({"message": "No unexecuted matches found."}), 200
 
@@ -648,7 +691,7 @@ def request_match():
 
     match.host_name = host_name
     match.start_time = start_time
-    match.processed = "in progress"
+    match.processed = MatchStatus.IN_PROGRESS
     match.log_file_name = log_file_name
     match.token = secrets.token_hex(16)
 
@@ -736,7 +779,7 @@ def submit_result():
     match.end_time = end_time
     match.left_score = left_score
     match.right_score = right_score
-    match.processed = "completed"
+    match.processed = MatchStatus.COMPLETED
     db.session.commit()
 
     return jsonify({"message": "Match result submitted."})
@@ -762,7 +805,7 @@ def decline_assignment():
 
     match.host_name = None
     match.start_time = None
-    match.processed = "unexecuted"
+    match.processed = MatchStatus.UNEXECUTED
     match.log_file_name = None
     match.token = None
     db.session.commit()

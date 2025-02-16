@@ -18,9 +18,10 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
-from rcgame_flask.group.models import Group, Match
+from rcgame_flask.group.models import Group, Match, GroupStats
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
 from rcgame_flask.team.models import Team
+from rcgame_flask.config import config
 from rcgame_flask import googlesheet
 
 
@@ -47,7 +48,32 @@ def index():
     # group_list = Group.query.all()
     group_list = Group.query.filter_by(is_archived=False).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    return render_template("group/index.html", groups=group_list)
+    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
+    return render_template("group/index.html", groups=group_list, completed_counts=completed_counts)
+
+
+@group.route("/summary/")
+@login_required
+def show_summaries():
+    """
+    Show summary of all groups.
+    """
+    group_list = Group.query.filter_by(is_archived=False).all()
+    group_list.sort(key=lambda x: x.created_at, reverse=True)
+    summary_list = [GroupStats(group.id) for group in group_list]
+    return render_template("group/summary.html", summary_list=summary_list)
+
+
+@group.route("/archived/")
+@login_required
+def show_archived_groups():
+    """
+    Show all archived groups.
+    """
+    group_list = Group.query.filter_by(is_archived=True).all()
+    group_list.sort(key=lambda x: x.created_at, reverse=True)
+    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
+    return render_template("group/archived_groups.html", groups=group_list, completed_counts=completed_counts)
 
 
 @group.route("/create", methods=["GET", "POST"])
@@ -86,7 +112,6 @@ def create():
             created_at=now,
             left_team_id=team_left_id,
             right_team_id=team_right_id,
-            number_of_matches=form.number_of_matches.data,
             description=form.description.data,
         )
         db.session.add(group)
@@ -94,7 +119,7 @@ def create():
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-            flash(f"Group name [{group_name}] already exists.")
+            flash(f"Group [{group_name}] cannot be created.")
             return redirect(url_for("group.create"))
 
         for i in range(int(form.number_of_matches.data)):
@@ -155,8 +180,7 @@ def create_roundrobin():
                     created_at=now,
                     left_team_id=left_id,
                     right_team_id=right_id,
-                    number_of_matches=form.number_of_matches.data,
-                    #description="",
+                    description="",
                 )
                 db.session.add(group)
                 try:
@@ -182,17 +206,6 @@ def create_roundrobin():
     return render_template("group/create_roundrobin.html", form=form)
 
 
-@group.route("/archived/")
-@login_required
-def show_archived_groups():
-    """
-    Show all archived groups.
-    """
-    group_list = Group.query.filter_by(is_archived=True).all()
-    group_list.sort(key=lambda x: x.created_at, reverse=True)
-    return render_template("group/archived_groups.html", groups=group_list)
-
-
 @group.route("/<int:group_id>/")
 @login_required
 def show_group_matches_by_id(group_id):
@@ -201,10 +214,15 @@ def show_group_matches_by_id(group_id):
     """
     group = Group.query.get_or_404(group_id)
     matches = Match.query.filter_by(group_id=group_id).all()
+
+    use_googlesheet = True
+    if config.GOOGLE_DOC_ID is None or config.GOOGLE_KEY_PATH is None:
+        use_googlesheet = False
     return render_template(
-        "group/match_list.html",
+        "group/detail.html",
         group=group,
         matches=matches,
+        use_googlesheet=use_googlesheet
     )
 
 
@@ -220,10 +238,18 @@ def show_group_matches(group_name):
         return redirect(url_for("group.index"))
 
     matches = Match.query.filter_by(group_id=group.id).all()
+
+    use_googlesheet = True
+    if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "":
+        use_googlesheet = False
+
+    stats = GroupStats(group.id)
     return render_template(
-        "group/match_list.html",
+        "group/detail.html",
         group=group,
         matches=matches,
+        stats=stats,
+        use_googlesheet=use_googlesheet
     )
 
 
@@ -271,10 +297,10 @@ def show_group_logs(group_name):
 
     dir_name = group_name
     log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
-    if not os.path.exists(log_dir):
-        flash(f"Log directory for group [{group_name}] not found.")
-        #return redirect(url_for("group.index"))
-        return redirect(url_for("group.show_group_matches", group_name=group_name))
+    # if not os.path.exists(log_dir):
+    #     flash(f"Log directory for group [{group_name}] not found.")
+    #     #return redirect(url_for("group.index"))
+    #     return redirect(url_for("group.show_group_matches", group_name=group_name))
 
     matches_in_group = Match.query.filter_by(group_id=group.id).all()
     log_file_paths = []
@@ -304,15 +330,15 @@ def edit_group(group_id):
     form = GroupEditForm(obj=group)
 
     if form.validate_on_submit():
+        number_of_matches = group.number_of_matches.count()
         for i in range(int(form.additional_matches.data)):
             match = Match(
-                group_index=group.number_of_matches + i + 1,
+                group_index=number_of_matches + i + 1,
                 group_id=group.id,
                 left_team_id=group.left_team_id,
                 right_team_id=group.right_team_id,
             )
             db.session.add(match)
-        group.number_of_matches += form.additional_matches.data
         group.description = form.description.data
         db.session.commit()
 

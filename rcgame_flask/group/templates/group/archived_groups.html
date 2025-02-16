@@ -16,17 +16,18 @@
         <button id="bulk-delete-button" type="submit" formaction="{{ url_for('group.bulk_delete_groups') }}"
             disabled>Delete</button>
     </div>
-    <table class="tablesorter">
+    <table id="group-table" class="tablesorter">
         <thead>
             <tr>
-                <th class="sorter-false"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th  class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Name</th>
                 <th>Created At</th>
                 <th>Left Team</th>
                 <th>Right Team</th>
-                <th class="sorter-false"># of Matches</th>
-                <th class="sorter-false">Description</th>
-                <th class="sorter-false">Log Files</th>
+                <th>Scheduled</th>
+                <th>Completed</th>
+                <th>Description</th>
+                <th>Log Files</th>
             </tr>
         </thead>
         <tbody>
@@ -49,7 +50,15 @@
                     <span class="error">Not found</span>
                     {% endif %}
                 </td>
-                <td>{{ group.number_of_matches }}</td>
+                <td>{{ group.matches.count() }}</td>
+                <td>
+                    {% set completed_count = completed_counts.get(group.id, 0) %}
+                    {% if completed_count == group.matches.count() %}
+                    <span class="success">{{ completed_count }}</span>
+                    {% else %}
+                    <span class="error">{{ completed_count }}</span>
+                    {% endif %}
+                </td>
                 <td>{{ group.description }}</td>
                 <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
             </tr>
@@ -60,7 +69,23 @@
 
 <script>
     $(function () {
-        $('table').tablesorter();
+        $('#group-table').tablesorter({
+            headers: {
+                0: { sorter: false, filter: false },
+                7: { sorter: false },
+                8: { sorter: false, filter: false }
+            },
+            sortList: [[2, 1]], // sort by the third column in descending order
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
     });
 
     function toggleCheckboxes(source) {

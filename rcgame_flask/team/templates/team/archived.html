@@ -6,7 +6,7 @@
 
 {% block content %}
 
-<div style="display: flex; justify-content: flex-strt; margin-top: 5px; margin-bottom: 5px;">
+<div style="display: flex; justify-content: flex-strt; margin-top: 10px; margin-bottom: 10px;">
     <a href="{{ url_for('team.index') }}">Show Active Teams</a>
 </div>
 
@@ -19,7 +19,7 @@
     <table id="team-table" class="tablesorter">
         <thead>
             <tr>
-                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Team Name</th>
                 <th>Version</th>
                 <th>Synch Mode</th>

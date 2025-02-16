@@ -1,0 +1,279 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}Group Detail{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a>
+    <span style="margin: 0 5px">/</span>
+    <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
+</div>
+{% if use_googlesheet %}
+    <div class="button-container">
+        <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Upload to Google Spreadsheet</button>
+        </form>
+    </div>
+{% endif %}
+
+<h2>Group Name: {{ group.name }}</h2>
+<div class="matchup-info">
+    {% if group.left_team %}
+    {{ group.left_team.name }}
+    ({{ group.left_team.version }})
+    {% else %}
+    <span class="error">Not found</span>
+    {% endif %}
+    vs.
+    {% if group.right_team %}
+    {{ group.right_team.name }}
+    ({{ group.right_team.version }})
+    {% else %}
+    <span class="error">Not found</span>
+    {% endif %}
+</div>
+<div>
+    Description: {{ group.description }}
+</div>
+
+<h3>Stats</h3>
+<table>
+    <thead>
+        <tr>
+            <th class="summary">Total</th>
+            <th class="summary" id="lborder">L Win</th>
+            <th class="summary">Draw</th>
+            <th class="summary">R Win</th>
+            <th class="summary" id="lborder">L Win Rate</th>
+            <th class="summary">Draw Rate</th>
+            <th class="summary">R Win Rate</th>
+            <th class="summary" id="lborder">L Goal</th>
+            <th class="summary">R Goal</th>
+            <th class="summary" id="lborder">L Ave. Goal</th>
+            <th class="summary">R Ave. Goal</th>
+            <th class="summary" id="lborder">L Max Goal</th>
+            <th class="summary">R Max Goal</th>
+            <th class="summary" id="lborder">L Scored</th>
+            <th class="summary">R Scored</th>
+            <th class="summary" id="lborder">L Score Rate</th>
+            <th class="summary">R Score Rate</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="summary">{{ stats.completed_count }}</td>
+            <td class="summary" id="lborder">{{ stats.left_win }}</td>
+            <td class="summary">{{ stats.draw }}</td>
+            <td class="summary">{{ stats.right_win }}</td>
+            <td class="summary" id="lborder">{{ stats.left_win_rate * 100 }} %</td>
+            <td class="summary">{{ stats.draw_rate * 100 }} %</td>
+            <td class="summary">{{ stats.right_win_rate * 100 }} %</td>
+            <td class="summary" id="lborder">{{ stats.left_goals }}</td>
+            <td class="summary">{{ stats.right_goals }}</td>
+            <td class="summary" id="lborder">{{ stats.left_ave_goal }}</td>
+            <td class="summary">{{ stats.right_ave_goal }}</td>
+            <td class="summary" id="lborder">{{ stats.left_max_goal }}</td>
+            <td class="summary">{{ stats.right_max_goal }}</td>
+            <td class="summary" id="lborder">{{ stats.left_scored_count }}</td>
+            <td class="summary">{{ stats.right_scored_count }}</td>
+            <td class="summary" id="lborder">{{ stats.left_score_rate * 100 }} %</td>
+            <td class="summary">{{ stats.right_score_rate * 100 }} %</td>
+        </tr>
+    </tbody>
+</table>
+
+<canvas id="matchScoresHistogram" width="300" height="50"></canvas>
+<canvas id="hostsHistogram" width="300" height="50"></canvas>
+
+<h3>Matches</h3>
+<div id="pager" class="pager">
+    <button type="button" class="first"><<</button>
+    <button type="button" class="prev"><</button>
+    <span class="pagedisplay"></span>
+    <button type="button" class="next">></button>
+    <button type="button" class="last">>></button>
+    <select class="pagesize" title="Select page size">
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+    </select>
+    <select class="gotoPage" title="Select page number"></select>
+</div>
+
+<table id="match-table" class="tablesorter">
+    <thead>
+        <tr>
+            <th>Index</th>
+            <th>Start At</th>
+            <th>End At</th>
+            <th>Left Score</th>
+            <th>Right Score</th>
+            <th>Host Name</th>
+            <th>Status</th>
+            <th>Log File</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for match in matches %}
+        <tr>
+            <td>{{ match.group_index }}</td>
+            <td>{{ match.start_time }}</td>
+            <td>{{ match.end_time }}</td>
+            <td style="text-align: right; padding-right: 10px;">{{ match.left_score }}</td>
+            <td style="text-align: right; padding-right: 10px;">{{ match.right_score }}</td>
+            <td>{{ match.host_name }}</td>
+            <td>
+                {% if match.processed == 'in progress' or match.processed == 'completed' %}
+                <form id="reset-form-{{ match.id }}"
+                    action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post"
+                    style="display:none;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+                <a href="#"
+                    onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{
+                    match.processed }}</a>
+                {% else %}
+                {{ match.processed }}
+                {% endif %}
+            </td>
+            <td>
+                {%if match.processed == 'completed' %}
+                <a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}"
+                    target="_blank">Log</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
+<script>
+    $(function () {
+        $('#match-table').tablesorter(
+            {
+                headers: {
+                    7: { sorter: false, filter: false }
+                },
+                sortList: [[0, 0]], // sort by first column in ascending order
+                widgets: ['filter', 'pager'],
+                widgetOptions: {
+                    filter_columnFilters: true,
+                    // class name applied to filter row and each input
+                    filter_cssFilter: 'tablesorter-filter',
+                    // Set this option to false to make the searches case sensitive
+                    filter_ignoreCase: true,
+
+                }
+            }
+        ).tablesorterPager({
+                container: $(".pager"),
+                size: 100,
+                output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
+            }
+        );
+
+        // prepare data for histograms
+        var leftScoreCounts = {{ stats.left_score_counts | tojson }};
+        var rightScoreCounts = {{ stats.right_score_counts | tojson }};
+        var scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
+        var leftData = scoreLabels.map(label => leftScoreCounts[label] || 0);
+        var rightData = scoreLabels.map(label => rightScoreCounts[label] || 0);
+
+        // draw match scores histogram
+        var ctx = document.getElementById('matchScoresHistogram').getContext('2d');
+        var matchScoresHistogram = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: scoreLabels,
+                datasets: [
+                    {
+                        label: 'Left Team Scores',
+                        data: leftData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Right Team Scores',
+                        data: rightData,
+                        backgroundColor: 'rgba(192, 75, 75, 0.2)',
+                        borderColor: 'rgba(192, 75, 75, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Scores'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Matches'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // draw hosts histogram
+        var hosts = {{ stats.host_counts | tojson }};
+        var hostLabels = Object.keys(hosts);
+        var hostData = hostLabels.map(label => hosts[label]);
+        var ctx = document.getElementById('hostsHistogram').getContext('2d');
+        var hostsHistogram = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: hostLabels,
+                datasets: [
+                    {
+                        label: 'Hosts',
+                        data: hostData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hosts'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Matches'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

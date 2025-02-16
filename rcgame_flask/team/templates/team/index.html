@@ -5,21 +5,22 @@
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 5px;"></div>
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
 <a href="{{ url_for('team.upload') }}">Upload a new team</a>
 </div>
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 5px;">
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
     <a href="{{ url_for('team.show_archived') }}">Show Archived Teams</a>
 </div>
 
-<form action="{{ url_for('team.bulk_archive')}}" method="post" style="display: flex; align-items: flex-start;">
+<form action="{{ url_for('team.bulk_archive')}}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button id="bulk-archive-button" type="submit" style="margin-right: 10px; margin-bottom: 10px; padding: 5px 10px;"
-        disabled>Archive</button>
+    <div class="button-container">
+        <button id="bulk-archive-button" type="submit" disabled>Archive</button>
+    </div>
     <table id="team-table" class="tablesorter">
         <thead>
             <tr>
-                <th><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Team Name</th>
                 <th>Version</th>
                 <th>Synch Mode</th>

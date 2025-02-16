@@ -219,7 +219,7 @@ def show_group_matches_by_id(group_id):
     if config.GOOGLE_DOC_ID is None or config.GOOGLE_KEY_PATH is None:
         use_googlesheet = False
     return render_template(
-        "group/match_list.html",
+        "group/detail.html",
         group=group,
         matches=matches,
         use_googlesheet=use_googlesheet
@@ -247,7 +247,7 @@ def show_group_matches(group_name):
     print(f"use_googlesheet: {use_googlesheet}")
 
     return render_template(
-        "group/match_list.html",
+        "group/detail.html",
         group=group,
         matches=matches,
         use_googlesheet=use_googlesheet

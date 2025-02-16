@@ -1,6 +1,6 @@
 {% extends 'table-base.html' %}
 {% block header %}
-<h1>{% block title %}Group Matches Detail{% endblock %}</h1>
+<h1>{% block title %}Group Detail{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -30,25 +30,27 @@
 <div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 0px;">
     <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
 </div>
-<div class="button-container">
-    <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Upload to Google Spreadsheet</button>
-    </form>
-</div>
+{% if use_googlesheet %}
+    <div class="button-container">
+        <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Upload to Google Spreadsheet</button>
+        </form>
+    </div>
+{% endif %}
 
 <div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 0px;">Matches: 0</div>
 
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
-            <th>Match Index</th>
-            <th>Start Time</th>
-            <th>End Time</th>
+            <th>Index</th>
+            <th>Start At</th>
+            <th>End At</th>
             <th>Left Score</th>
             <th>Right Score</th>
             <th>Host Name</th>
-            <th>Processed</th>
+            <th>Status</th>
             <th>Log File</th>
         </tr>
     </thead>

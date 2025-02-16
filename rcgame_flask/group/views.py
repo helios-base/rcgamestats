@@ -21,6 +21,7 @@ from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match, GroupStats
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
 from rcgame_flask.team.models import Team
+from rcgame_flask.config import config
 from rcgame_flask import googlesheet
 
 
@@ -213,10 +214,15 @@ def show_group_matches_by_id(group_id):
     """
     group = Group.query.get_or_404(group_id)
     matches = Match.query.filter_by(group_id=group_id).all()
+
+    use_googlesheet = True
+    if config.GOOGLE_DOC_ID is None or config.GOOGLE_KEY_PATH is None:
+        use_googlesheet = False
     return render_template(
         "group/match_list.html",
         group=group,
         matches=matches,
+        use_googlesheet=use_googlesheet
     )
 
 
@@ -232,10 +238,19 @@ def show_group_matches(group_name):
         return redirect(url_for("group.index"))
 
     matches = Match.query.filter_by(group_id=group.id).all()
+
+    use_googlesheet = True
+    if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "":
+        use_googlesheet = False
+    print(f"config.GOOGLE_DOC_ID: {config.GOOGLE_DOC_ID}")
+    print(f"config.GOOGLE_KEY_PATH: {config.GOOGLE_KEY_PATH}")
+    print(f"use_googlesheet: {use_googlesheet}")
+
     return render_template(
         "group/match_list.html",
         group=group,
         matches=matches,
+        use_googlesheet=use_googlesheet
     )
 
 

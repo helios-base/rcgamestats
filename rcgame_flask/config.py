@@ -16,8 +16,8 @@ class Config:
     WTF_CSRF_ENABLED = True
     WTF_CSRF_SECRET_KEY = os.getenv("WTF_CSRF_SECRET_KEY", "my_wtf_csrf_secret_key")
 
-    GOOGLE_DOC_ID = os.getenv("GOOGLE_DOC_ID", None)
-    GOOGLE_KEY_PATH = os.getenv("GOOGLE_KEY_PATH", None)
+    GOOGLE_DOC_ID = os.getenv("GOOGLE_DOC_ID", "")
+    GOOGLE_KEY_PATH = os.getenv("GOOGLE_KEY_PATH", "")
 
 
 config = Config()

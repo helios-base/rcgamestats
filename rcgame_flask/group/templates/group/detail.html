@@ -126,7 +126,7 @@
             <td style="text-align: right; padding-right: 10px;">{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
             <td>
-                {% if match.processed == 'in progress' or match.processed == 'completed' %}
+                {% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
                 <form id="reset-form-{{ match.id }}"
                     action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post"
                     style="display:none;">
@@ -193,15 +193,19 @@
                     {
                         label: 'Left Team Scores',
                         data: leftData,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
+                        // backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        // borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                        borderColor: 'rgba(255, 215, 0, 1)',
                         borderWidth: 1
                     },
                     {
                         label: 'Right Team Scores',
                         data: rightData,
-                        backgroundColor: 'rgba(192, 75, 75, 0.2)',
-                        borderColor: 'rgba(192, 75, 75, 1)',
+                        // backgroundColor: 'rgba(192, 75, 75, 0.2)',
+                        // borderColor: 'rgba(192, 75, 75, 1)',
+                        backgroundColor: 'rgba(240, 20, 20, 0.2)',
+                        borderColor: 'rgba(240, 20, 20, 1)',
                         borderWidth: 1
                     }
                 ]

@@ -1,4 +1,18 @@
+from enum import Enum
 from rcgame_flask.app import db
+
+
+class GroupStatus(Enum):
+    NORMAL = 'normal'
+    REJECTED = 'rejected'
+    UNDER_REVIEW = 'under_review'
+    APPROVED = 'approved'
+
+
+class MatchStatus(Enum):
+    UNEXECUTED = 'unexecuted'
+    IN_PROGRESS = 'in progress'
+    COMPLETED = 'completed'
 
 
 class Group(db.Model):
@@ -9,7 +23,8 @@ class Group(db.Model):
     left_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     description = db.Column(db.Text)
-    is_archived = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    status = db.Column(db.Enum(GroupStatus), default=GroupStatus.NORMAL)
 
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
@@ -27,7 +42,7 @@ class Match(db.Model):
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     left_score = db.Column(db.Integer)
     right_score = db.Column(db.Integer)
-    processed = db.Column(db.String(15), default='unexecuted')
+    processed = db.Column(db.Enum(MatchStatus), default=MatchStatus.UNEXECUTED)
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(16))
 
@@ -73,7 +88,7 @@ class GroupStats():
         """
         if self.group is None:
             return
-        matches = Match.query.filter_by(group_id=self.group_id, processed="completed").all()
+        matches = Match.query.filter_by(group_id=self.group_id, processed=MatchStatus.COMPLETED).all()
         self.completed_count = len(matches)
         left_max_score = 10
         right_max_score = 10

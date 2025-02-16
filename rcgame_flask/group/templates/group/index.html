@@ -36,9 +36,9 @@
             </tr>
         </thead>
         <tbody>
-            {% for group in groups if not group.is_archived %}
-            {% set scheduled_count = group.matches.count() %}
-            {% set completed_count = completed_counts.get(group.id, 0) %}
+            {% for group in groups if group.is_active %}
+              {% set scheduled_count = group.matches.count() %}
+              {% set completed_count = completed_counts.get(group.id, 0) %}
             <tr>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>

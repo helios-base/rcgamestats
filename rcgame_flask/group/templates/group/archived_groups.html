@@ -31,7 +31,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for group in groups if group.is_archived %}
+            {% for group in groups if not group.is_active %}
             <tr>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}">{{ group.name }}</a></td>

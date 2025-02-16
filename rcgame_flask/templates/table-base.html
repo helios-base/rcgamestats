@@ -40,7 +40,10 @@
 <footer>
   <div class="footer-nav">
     <a href="{{ url_for('index') }}">Menu</a>
+    <a href="{{ url_for('group.create') }}">Create a new group</a>
+    <a href="{{ url_for('group.create_roundrobin') }}">Create roundrobin</a>
     <a href="{{ url_for('group.index') }}">Groups</a>
+    <a href="{{ url_for('group.show_summaries') }}">Summary</a>
     <a href="{{ url_for('team.index') }}">Teams</a>
     <a href="{{ url_for('host.index') }}">Hosts</a>
   </div>

@@ -70,14 +70,18 @@ td.description {
     max-width: 10ch;
 }
 
-thead.summary {
-    font-size: 10pt;
-}
 th.summary {
     font-size: 8pt;
 }
-tbody.summary {
+td.summary {
     font-size: 10pt;
+    white-space: nowrap; /* テキストを1行にする */
+    overflow: hidden; /* 溢れたテキストを隠す */
+    max-width: 20ch; /* 最大幅を設定 */
+}
+/* 特定のカラムの境界線を強調する */
+#lborder{
+    border-left: 3px solid #000; /* 左側の境界線を太くする */
 }
 
 .footer-nav { 
@@ -181,7 +185,7 @@ tbody.summary {
     position: relative;
     cursor: pointer;
     text-align: left;
-    padding-right: 10px;
+    padding-right: 12px;
 }
 .tablesorter th::before, .tablesorter th::after{
     content: '';

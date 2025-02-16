@@ -1,0 +1,83 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}Summary{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    <a href="{{ url_for('group.index') }}">Show Active Groups</a>
+</div>
+
+<table id="summary-table" class="tablesorter">
+    <thead class="summary">
+        <tr>
+            <th class="summary">Name</th>
+            <th class="summary">Created At</th>
+            <th class="summary">Left</th>
+            <th class="summary">Right</th>
+            <th class="summary">Total</th>
+            <th class="summary">L Win</th>
+            <th class="summary">Draw</th>
+            <th class="summary">R Win</th>
+            <th class="summary">L Goal</th>
+            <th class="summary">R Goal</th>
+            <th class="summary">L Win Rate</th>
+            <th class="summary">Draw Rate</th>
+            <th class="summary">R Win Rate</th>
+            <th class="summary">L Ave. Goal</th>
+            <th class="summary">R Ave. Goal</th>
+            <th class="summary">L Max Goal</th>
+            <th class="summary">R Max Goal</th>
+            <th class="summary">L Scored</th>
+            <th class="summary">R Scored</th>
+            <th class="summary">L Score Rate</th>
+            <th class="summary">R Score Rate</th>
+        </tr>
+    </thead>
+    <tbody class="summary">
+        {% for summary in summary_list %}
+        <tr>
+            <td><a href="{{ url_for('group.show_group_matches', group_name=summary.group.name) }}" title="{{ summary.group.name }}">{{ summary.group.name }}</a></td>
+            <td>{{ summary.group.created_at }}</td>
+            <td>{{ summary.group.left_team.name }}</td>
+            <td>{{ summary.group.right_team.name }}</td>
+            <td>{{ summary.completed_count }}</td>
+            <td>{{ summary.left_win }}</td>
+            <td>{{ summary.draw }}</td>
+            <td>{{ summary.right_win }}</td>
+            <td>{{ summary.left_goals }}</td>
+            <td>{{ summary.right_goals }}</td>
+            <td>{{ summary.left_win_rate * 100 }} %</td>
+            <td>{{ summary.draw_rate * 100 }} %</td>
+            <td>{{ summary.right_win_rate * 100 }} %</td>
+            <td>{{ summary.left_ave_goal }}</td>
+            <td>{{ summary.right_ave_goal }}</td>
+            <td>{{ summary.left_max_goal }}</td>
+            <td>{{ summary.right_max_goal }}</td>
+            <td>{{ summary.left_scored_count }}</td>
+            <td>{{ summary.right_scored_count }}</td>
+            <td>{{ summary.left_score_rate * 100 }} %</td>
+            <td>{{ summary.right_score_rate * 100 }} %</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    $(function () {
+        $('#summary-table').tablesorter({
+            sortList: [[1, 1]], // sort by the third column in descending order
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
+    });
+</script>
+{% endblock %}
+

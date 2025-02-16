@@ -12,6 +12,9 @@
 <div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
     <a href="{{ url_for('group.show_archived_groups') }}">Show Archived Groups</a>
 </div>
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    <a href="{{ url_for('group.show_summaries') }}">Show Summary</a>
+</div>
 
 <form action="{{ url_for('group.bulk_archive_groups') }}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

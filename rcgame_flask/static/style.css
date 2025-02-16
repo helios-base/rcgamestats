@@ -70,6 +70,16 @@ td.description {
     max-width: 10ch;
 }
 
+thead.summary {
+    font-size: 10pt;
+}
+th.summary {
+    font-size: 8pt;
+}
+tbody.summary {
+    font-size: 10pt;
+}
+
 .footer-nav { 
     display: flex;
     flex-direction: column;
@@ -171,6 +181,7 @@ td.description {
     position: relative;
     cursor: pointer;
     text-align: left;
+    padding-right: 10px;
 }
 .tablesorter th::before, .tablesorter th::after{
     content: '';
@@ -186,12 +197,12 @@ td.description {
 .tablesorter th::before{
     border-bottom-style: solid;
     border-top: none;
-    top: 30%;
+    top: 25%;
 }
 .tablesorter th::after{
     border-top-style: solid;
     border-bottom: none;
-    bottom: 30%;
+    bottom: 25%;
 }
 .tablesorter th.tablesorter-headerAsc:after{
     border: none;

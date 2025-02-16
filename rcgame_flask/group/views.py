@@ -18,7 +18,7 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
-from rcgame_flask.group.models import Group, Match
+from rcgame_flask.group.models import Group, Match, GroupStats
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
 from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
@@ -49,6 +49,30 @@ def index():
     group_list.sort(key=lambda x: x.created_at, reverse=True)
     completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
     return render_template("group/index.html", groups=group_list, completed_counts=completed_counts)
+
+
+@group.route("/summary/")
+@login_required
+def show_summaries():
+    """
+    Show summary of all groups.
+    """
+    group_list = Group.query.filter_by(is_archived=False).all()
+    group_list.sort(key=lambda x: x.created_at, reverse=True)
+    summary_list = [GroupStats(group.id) for group in group_list]
+    return render_template("group/summary.html", summary_list=summary_list)
+
+
+@group.route("/archived/")
+@login_required
+def show_archived_groups():
+    """
+    Show all archived groups.
+    """
+    group_list = Group.query.filter_by(is_archived=True).all()
+    group_list.sort(key=lambda x: x.created_at, reverse=True)
+    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
+    return render_template("group/archived_groups.html", groups=group_list, completed_counts=completed_counts)
 
 
 @group.route("/create", methods=["GET", "POST"])
@@ -179,18 +203,6 @@ def create_roundrobin():
         return redirect(url_for("group.index"))
 
     return render_template("group/create_roundrobin.html", form=form)
-
-
-@group.route("/archived/")
-@login_required
-def show_archived_groups():
-    """
-    Show all archived groups.
-    """
-    group_list = Group.query.filter_by(is_archived=True).all()
-    group_list.sort(key=lambda x: x.created_at, reverse=True)
-    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed="completed").count() for group in group_list}
-    return render_template("group/archived_groups.html", groups=group_list, completed_counts=completed_counts)
 
 
 @group.route("/<int:group_id>/")

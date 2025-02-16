@@ -652,6 +652,27 @@ def show_match_log(group_name, group_index):
     )
 
 
+@group.route("/plot", methods=["POST"])
+@login_required
+def plot_groups():
+    """
+    Plot match results.
+    """
+    group_ids_raw = request.form.getlist("group_ids")
+    if not group_ids_raw:
+        flash("No groups selected.", "error")
+        return redirect(url_for("group.index"))
+
+    group_ids = [int(id) for id in group_ids_raw[0].split(",")]
+
+    for id in group_ids:
+        group = Group.query.get(id)
+        if group is None:
+            flash(f"Group ID {id} not found.", "error")
+            return redirect(url_for("group.index"))
+        print(f"Plotting match results for group: id={id} name=[{group.name}]")
+    return jsonify({"message": "Plotting match results."})
+
 #
 # Client API
 #
@@ -811,3 +832,5 @@ def decline_assignment():
     db.session.commit()
 
     return jsonify({"message": "Match declined."})
+
+

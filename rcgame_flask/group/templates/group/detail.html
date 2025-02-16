@@ -228,6 +228,11 @@
                         },
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return Number.isInteger(value) ? value : null;
+                            }
                         }
                     }
                 }
@@ -272,6 +277,11 @@
                         },
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return Number.isInteger(value) ? value : null;
+                            }
                         }
                     }
                 }

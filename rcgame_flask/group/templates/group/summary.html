@@ -8,6 +8,15 @@
     <a href="{{ url_for('group.index') }}">Show Active Groups</a>
 </div>
 
+<div class="button-container">
+<form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="plot">
+    <input type="hidden" name="group_ids" id="filtered-ids">
+    <button type="submit">Plot Filterd Groups</button>
+</form>
+</div>
+
 <table id="summary-table" class="tablesorter">
     <thead>
         <tr>
@@ -35,7 +44,7 @@
     </thead>
     <tbody>
         {% for summary in summary_list %}
-        <tr{% if summary.group.status.value == 'approved' %} class="approved"{%elif summary.group.status.value == 'rejected' %} class="rejected"{% elif summary.group.status.value == 'under_review' %} class="under_review"{% endif %}>
+        <tr data-id="{{ summary.group.id }}"{% if summary.group.status.value == 'approved' %} class="approved"{%elif summary.group.status.value == 'rejected' %} class="rejected"{% elif summary.group.status.value == 'under_review' %} class="under_review"{% endif %}>
             <td class="summary"><a href="{{ url_for('group.show_group_matches', group_name=summary.group.name) }}" title="{{ summary.group.name }}">{{ summary.group.created_at }}</a></td>
             <td class="summary" id="lborder">{{ summary.group.left_team.name }}</td>
             <td class="summary">{{ summary.group.right_team.name }}</td>
@@ -76,6 +85,14 @@
                 filter_ignoreCase: true,
 
             }
+        });
+
+        $('#filtered-form').on('submit', function() {
+            var filteredIds = [];
+            $('#summary-table tbody tr:visible').each(function() {
+                filteredIds.push($(this).data('id'));
+            });
+            $('#filtered-ids').val(filteredIds.join(','));
         });
     });
 </script>

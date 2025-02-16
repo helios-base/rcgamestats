@@ -11,7 +11,6 @@
 <table id="summary-table" class="tablesorter">
     <thead>
         <tr>
-            <th class="summary">Name</th>
             <th class="summary">Created At</th>
             <th class="summary" id="lborder">Left</th>
             <th class="summary">Right</th>
@@ -19,11 +18,11 @@
             <th class="summary">L Win</th>
             <th class="summary">Draw</th>
             <th class="summary">R Win</th>
-            <th class="summary" id="lborder">L Goal</th>
-            <th class="summary">R Goal</th>
             <th class="summary" id="lborder">L Win Rate</th>
             <th class="summary">Draw Rate</th>
             <th class="summary">R Win Rate</th>
+            <th class="summary" id="lborder">L Goal</th>
+            <th class="summary">R Goal</th>
             <th class="summary" id="lborder">L Ave. Goal</th>
             <th class="summary">R Ave. Goal</th>
             <th class="summary" id="lborder">L Max Goal</th>
@@ -37,19 +36,18 @@
     <tbody>
         {% for summary in summary_list %}
         <tr>
-            <td class="summary"><a href="{{ url_for('group.show_group_matches', group_name=summary.group.name) }}" title="{{ summary.group.name }}">{{ summary.group.name }}</a></td>
-            <td class="summary">{{ summary.group.created_at }}</td>
+            <td class="summary"><a href="{{ url_for('group.show_group_matches', group_name=summary.group.name) }}" title="{{ summary.group.name }}">{{ summary.group.created_at }}</a></td>
             <td class="summary" id="lborder">{{ summary.group.left_team.name }}</td>
             <td class="summary">{{ summary.group.right_team.name }}</td>
             <td class="summary" id="lborder">{{ summary.completed_count }}</td>
             <td class="summary">{{ summary.left_win }}</td>
             <td class="summary">{{ summary.draw }}</td>
             <td class="summary">{{ summary.right_win }}</td>
-            <td class="summary" id="lborder">{{ summary.left_goals }}</td>
-            <td class="summary">{{ summary.right_goals }}</td>
             <td class="summary" id="lborder">{{ summary.left_win_rate * 100 }} %</td>
             <td class="summary">{{ summary.draw_rate * 100 }} %</td>
             <td class="summary">{{ summary.right_win_rate * 100 }} %</td>
+            <td class="summary" id="lborder">{{ summary.left_goals }}</td>
+            <td class="summary">{{ summary.right_goals }}</td>
             <td class="summary" id="lborder">{{ summary.left_ave_goal }}</td>
             <td class="summary">{{ summary.right_ave_goal }}</td>
             <td class="summary" id="lborder">{{ summary.left_max_goal }}</td>
@@ -67,6 +65,8 @@
     $(function () {
         $('#summary-table').tablesorter({
             sortList: [[1, 1]], // sort by the third column in descending order
+            duplicateSpan : true, // default setting
+
             widgets: ['filter'],
             widgetOptions: {
                 filter_columnFilters: true,

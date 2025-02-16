@@ -88,7 +88,21 @@
 <canvas id="hostsHistogram" width="300" height="50"></canvas>
 
 <h3>Matches</h3>
-<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 0px;">0 Hits</div>
+<div id="pager" class="pager">
+    <button type="button" class="first"><<</button>
+    <button type="button" class="prev"><</button>
+    <span class="pagedisplay"></span>
+    <button type="button" class="next">></button>
+    <button type="button" class="last">>></button>
+    <select class="pagesize" title="Select page size">
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+    </select>
+    <select class="gotoPage" title="Select page number"></select>
+</div>
+
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
@@ -145,7 +159,7 @@
                     7: { sorter: false, filter: false }
                 },
                 sortList: [[0, 0]], // sort by first column in ascending order
-                widgets: ['filter'],
+                widgets: ['filter', 'pager'],
                 widgetOptions: {
                     filter_columnFilters: true,
                     // class name applied to filter row and each input
@@ -155,10 +169,12 @@
 
                 }
             }
-        ).bind('filterEnd', function(event, config) {
-            var totalRows = config.$tbodies.find('tr:visible').length;
-            $('#record-count').text(totalRows + ' Hits');
-        });
+        ).tablesorterPager({
+                container: $(".pager"),
+                size: 100,
+                output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
+            }
+        );
 
         // prepare data for histograms
         var leftScoreCounts = {{ stats.left_score_counts | tojson }};

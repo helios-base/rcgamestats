@@ -61,6 +61,9 @@ class GroupStats():
         self.right_scored_count = 0
         self.left_score_rate = 0.0
         self.right_score_rate = 0.0
+        self.left_score_counts = { i: 0 for i in range(11) }
+        self.right_score_counts = { i: 0 for i in range(11) }
+        self.host_counts = {}
 
         self.__calculate()
 
@@ -72,6 +75,8 @@ class GroupStats():
             return
         matches = Match.query.filter_by(group_id=self.group_id, processed="completed").all()
         self.completed_count = len(matches)
+        left_max_score = 10
+        right_max_score = 10
         for match in matches:
             if match.left_score > match.right_score:
                 self.left_win += 1
@@ -85,6 +90,29 @@ class GroupStats():
             self.right_scored_count += 1 if match.right_score > 0 else 0
             self.left_max_goal = max(self.left_max_goal, match.left_score)
             self.right_max_goal = max(self.right_max_goal, match.right_score)
+
+            if match.left_score not in self.left_score_counts:
+                if match.left_score > left_max_score:
+                    for i in range(left_max_score+1, match.left_score+1):
+                        self.left_score_counts[i] = 0
+                    left_max_score = match.left_score
+                self.left_score_counts[match.left_score] = 1
+            else:
+                self.left_score_counts[match.left_score] += 1
+            
+            if match.right_score not in self.right_score_counts:
+                if match.right_score > right_max_score:
+                    for i in range(right_max_score+1, match.right_score+1):
+                        self.right_score_counts[i] = 0
+                    right_max_score = match.right_score
+                self.right_score_counts[match.right_score] = 1
+            else:
+                self.right_score_counts[match.right_score] += 1
+
+            if match.host_name not in self.host_counts:
+                self.host_counts[match.host_name] = 1
+            else:
+                self.host_counts[match.host_name] += 1
 
         if self.completed_count > 0:
             self.left_win_rate = self.left_win / self.completed_count

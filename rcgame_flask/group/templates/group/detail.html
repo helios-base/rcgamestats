@@ -4,6 +4,20 @@
 {% endblock %}
 
 {% block content %}
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a>
+    <span style="margin: 0 5px">/</span>
+    <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
+</div>
+{% if use_googlesheet %}
+    <div class="button-container">
+        <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Upload to Google Spreadsheet</button>
+        </form>
+    </div>
+{% endif %}
+
 <h2>Group Name: {{ group.name }}</h2>
 <div class="matchup-info">
     {% if group.left_team %}
@@ -23,21 +37,6 @@
 <div>
     Description: {{ group.description }}
 </div>
-
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
-    <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a>
-</div>
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 0px;">
-    <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
-</div>
-{% if use_googlesheet %}
-    <div class="button-container">
-        <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit">Upload to Google Spreadsheet</button>
-        </form>
-    </div>
-{% endif %}
 
 <h3>Stats</h3>
 <table>
@@ -85,8 +84,11 @@
     </tbody>
 </table>
 
+<canvas id="matchScoresHistogram" width="300" height="50"></canvas>
+<canvas id="hostsHistogram" width="300" height="50"></canvas>
+
 <h3>Matches</h3>
-<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 0px;">Matches: 0</div>
+<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 0px;">0 Hits</div>
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
@@ -134,6 +136,7 @@
     </tbody>
 </table>
 
+<script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
 <script>
     $(function () {
         $('#match-table').tablesorter(
@@ -154,7 +157,106 @@
             }
         ).bind('filterEnd', function(event, config) {
             var totalRows = config.$tbodies.find('tr:visible').length;
-            $('#record-count').text('Matches: ' + totalRows);
+            $('#record-count').text(totalRows + ' Hits');
+        });
+
+        // prepare data for histograms
+        var leftScoreCounts = {{ stats.left_score_counts | tojson }};
+        var rightScoreCounts = {{ stats.right_score_counts | tojson }};
+        var scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
+        var leftData = scoreLabels.map(label => leftScoreCounts[label] || 0);
+        var rightData = scoreLabels.map(label => rightScoreCounts[label] || 0);
+
+        // draw match scores histogram
+        var ctx = document.getElementById('matchScoresHistogram').getContext('2d');
+        var matchScoresHistogram = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: scoreLabels,
+                datasets: [
+                    {
+                        label: 'Left Team Scores',
+                        data: leftData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Right Team Scores',
+                        data: rightData,
+                        backgroundColor: 'rgba(192, 75, 75, 0.2)',
+                        borderColor: 'rgba(192, 75, 75, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Scores'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Matches'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // draw hosts histogram
+        var hosts = {{ stats.host_counts | tojson }};
+        var hostLabels = Object.keys(hosts);
+        var hostData = hostLabels.map(label => hosts[label]);
+        var ctx = document.getElementById('hostsHistogram').getContext('2d');
+        var hostsHistogram = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: hostLabels,
+                datasets: [
+                    {
+                        label: 'Hosts',
+                        data: hostData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hosts'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Matches'
+                        },
+                        grid: {
+                            display: true
+                        }
+                    }
+                }
+            }
         });
     });
 </script>

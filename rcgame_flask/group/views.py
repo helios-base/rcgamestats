@@ -119,7 +119,7 @@ def create():
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-            flash(f"Group name [{group_name}] already exists.")
+            flash(f"Group [{group_name}] cannot be created.")
             return redirect(url_for("group.create"))
 
         for i in range(int(form.number_of_matches.data)):

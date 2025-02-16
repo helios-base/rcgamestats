@@ -39,8 +39,54 @@
     </div>
 {% endif %}
 
-<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 0px;">Matches: 0</div>
+<h3>Stats</h3>
+<table>
+    <thead>
+        <tr>
+            <th class="summary">Total</th>
+            <th class="summary" id="lborder">L Win</th>
+            <th class="summary">Draw</th>
+            <th class="summary">R Win</th>
+            <th class="summary" id="lborder">L Win Rate</th>
+            <th class="summary">Draw Rate</th>
+            <th class="summary">R Win Rate</th>
+            <th class="summary" id="lborder">L Goal</th>
+            <th class="summary">R Goal</th>
+            <th class="summary" id="lborder">L Ave. Goal</th>
+            <th class="summary">R Ave. Goal</th>
+            <th class="summary" id="lborder">L Max Goal</th>
+            <th class="summary">R Max Goal</th>
+            <th class="summary" id="lborder">L Scored</th>
+            <th class="summary">R Scored</th>
+            <th class="summary" id="lborder">L Score Rate</th>
+            <th class="summary">R Score Rate</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="summary">{{ stats.completed_count }}</td>
+            <td class="summary" id="lborder">{{ stats.left_win }}</td>
+            <td class="summary">{{ stats.draw }}</td>
+            <td class="summary">{{ stats.right_win }}</td>
+            <td class="summary" id="lborder">{{ stats.left_win_rate * 100 }} %</td>
+            <td class="summary">{{ stats.draw_rate * 100 }} %</td>
+            <td class="summary">{{ stats.right_win_rate * 100 }} %</td>
+            <td class="summary" id="lborder">{{ stats.left_goals }}</td>
+            <td class="summary">{{ stats.right_goals }}</td>
+            <td class="summary" id="lborder">{{ stats.left_ave_goal }}</td>
+            <td class="summary">{{ stats.right_ave_goal }}</td>
+            <td class="summary" id="lborder">{{ stats.left_max_goal }}</td>
+            <td class="summary">{{ stats.right_max_goal }}</td>
+            <td class="summary" id="lborder">{{ stats.left_scored_count }}</td>
+            <td class="summary">{{ stats.right_scored_count }}</td>
+            <td class="summary" id="lborder">{{ stats.left_score_rate * 100 }} %</td>
+            <td class="summary">{{ stats.right_score_rate * 100 }} %</td>
+        </tr>
+    </tbody>
+</table>
 
+<h3>Matches</h3>
+<div id="record-count" style="display: flex; justify-content: flex-end; margin-top: 0px;">Matches: 0</div>
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
@@ -90,7 +136,7 @@
 
 <script>
     $(function () {
-        $('table').tablesorter(
+        $('#match-table').tablesorter(
             {
                 headers: {
                     7: { sorter: false, filter: false }

@@ -242,14 +242,13 @@ def show_group_matches(group_name):
     use_googlesheet = True
     if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "":
         use_googlesheet = False
-    print(f"config.GOOGLE_DOC_ID: {config.GOOGLE_DOC_ID}")
-    print(f"config.GOOGLE_KEY_PATH: {config.GOOGLE_KEY_PATH}")
-    print(f"use_googlesheet: {use_googlesheet}")
 
+    stats = GroupStats(group.id)
     return render_template(
         "group/detail.html",
         group=group,
         matches=matches,
+        stats=stats,
         use_googlesheet=use_googlesheet
     )
 

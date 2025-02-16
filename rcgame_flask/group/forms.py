@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, SelectField, IntegerField, TextAreaField, SelectMultipleField
-from wtforms.validators import DataRequired, Length, ValidationError
+from wtforms.validators import Optional, NumberRange, DataRequired, Length, ValidationError
 
 
 class GroupCreateForm(FlaskForm):
@@ -19,7 +19,9 @@ class GroupCreateForm(FlaskForm):
     )
     number_of_matches = IntegerField(
         "# of Matches",
-        validators=[DataRequired("Please enter the number of matches")]
+        validators=[
+            DataRequired("Please enter the number of matches"),
+            NumberRange(min=1, message="Number of matches must be greater than or equal to 1")]
     )
     description = TextAreaField(
         "Description",
@@ -37,7 +39,7 @@ class GroupCreateForm(FlaskForm):
 
     def validate_number_of_matches(self, number_of_matches):
         if number_of_matches.data < 1:
-            raise ValidationError("Number of matches must be at least 1")
+            raise ValidationError("Number of matches must be greater than or equal to 1")
 
 
 class GroupEditForm(FlaskForm):
@@ -46,17 +48,18 @@ class GroupEditForm(FlaskForm):
     """
     additional_matches = IntegerField(
         "Additional Matches",
-        validators=[DataRequired("Please enter the number of matches")]
+        validators=[NumberRange(min=0, message="Number of matches must be greater than or equal to 0")],
+        default=0
     )
     description = TextAreaField(
         "Description",
-        validators=[Length(min=0, max=256)]
+        validators=[Length(min=0, max=256, message="Description must be less than 256 characters")]
     )
     submit = SubmitField("Submit")
 
     def validate_additional_matches(self, additional_matches):
-        if additional_matches.data < 1:
-            raise ValidationError("Number of matches must be at least 1")
+        if additional_matches.data < 0:
+            raise ValidationError("Number of matches must be greater than or equal to 0")
 
 
 class RoundrobinCreateForm(FlaskForm):

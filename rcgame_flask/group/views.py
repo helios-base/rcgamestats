@@ -327,13 +327,13 @@ def edit_group(group_id):
     """
     group = Group.query.get(group_id)
     if group is None:
-        flash(f"Group ID {group_id} not found.")
+        flash(f"Group ID {group_id} not found.", "error")
         return redirect(url_for("group.index"))
 
     form = GroupEditForm(obj=group)
 
     if form.validate_on_submit():
-        number_of_matches = group.number_of_matches.count()
+        number_of_matches = group.matches.count()
         for i in range(int(form.additional_matches.data)):
             match = Match(
                 group_index=number_of_matches + i + 1,
@@ -341,7 +341,9 @@ def edit_group(group_id):
                 left_team_id=group.left_team_id,
                 right_team_id=group.right_team_id,
             )
+            print(f"Adding match {match.group_index} to group {group.name}")
             db.session.add(match)
+        print(f"Old description: {group.description}, New description: {form.description.data}")
         group.description = form.description.data
         db.session.commit()
 

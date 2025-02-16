@@ -13,6 +13,7 @@ class MatchStatus(Enum):
     UNEXECUTED = 'unexecuted'
     IN_PROGRESS = 'in progress'
     COMPLETED = 'completed'
+    ARCHIVED = 'archived'
 
 
 class Group(db.Model):

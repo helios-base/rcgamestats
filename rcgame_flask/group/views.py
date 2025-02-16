@@ -381,21 +381,59 @@ def archive_group(group_id):
     return redirect(url_for("group.index"))
 
 
-@group.route("/bulk_archive_groups", methods=["POST"])
+@group.route("/bulk_action", methods=["POST"])
 @login_required
-def bulk_archive_groups():
+def bulk_action():
     """
     Archive selected groups.
     """
+
+    action = request.form.get("action")
     group_ids = request.form.getlist("group_ids")
     if not group_ids:
-        flash("No groups selected for archiving.")
+        flash("No groups selected.", "error")
         return redirect(url_for("group.index"))
 
+    if action == "archive":
+        return bulk_archive_groups(group_ids)
+    elif action == "approve":
+        return bulk_set_status_groups(group_ids, GroupStatus.APPROVED)
+    elif action == "reject":
+        return bulk_set_status_groups(group_ids, GroupStatus.REJECTED)
+    elif action == "under_review":
+        return bulk_set_status_groups(group_ids, GroupStatus.UNDER_REVIEW)
+    elif action == "reset_status":
+        return bulk_set_status_groups(group_ids, GroupStatus.NORMAL)
+
+    flash(f"Unknown action [{action}].", "error")
+    return redirect(url_for("group.index"))
+
+
+def bulk_set_status_groups(group_ids, status):
+    """
+    Bulk approve groups.
+    """
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group is None:
-            flash(f"Group ID {group_id} not found.")
+            flash(f"Group ID {group_id} not found.", "error")
+            return redirect(url_for("group.index"))
+
+        group.status = status
+        db.session.commit()
+        flash(f"Group [{group.name}] has been set to [{status.value}].")
+
+    return redirect(url_for("group.index"))
+
+
+def bulk_archive_groups(group_ids):
+    """
+    Bulk archive groups.
+    """
+    for group_id in group_ids:
+        group = Group.query.get(group_id)
+        if group is None:
+            flash(f"Group ID {group_id} not found.", "error")
             return redirect(url_for("group.index"))
 
         group.is_active = False

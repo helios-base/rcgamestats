@@ -35,7 +35,7 @@
     </thead>
     <tbody>
         {% for summary in summary_list %}
-        <tr>
+        <tr{% if summary.group.status.value == 'approved' %} class="approved"{%elif summary.group.status.value == 'rejected' %} class="rejected"{% elif summary.group.status.value == 'under_review' %} class="under_review"{% endif %}>
             <td class="summary"><a href="{{ url_for('group.show_group_matches', group_name=summary.group.name) }}" title="{{ summary.group.name }}">{{ summary.group.created_at }}</a></td>
             <td class="summary" id="lborder">{{ summary.group.left_team.name }}</td>
             <td class="summary">{{ summary.group.right_team.name }}</td>

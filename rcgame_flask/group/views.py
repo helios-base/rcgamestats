@@ -19,8 +19,9 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
-from rcgame_flask.group.models import Group, Match, GroupStats, GroupStatus, MatchStatus
+from rcgame_flask.group.models import Group, Match, GroupStatus, MatchStatus
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
+from rcgame_flask.group.stats import GroupStats
 from rcgame_flask.team.models import Team
 from rcgame_flask.config import config
 from rcgame_flask import googlesheet
@@ -233,26 +234,6 @@ def create_roundrobin():
     return render_template("group/create_roundrobin.html", form=form)
 
 
-@group.route("/<int:group_id>/")
-@login_required
-def show_group_matches_by_id(group_id):
-    """
-    Show all matches associated with a group.
-    """
-    group = Group.query.get_or_404(group_id)
-    matches = Match.query.filter_by(group_id=group_id).all()
-
-    use_googlesheet = True
-    if config.GOOGLE_DOC_ID is None or config.GOOGLE_KEY_PATH is None:
-        use_googlesheet = False
-    return render_template(
-        "group/detail.html",
-        group=group,
-        matches=matches,
-        use_googlesheet=use_googlesheet
-    )
-
-
 @group.route("/<string:group_name>/")
 @login_required
 def show_group_matches(group_name):
@@ -266,9 +247,7 @@ def show_group_matches(group_name):
 
     matches = Match.query.filter_by(group_id=group.id).all()
 
-    use_googlesheet = True
-    if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "":
-        use_googlesheet = False
+    use_googlesheet = False if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "" else True
 
     stats = GroupStats(group.id)
     return render_template(
@@ -612,8 +591,17 @@ def reset_match(group_id, match_id):
     """
     Reset a match.
     """
+    group = Group.query.get(group_id)
+    if group is None:
+        flash(f"Group ID {group_id} not found.")
+        return redirect(url_for("group.index"))
+
     match = Match.query.get(match_id)
-    if match and match.processed == MatchStatus.COMPLETED:
+    if match is None:
+        flash(f"Match ID {match_id} not found.")
+        return redirect(url_for("group.show_group_matches", group_name=group.name))
+
+    if match.processed == MatchStatus.COMPLETED:
         log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
         log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
         for log_file_path in log_file_paths:
@@ -628,7 +616,7 @@ def reset_match(group_id, match_id):
         match.token = None
         db.session.commit()
         flash(f"Match {match.group_index} has been reset.")
-    elif match and match.processed == MatchStatus.IN_PROGRESS:
+    elif match.processed == MatchStatus.IN_PROGRESS:
         match.host_name = None
         match.start_time = None
         match.processed = MatchStatus.UNEXECUTED
@@ -639,7 +627,7 @@ def reset_match(group_id, match_id):
     else:
         flash("Match not found or not in progress or completed.")
 
-    return redirect(url_for("group.show_group_matches_by_id", group_id=group_id))
+    return redirect(url_for("group.show_group_matches", group_name=group.name))
 
 
 @group.route("/<string:group_name>/<int:group_index>/log/", methods=["GET"])
@@ -858,5 +846,3 @@ def decline_assignment():
     db.session.commit()
 
     return jsonify({"message": "Match declined."})
-
-

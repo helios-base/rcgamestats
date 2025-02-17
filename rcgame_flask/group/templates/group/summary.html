@@ -52,9 +52,9 @@
             <td class="summary">{{ summary.left_win }}</td>
             <td class="summary">{{ summary.draw }}</td>
             <td class="summary">{{ summary.right_win }}</td>
-            <td class="summary" id="lborder">{{ summary.left_win_rate * 100 }} %</td>
-            <td class="summary">{{ summary.draw_rate * 100 }} %</td>
-            <td class="summary">{{ summary.right_win_rate * 100 }} %</td>
+            <td class="summary" id="lborder">{{ "%.2f" % (summary.left_win_rate * 100) }} %</td>
+            <td class="summary">{{ "%.2f" % (summary.draw_rate * 100) }} %</td>
+            <td class="summary">{{ "%.2f" % (summary.right_win_rate * 100) }} %</td>
             <td class="summary" id="lborder">{{ summary.left_goals }}</td>
             <td class="summary">{{ summary.right_goals }}</td>
             <td class="summary" id="lborder">{{ summary.left_ave_goal }}</td>
@@ -63,8 +63,8 @@
             <td class="summary">{{ summary.right_max_goal }}</td>
             <td class="summary" id="lborder">{{ summary.left_scored_count }}</td>
             <td class="summary">{{ summary.right_scored_count }}</td>
-            <td class="summary" id="lborder">{{ summary.left_score_rate * 100 }} %</td>
-            <td class="summary">{{ summary.right_score_rate * 100 }} %</td>
+            <td class="summary" id="lborder">{{ "%.2f" % (summary.left_score_rate * 100) }} %</td>
+            <td class="summary">{{ "%.2f" % (summary.right_score_rate * 100) }} %</td>
         </tr>
         {% endfor %}
     </tbody>

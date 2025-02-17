@@ -39,6 +39,15 @@
 </div>
 
 <h3>Stats</h3>
+<ul>
+    <li>Left Mean Score: {{ stats.left_mean_score }}</li>
+    <li>Right Mean Score: {{ stats.right_mean_score }}</li>
+    <li>Left Score Confidence Interval: {{ stats.left_score_confidence_interval[0] }} 
+        - {{ stats.left_score_confidence_interval[1] }}</li>
+    <li>Right Score Confidence Interval: {{ stats.right_score_confidence_interval[0] }}
+        - {{ stats.right_score_confidence_interval[1] }}
+    </li>
+</ul>
 <table>
     <thead>
         <tr>
@@ -67,9 +76,9 @@
             <td class="summary" id="lborder">{{ stats.left_win }}</td>
             <td class="summary">{{ stats.draw }}</td>
             <td class="summary">{{ stats.right_win }}</td>
-            <td class="summary" id="lborder">{{ stats.left_win_rate * 100 }} %</td>
-            <td class="summary">{{ stats.draw_rate * 100 }} %</td>
-            <td class="summary">{{ stats.right_win_rate * 100 }} %</td>
+            <td class="summary" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
+            <td class="summary">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
+            <td class="summary">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
             <td class="summary" id="lborder">{{ stats.left_goals }}</td>
             <td class="summary">{{ stats.right_goals }}</td>
             <td class="summary" id="lborder">{{ stats.left_ave_goal }}</td>
@@ -78,8 +87,8 @@
             <td class="summary">{{ stats.right_max_goal }}</td>
             <td class="summary" id="lborder">{{ stats.left_scored_count }}</td>
             <td class="summary">{{ stats.right_scored_count }}</td>
-            <td class="summary" id="lborder">{{ stats.left_score_rate * 100 }} %</td>
-            <td class="summary">{{ stats.right_score_rate * 100 }} %</td>
+            <td class="summary" id="lborder">{{ "%.2f" % (stats.left_score_rate * 100) }} %</td>
+            <td class="summary">{{ "%.2f" % (stats.right_score_rate * 100) }} %</td>
         </tr>
     </tbody>
 </table>
@@ -181,6 +190,13 @@
         var scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
         var leftData = scoreLabels.map(label => leftScoreCounts[label] || 0);
         var rightData = scoreLabels.map(label => rightScoreCounts[label] || 0);
+
+        var leftMean = {{ stats.left_mean_score }};
+        var leftCI_lower = {{ stats.left_score_confidence_interval[0] }};
+        var leftCI_upper = {{ stats.left_score_confidence_interval[1] }};
+        var rightMean = {{ stats.right_mean_score }};
+        var rightCI_lower = {{ stats.right_score_confidence_interval[0] }};
+        var rightCI_upper = {{ stats.right_score_confidence_interval[1] }};
 
         // draw match scores histogram
         var ctx = document.getElementById('matchScoresHistogram').getContext('2d');

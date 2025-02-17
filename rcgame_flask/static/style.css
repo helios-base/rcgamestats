@@ -31,7 +31,7 @@ input[type=submit] { align-self: start; min-width: 10em; }
 
 .matchup-info { font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em; }
 .success { font-weight: bold; }
-.error { color: #910101; background-color: white; }
+.error { color: white; background-color: rgb(22, 46, 180); }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { border: 1px solid #000000; padding: 1px 4px; word-wrap: break-word; max-width: 200px; }

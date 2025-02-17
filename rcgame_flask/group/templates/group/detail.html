@@ -253,7 +253,7 @@
                         const xUpper = xScale.getPixelForValue(error.upper);
                         // 描画設定
                         ctx.save();
-                        ctx.strokeStyle = dataset.borderColor;
+                        ctx.strokeStyle = dataset.errorBarColor || 'black';
                         ctx.lineWidth = 1;
                         // 横方向のエラーバー線
                         ctx.beginPath();
@@ -348,8 +348,7 @@
                     label: 'Mean Score',
                     data: [null, null],
                     meanMarkers: meanMarkers,
-                    // 信頼区間のエラーバー情報をセット
-                    errorBars: errorBarsData,
+                    errorBars: errorBarsData, // 信頼区間のエラーバー情報をセット
                     backgroundColor: ['rgba(0, 0, 0, 0)'], // 描画しないので透明
                     borderColor: ['rgba(255, 215, 0, 1)', 'rgba(240, 20, 20, 1)'],
                     borderWidth: 1,

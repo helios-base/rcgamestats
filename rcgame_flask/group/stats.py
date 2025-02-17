@@ -44,8 +44,8 @@ class GroupStats():
         self.right_scored_games = 0
         self.left_scored_games_rate = 0.0
         self.right_scored_games_rate = 0.0
-        self.left_score_counts = {i: 0 for i in range(11)}
-        self.right_score_counts = {i: 0 for i in range(11)}
+        self.left_score_counts = {i: 0 for i in range(6)}
+        self.right_score_counts = {i: 0 for i in range(6)}
         self.left_mean_score = 0.0
         self.right_mean_score = 0.0
         self.left_score_confidence_interval = (0.0, 0.0)
@@ -85,8 +85,8 @@ class GroupStats():
         self.left_scored_games_rate = self.left_scored_games / self.completed_count
         self.right_scored_games_rate = self.right_scored_games / self.completed_count
 
-        self.left_score_counts = {i: int(count) for i, count in enumerate(np.bincount(left_scores, minlength=11))}
-        self.right_score_counts = {i: int(count) for i, count in enumerate(np.bincount(right_scores, minlength=11))}
+        self.left_score_counts = {i: int(count) for i, count in enumerate(np.bincount(left_scores, minlength=6))}
+        self.right_score_counts = {i: int(count) for i, count in enumerate(np.bincount(right_scores, minlength=6))}
 
         self.left_mean_score, self.left_score_confidence_interval = compute_confidence_interval(left_scores)
         self.right_mean_score, self.right_score_confidence_interval = compute_confidence_interval(right_scores)

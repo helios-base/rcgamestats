@@ -3,6 +3,7 @@ import shutil
 import glob
 import re
 import secrets
+import json
 from datetime import datetime
 from rcgame_flask.app import db, csrf
 from flask import (
@@ -37,6 +38,25 @@ def create_group_name(created_at, team_left, team_right, use_version=False):
     if not use_version:
         return f"{time_str}-{team_left.name}-{team_right.name}"
     return f"{time_str}-{team_left.name}_{team_left.version}-{team_right.name}_{team_right.version}"
+
+
+def save_group_metadata(group):
+    metadata = {
+        "name": group.name,
+        "created_at": group.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        "left_team": group.left_team.name,
+        "left_team_version": group.left_team.version,
+        "right_team": group.right_team.name,
+        "right_team_version": group.right_team.version,
+        "description": group.description,
+        "scheduled_matches": group.matches.count(),
+    }
+    log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    metadata_file_path = os.path.join(log_dir, "group_info.json")
+    with open(metadata_file_path, 'w') as metadata_file:
+        json.dump(metadata, metadata_file, indent=4)
 
 
 @group.route("/")
@@ -125,6 +145,8 @@ def create():
             flash(f"Group [{group_name}] cannot be created.")
             return redirect(url_for("group.create"))
 
+        save_group_metadata(group)
+
         for i in range(int(form.number_of_matches.data)):
             match = Match(
                 group_index=i + 1,
@@ -192,6 +214,8 @@ def create_roundrobin():
                     db.session.rollback()
                     flash(f"Group name [{group_name}] already exists.")
                     continue
+
+                save_group_metadata(group)
 
                 for i in range(int(form.number_of_matches.data)):
                     match = Match(
@@ -346,6 +370,8 @@ def edit_group(group_id):
         print(f"Old description: {group.description}, New description: {form.description.data}")
         group.description = form.description.data
         db.session.commit()
+
+        save_group_metadata(group)
 
         flash(
             f"Updated group {group.name} with {form.additional_matches.data} matches."

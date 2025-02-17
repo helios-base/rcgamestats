@@ -585,22 +585,23 @@ def upload_group_results_to_google_sheet(group_id):
 #
 
 
-@group.route("/<int:group_id>/<int:match_id>/reset", methods=["POST"])
+@group.route("/reset_match", methods=["POST"])
 @login_required
-def reset_match(group_id, match_id):
+def reset_match():
     """
     Reset a match.
     """
-    group = Group.query.get(group_id)
-    if group is None:
-        flash(f"Group ID {group_id} not found.")
-        return redirect(url_for("group.index"))
+    match_id = request.form.get("match_id")
+    if not match_id:
+        flash("Match ID is missing.", "error")
+        return redirect(url_for("group.detail", group_id=request.args.get("group_id")))
 
     match = Match.query.get(match_id)
     if match is None:
         flash(f"Match ID {match_id} not found.")
         return redirect(url_for("group.show_group_matches", group_name=group.name))
 
+    group_name = match.group.name
     if match.processed == MatchStatus.COMPLETED:
         log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
         log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
@@ -627,7 +628,7 @@ def reset_match(group_id, match_id):
     else:
         flash("Match not found or not in progress or completed.")
 
-    return redirect(url_for("group.show_group_matches", group_name=group.name))
+    return redirect(url_for("group.show_group_matches", group_name=group_name))
 
 
 @group.route("/<string:group_name>/<int:group_index>/log/", methods=["GET"])

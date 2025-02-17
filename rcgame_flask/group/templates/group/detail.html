@@ -104,6 +104,10 @@
     <select class="gotoPage" title="Select page number"></select>
 </div>
 
+<form id="resetForm" method="post" action="{{ url_for('group.reset_match', group_id=group.id) }}" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="match_id" id="matchId" value="">
+</form>
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
@@ -122,14 +126,11 @@
             <td>{{ match.group_index }}</td>
             <td>{{ match.start_time }}</td>
             <td>{{ match.end_time }}</td>
-            <td style="text-align: right; padding-right: 10px;">{{ match.left_score }}</td>
-            <td style="text-align: right; padding-right: 10px;">{{ match.right_score }}</td>
+            <td class="score">{{ match.left_score }}</td>
+            <td class="score">{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
             <td>{% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
-                <form id="reset-form-{{ match.id }}" action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post" style="display:none;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                </form>
-                <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{ match.processed.value }}</a>
+                <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { resetMatch('{{ match.id }}'); }">{{ match.processed.value }}</a>
             {% else %}{{ match.processed.value }}{% endif %}</td>
             <td>{%if match.processed.value == 'completed' %}<a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}">Log</a>{% endif %}</td>
         </tr>
@@ -139,6 +140,11 @@
 
 <script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
 <script>
+    function resetMatch(matchId) {
+        document.getElementById('matchId').value = matchId;
+        document.getElementById('resetForm').submit();
+    }
+
     $(function () {
         $('#match-table').tablesorter(
             {

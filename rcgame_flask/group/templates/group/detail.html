@@ -10,12 +10,12 @@
     <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
 </div>
 {% if use_googlesheet %}
-    <div class="button-container">
-        <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit">Upload to Google Spreadsheet</button>
-        </form>
-    </div>
+<div class="button-container">
+    <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Upload to Google Spreadsheet</button>
+    </form>
+</div>
 {% endif %}
 
 <h2>Group Name: {{ group.name }}</h2>
@@ -39,15 +39,6 @@
 </div>
 
 <h3>Stats</h3>
-<ul>
-    <li>Left Mean Score: {{ stats.left_mean_score }}</li>
-    <li>Right Mean Score: {{ stats.right_mean_score }}</li>
-    <li>Left Score Confidence Interval: {{ stats.left_score_confidence_interval[0] }} 
-        - {{ stats.left_score_confidence_interval[1] }}</li>
-    <li>Right Score Confidence Interval: {{ stats.right_score_confidence_interval[0] }}
-        - {{ stats.right_score_confidence_interval[1] }}
-    </li>
-</ul>
 <table>
     <thead>
         <tr>
@@ -94,6 +85,7 @@
 </table>
 
 <canvas id="matchScoresHistogram" width="300" height="50"></canvas>
+<canvas id="ciChart" width="300" height="20"></canvas>
 <canvas id="hostsHistogram" width="300" height="50"></canvas>
 
 <h3>Matches</h3>
@@ -126,33 +118,20 @@
         </tr>
     </thead>
     <tbody>
-        {% for match in matches %}
-        <tr>
+        {% for match in matches %}<tr>
             <td>{{ match.group_index }}</td>
             <td>{{ match.start_time }}</td>
             <td>{{ match.end_time }}</td>
             <td style="text-align: right; padding-right: 10px;">{{ match.left_score }}</td>
             <td style="text-align: right; padding-right: 10px;">{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
-            <td>
-                {% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
-                <form id="reset-form-{{ match.id }}"
-                    action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post"
-                    style="display:none;">
+            <td>{% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
+                <form id="reset-form-{{ match.id }}" action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post" style="display:none;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 </form>
-                <a href="#"
-                    onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{
-                    match.processed.value }}</a>
-                {% else %}
-                {{ match.processed.value }}
-                {% endif %}
-            </td>
-            <td>
-                {%if match.processed.value == 'completed' %}
-                <a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}">Log</a>
-                {% endif %}
-            </td>
+                <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{ match.processed.value }}</a>
+            {% else %}{{ match.processed.value }}{% endif %}</td>
+            <td>{%if match.processed.value == 'completed' %}<a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}">Log</a>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -178,25 +157,18 @@
                 }
             }
         ).tablesorterPager({
-                container: $(".pager"),
-                size: 100,
-                output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
-            }
-        );
+            container: $(".pager"),
+            size: 100,
+            output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
+        });
 
         // prepare data for histograms
         var leftScoreCounts = {{ stats.left_score_counts | tojson }};
+
         var rightScoreCounts = {{ stats.right_score_counts | tojson }};
         var scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
         var leftData = scoreLabels.map(label => leftScoreCounts[label] || 0);
         var rightData = scoreLabels.map(label => rightScoreCounts[label] || 0);
-
-        var leftMean = {{ stats.left_mean_score }};
-        var leftCI_lower = {{ stats.left_score_confidence_interval[0] }};
-        var leftCI_upper = {{ stats.left_score_confidence_interval[1] }};
-        var rightMean = {{ stats.right_mean_score }};
-        var rightCI_lower = {{ stats.right_score_confidence_interval[0] }};
-        var rightCI_upper = {{ stats.right_score_confidence_interval[1] }};
 
         // draw match scores histogram
         var ctx = document.getElementById('matchScoresHistogram').getContext('2d');
@@ -246,13 +218,172 @@
                             display: true
                         },
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return Number.isInteger(value) ? value : null;
                             }
                         }
                     }
                 }
             }
+        });
+
+        // 
+        // draw confidence interval chart
+        //
+        // カスタムプラグイン：afterDatasetsDraw フックで横方向エラーバーを描画
+        Chart.register({
+            id: 'horizontalErrorBars',
+            afterDatasetsDraw: (chart, easing) => {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                // 各バーに対してエラーバーを描画
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (!dataset.errorBars) return; // errorBars プロパティがなければ何もしない
+                    dataset.errorBars.forEach((error, i) => {
+                        // 横バー用：y軸は各ラベルの中心位置、x軸はそれぞれ下限、上限に合わせる
+                        const centerY = yScale.getPixelForValue(chart.data.labels[i]);
+                        const xLower = xScale.getPixelForValue(error.lower);
+                        const xUpper = xScale.getPixelForValue(error.upper);
+                        // 描画設定
+                        ctx.save();
+                        ctx.strokeStyle = dataset.borderColor;
+                        ctx.lineWidth = 1;
+                        // 横方向のエラーバー線
+                        ctx.beginPath();
+                        ctx.moveTo(xLower, centerY);
+                        ctx.lineTo(xUpper, centerY);
+                        ctx.stroke();
+                        // 左側キャップ
+                        ctx.beginPath();
+                        ctx.moveTo(xLower, centerY - 4);
+                        ctx.lineTo(xLower, centerY + 4);
+                        ctx.stroke();
+                        // 右側キャップ
+                        ctx.beginPath();
+                        ctx.moveTo(xUpper, centerY - 4);
+                        ctx.lineTo(xUpper, centerY + 4);
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                });
+            }
+        });
+
+        // カスタムプラグイン：afterDatasetsDraw フックで平均値の縦線を描画
+        Chart.register({
+            id: 'meanLinePlugin',
+            afterDatasetsDraw: (chart, easing) => {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+
+                // meaanMarkers プロパティに平均値の配列をセットしていると仮定
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (!dataset.meanMarkers) return; // meanMarkers がない場合は処理しない
+
+                    dataset.meanMarkers.forEach((mean, i) => {
+                        // 対応するラベルのバーの中心位置を取得
+                        // 横方向バー (indexAxis: 'y') の場合、y軸はカテゴリ位置となる
+                        const barMeta = chart.getDatasetMeta(datasetIndex).data[i];
+                        if (!barMeta) return;
+
+                        const centerY = barMeta.y;
+                        // x軸座標は平均値に対応する位置
+                        const xPixel = xScale.getPixelForValue(mean);
+
+                        ctx.save();
+                        ctx.lineWidth = 3; // 太い縦線
+                        ctx.strokeStyle = dataset.borderColor[i] || dataset.borderColor; // 色は dataset から
+                        ctx.beginPath();
+                        // バーの上下の位置に合わせて線を引く
+                        const barTop = barMeta.y - barMeta.height / 2;
+                        const barBottom = barMeta.y + barMeta.height / 2;
+                        ctx.moveTo(xPixel, barTop);
+                        ctx.lineTo(xPixel, barBottom);
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                });
+            }
+        });
+
+        // 信頼区間の値はサーバ計算済みの変数から取得
+        var leftMean = {{ stats.left_mean_score }};
+        var leftCI_lower = {{ stats.left_score_confidence_interval[0] }};
+        var leftCI_upper = {{ stats.left_score_confidence_interval[1] }};
+        var rightMean = {{ stats.right_mean_score }};
+        var rightCI_lower = {{ stats.right_score_confidence_interval[0] }};
+        var rightCI_upper = {{ stats.right_score_confidence_interval[1] }};
+
+        // ヒストグラムと同じ x 軸範囲に合わせるための値（例：0～maxScore など）
+        var numericLabels = scoreLabels.map(Number);
+        var xMin = Math.min(leftCI_lower, rightCI_lower, Math.min.apply(null, numericLabels)) - 1;
+        var xMax = Math.max(leftCI_upper, rightCI_upper, Math.max.apply(null, numericLabels)) + 1;
+
+        // 信頼区間のエラーバー情報は各データポイントごとに配列で用意
+        // ここでは、2つのデータ "Left" と "Right" のみ描画する
+        var errorBarsData = [
+            { mean: leftMean, lower: leftCI_lower, upper: leftCI_upper },
+            { mean: rightMean, lower: rightCI_lower, upper: rightCI_upper }
+        ];
+
+        // 平均値の位置のみセットする（棒グラフ自体は描画せず縦線のみ描画）
+        var meanMarkers = [leftMean, rightMean];
+
+        // 信頼区間のグラフの作成（横方向バー）
+        var ctxCI = document.getElementById('ciChart').getContext('2d');
+        var ciChart = new Chart(ctxCI, {
+            type: 'bar',
+            data: {
+                labels: ['Left', 'Right'],
+                datasets: [{
+                    // 平均値の棒グラフは描画せず、meanMarkers に平均値のみ保持
+                    label: 'Mean Score',
+                    data: [null, null],
+                    meanMarkers: meanMarkers,
+                    // 信頼区間のエラーバー情報をセット
+                    errorBars: errorBarsData,
+                    backgroundColor: ['rgba(0, 0, 0, 0)'], // 描画しないので透明
+                    borderColor: ['rgba(255, 215, 0, 1)', 'rgba(240, 20, 20, 1)'],
+                    borderWidth: 1,
+                    errorBarColor: 'black' // エラーバーの色
+                }]
+            },
+            options: {
+                indexAxis: 'y',  // 横方向バーにする
+                scales: {
+                    x: {
+                        min: xMin,
+                        max: xMax,
+                        title: {
+                            display: true,
+                            text: 'Mean Score and Confidence Interval'
+                        },
+                        grid: {
+                            display: true
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Team'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            },
+            plugins: ['meanLinePlugin', 'horizontalErrorBars']
         });
 
         // draw hosts histogram
@@ -295,7 +426,7 @@
                             display: true
                         },
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return Number.isInteger(value) ? value : null;
                             }
                         }
@@ -303,6 +434,6 @@
                 }
             }
         });
-    });
+    }); // end of $(function() { ... });
 </script>
 {% endblock %}

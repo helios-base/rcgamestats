@@ -139,7 +139,7 @@
 </table>
 
 <script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="{{ url_for('static', filename='chartjs-plugin-datalabels.js')}}"></script>
 <script>
     function resetMatch(matchId) {
         document.getElementById('matchId').value = matchId;

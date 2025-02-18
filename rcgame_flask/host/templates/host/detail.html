@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>{% block title %}Host Detail{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Group Name: {{ host.name }}</h2>
+
+<ul>
+    <li>Host ID: {{ host.id }}</li>
+    <li>Host Name: {{ host.name }}</li>
+    <li>Host IP: {{ host.ip }}</li>
+    <li>Total Matches: {{ total_matches }}</li>
+    <li>Total Times: {{ "%02d" % (total_seconds // 3600) }}:{{ "%02d" % ((total_seconds % 3600) // 60) }}:{{ "%02d" % (total_seconds % 60) }} </li>
+    <li>Average Time: {{ "%02d" % (average_seconds // 3600) }}:{{ "%02d" % ((average_seconds % 3600) // 60) }}:{{ "%02d" % (average_seconds % 60) }}</li>
+</ul>
+
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

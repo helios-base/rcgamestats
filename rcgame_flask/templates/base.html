@@ -14,7 +14,7 @@
     {% if current_user.is_authenticated %}
       <li><a href="{{ url_for('index') }}">Top</a></li>
       <li><a href="{{ url_for('group.index') }}">Groups</a></li>
-      <li><a href="{{ url_for('group.show_stats') }}">Stas</a></li>
+      <li><a href="{{ url_for('group.show_stats') }}">Stats</a></li>
       <li><a href="{{ url_for('team.index') }}">Teams</a></li>
       <li><span> | </span></li>
       <li><a href="{{ url_for('auth.dashboard') }}">{{ current_user['username'] }}</a></li>

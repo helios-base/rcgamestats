@@ -89,7 +89,6 @@ def show_stats():
         stats = group.stats
         if stats is None:
             stats = GroupStats(group.id)
-            db.session.flush()
             stats.update()
             db.session.add(stats)
             db.session.commit()
@@ -272,7 +271,6 @@ def show_group_matches(group_name):
     stats = group.stats
     if stats is None:
         stats = GroupStats(group.id)
-        db.session.flush()
         stats.update()
         db.session.add(stats)
         db.session.commit()
@@ -723,7 +721,6 @@ def plot_groups_confidence_intervals():
         stats = group.stats
         if stats is None:
             stats = GroupStats(group_id)
-            db.session.flush()
             stats.update()
             db.session.add(stats)
             db.session.commit()
@@ -797,8 +794,6 @@ def request_match():
         print(f"Adding host {host.name} ...")
         db.session.add(host)
         db.session.commit()
-    else:
-        print(f"Host {host.name} already exists.")
 
     synch_mode = match.left_team.synch_mode and match.right_team.synch_mode
 
@@ -891,8 +886,6 @@ def submit_result():
         host = Host(name=match.host_name)
         print(f"Adding host {host.name} ...")
         db.session.add(host)
-    else:
-        print(f"Host {host.name} already exists.")
 
     db.session.commit()
     return jsonify({"message": f"Accepted the result of match {match_id}."})

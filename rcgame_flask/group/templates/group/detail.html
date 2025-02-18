@@ -123,9 +123,9 @@
     </thead>
     <tbody>
         {% for match in matches %}<tr>
-            <td>{{ match.group_index }}</td>
-            <td>{{ match.start_time }}</td>
-            <td>{{ match.end_time }}</td>
+            <td class="index">{{ match.group_index }}</td>
+            <td class="time">{{ match.start_time }}</td>
+            <td class="time">{{ match.end_time }}</td>
             <td class="score">{{ match.left_score }}</td>
             <td class="score">{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
@@ -371,9 +371,11 @@
         var rightCI_upper = {{ stats.right_score_confidence_interval[1] }};
 
         // ヒストグラムと同じ x 軸範囲に合わせるための値（例：0～maxScore など）
-        var numericLabels = scoreLabels.map(Number);
-        var xMin = Math.min(leftCI_lower, rightCI_lower, Math.min.apply(null, numericLabels)) - 1;
-        var xMax = Math.max(leftCI_upper, rightCI_upper, Math.max.apply(null, numericLabels)) + 1;
+        // var numericLabels = scoreLabels.map(Number);
+        // var xMin = Math.min(leftCI_lower, rightCI_lower, Math.min.apply(null, numericLabels)) - 1;
+        // var xMax = Math.max(leftCI_upper, rightCI_upper, Math.max.apply(null, numericLabels)) + 1;
+        var xMin = Math.round(Math.min(leftCI_lower, rightCI_lower) - 1);
+        var xMax = Math.round(Math.max(leftCI_upper, rightCI_upper) + 1);
 
         // 信頼区間のエラーバー情報は各データポイントごとに配列で用意
         // ここでは、2つのデータ "Left" と "Right" のみ描画する
@@ -411,7 +413,7 @@
                         max: xMax,
                         title: {
                             display: true,
-                            text: 'Mean Score and Confidence Interval'
+                            text: 'Mean Score and 95% Confidence Interval'
                         },
                         grid: {
                             display: true

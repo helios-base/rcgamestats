@@ -55,6 +55,10 @@ td *:last-child {
 }
 
 .table-cb { width: 1%; white-space: nowrap; }
+td.index{
+    text-align: center;
+    width: 5em;
+}
 td.time {
     word-wrap: normal;
     white-space: nowrap;

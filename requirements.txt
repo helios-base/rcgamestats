@@ -5,3 +5,7 @@ flask-login
 flask-wtf
 oauth2client
 gspread
+scipy
+numpy
+pandas
+matplotlib

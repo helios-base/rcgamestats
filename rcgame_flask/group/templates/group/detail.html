@@ -123,7 +123,7 @@
     </thead>
     <tbody>
         {% for match in matches %}<tr>
-            <td>{{ match.group_index }}</td>
+            <td>{{ match.index }}</td>
             <td>{{ match.start_time }}</td>
             <td>{{ match.end_time }}</td>
             <td>{{ match.left_score }}</td>
@@ -132,7 +132,7 @@
             <td>{% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
                 <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { resetMatch('{{ match.id }}'); }">{{ match.processed.value }}</a>
             {% else %}{{ match.processed.value }}{% endif %}</td>
-            <td>{%if match.processed.value == 'completed' %}<a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}">Log</a>{% endif %}</td>
+            <td>{%if match.processed.value == 'completed' %}<a href="{{ url_for('group.show_match_log', group_name=group.name, index=match.index) }}">Log</a>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>

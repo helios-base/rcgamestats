@@ -137,7 +137,9 @@
         {% endfor %}
     </tbody>
 </table>
+{% endblock %}
 
+{% block scripts %}
 <script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='chartjs-plugin-datalabels.js')}}"></script>
 <script>

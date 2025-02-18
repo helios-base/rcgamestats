@@ -120,12 +120,12 @@ class GroupStats(db.Model):
 
     def __compute_confidence_interval(self, data, mean, confidence=0.95):
         if len(data) < 2:
-            return 0.0, 0.0
-        
+            return mean, mean
+
         se = stats.sem(data)
         if se == 0:
             return mean, mean
-        
+
         return stats.t.interval(confidence, len(data) - 1, loc=mean, scale=se)
 
     def update(self):

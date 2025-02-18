@@ -13,7 +13,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="action" value="plot">
     <input type="hidden" name="group_ids" id="filtered-ids">
-    <button type="submit">Plot Filterd Groups</button>
+    <button type="submit" onclick="submitInPopup()">Plot Filterd Groups</button>
 </form>
 </div>
 
@@ -99,6 +99,16 @@
             $('#filtered-ids').val(filteredIds.join(','));
         });
     });
+
+    function submitInPopup() {
+        // ポップアップウィンドウをあらかじめ指定
+        var features = "width=1200,height=600,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes";
+        var popupWindow = window.open("about:blank", "PlotPopup", features);
+        // フォームのtargetをポップアップウィンドウの名前に設定
+        document.getElementById("filtered-form").target = "PlotPopup";
+        // フォーム送信
+        document.getElementById("filtered-form").submit();
+    }
 </script>
 {% endblock %}
 

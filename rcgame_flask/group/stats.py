@@ -119,9 +119,22 @@ def __plot_confidence_interval(ax, mean_scores, ci_scores, y, color):
     Plot the confidence interval of the mean score
     """
     ax.errorbar(x=mean_scores, y=y, xerr=[[mean_scores - ci_scores[0]], [ci_scores[1] - mean_scores]], fmt='o', color=color, elinewidth=2, capsize=5)
-    ax.text(mean_scores, y+0.1, f'{mean_scores:.3f}', color=color, fontsize=10, ha='center')
+    # ax.errorbar(x=mean_scores, y=y, xerr=[[mean_scores - ci_scores[0]], [ci_scores[1] - mean_scores]],
+    #             fmt='|', markersize=20, markeredgewidth=3,
+    #             color=color, elinewidth=2, capsize=5)
+    ax.text(mean_scores, y+0.2, f'{mean_scores:.3f}', color=color, fontsize=10, ha='center')
     ax.text(ci_scores[0], y+0.1, f'{ci_scores[0]:.3f}', color=color, fontsize=10, ha='center')
     ax.text(ci_scores[1], y+0.1, f'{ci_scores[1]:.3f}', color=color, fontsize=10, ha='center')
+
+
+def __split_group_name(name):
+    """
+    Split group name into two lines
+    """
+    parts = name.split('-') # split by '-'
+    if len(parts) == 4:  # if there are 4 parts, split into two lines
+        return "{}-{}\n{}-{}".format(parts[0], parts[1], parts[2], parts[3])
+    return name
 
 
 def plot_confidence_intervals(image_dir, stats_list):
@@ -132,7 +145,8 @@ def plot_confidence_intervals(image_dir, stats_list):
     matplotlib.use('Agg')  # Must be called before importing matplotlib.pyplot to avoid interactive mode
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6), gridspec_kw={'wspace': 0})
+    # fig, axes = plt.subplots(1, 2, figsize=(16, 9), gridspec_kw={'wspace': 0})
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'wspace': 0})
     for i, st in enumerate(stats_list):
         left_ci, right_ci = st.compute_confidence_intervals()
         y = i
@@ -147,7 +161,7 @@ def plot_confidence_intervals(image_dir, stats_list):
     plt.subplots_adjust(wspace=0.0)
     axes[0].set_ylabel('Group')
     axes[0].set_yticks(np.arange(len(stats_list)))
-    axes[0].set_yticklabels([st.group.name for st in stats_list])
+    axes[0].set_yticklabels([__split_group_name(st.group.name) for st in stats_list])
     axes[0].set_xlabel('Left')
     axes[0].set_title('95% Confidence Interval of Scores')
     axes[0].set_ylim(-1, len(stats_list))

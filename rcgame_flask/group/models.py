@@ -166,4 +166,3 @@ class GroupStats(db.Model):
             self.right_score_confidence_interval_lower, self.right_score_confidence_interval_upper = self.__compute_confidence_interval(right_scores, self.right_mean_score)
 
         self.updated_at = datetime.now().replace(microsecond=0)
-        print(f'Group {self.group.name} stats updated at {self.updated_at}')

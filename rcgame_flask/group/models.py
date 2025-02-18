@@ -88,8 +88,8 @@ class GroupStats(db.Model):
     right_score_confidence_interval_upper = db.Column(db.Float)
     host_counts = db.Column(db.JSON)
 
-    # group = db.relationship('Group', backref=db.backref('stats', uselist=False, lazy='dynamic'))
-    group = db.relationship('Group', foreign_keys=[group_id])
+    group = db.relationship('Group', backref=db.backref('stats', uselist=False, lazy='joined'))
+    # group = db.relationship('Group', foreign_keys=[group_id])
 
     def __init__(self, group_id):
         self.group_id = group_id

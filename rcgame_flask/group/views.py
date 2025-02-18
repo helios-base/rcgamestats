@@ -85,8 +85,9 @@ def show_stats():
     """
     group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
+    stats_list = []
     for group in group_list:
-        stats = GroupStats.query.filter_by(group_id=group.id).first()
+        stats = group.stats
         if stats is None:
             stats = GroupStats(group.id)
             stats.update()
@@ -95,7 +96,9 @@ def show_stats():
         elif stats.updated_at is None or group.updated_at > stats.updated_at:
             stats.update()
             db.session.commit()
-    stats_list = GroupStats.query.filter(GroupStats.group_id.in_([group.id for group in group_list])).all()
+
+        stats_list.append(stats)
+
     return render_template("group/stats.html", stats_list=stats_list)
 
 
@@ -260,7 +263,7 @@ def show_group_matches(group_name):
 
     use_googlesheet = False if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "" else True
 
-    stats = GroupStats.query.filter_by(group_id=group.id).first()
+    stats = group.stats
     if stats is None:
         stats = GroupStats(group.id)
         stats.update()
@@ -704,11 +707,12 @@ def plot_groups_confidence_intervals():
     group_ids = [int(id) for id in group_ids_raw[0].split(",")]
     group_ids.reverse()
 
+    stats_list = []
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group is None:
             return jsonify({"error": f"Group ID {group_id} not found."}),
-        stats = GroupStats.query.filter_by(group_id=group_id).first()
+        stats = group.stats
         if stats is None:
             stats = GroupStats(group_id)
             stats.update()
@@ -718,7 +722,8 @@ def plot_groups_confidence_intervals():
             stats.update()
             db.session.commit()
 
-    stats_list = GroupStats.query.filter(GroupStats.group_id.in_(group_ids)).all()
+        stats_list.append(stats)
+
     image_dir = os.path.join(current_app.static_folder, "images")
     try:
         if not os.path.exists(image_dir):

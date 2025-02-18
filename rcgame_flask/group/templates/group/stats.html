@@ -9,11 +9,11 @@
 </div>
 
 <div class="button-container">
-<form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups') }}" target="_blank">
+<form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups_confidence_intervals') }}" target="_blank">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="action" value="plot">
     <input type="hidden" name="group_ids" id="filtered-ids">
-    <button type="submit" onclick="submitInPopup()">Plot Filterd Groups</button>
+    <button type="submit" onclick="submitInPopup()">Plot Confidence Intervals</button>
 </form>
 </div>
 

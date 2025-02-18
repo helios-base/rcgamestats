@@ -671,9 +671,9 @@ def show_match_log(group_name, group_index):
     )
 
 
-@group.route("/plot", methods=["POST"])
+@group.route("/plot_confidence_intervals", methods=["POST"])
 @login_required
-def plot_groups():
+def plot_groups_confidence_intervals():
     """
     Plot match results.
     """

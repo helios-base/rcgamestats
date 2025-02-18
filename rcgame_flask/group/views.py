@@ -88,6 +88,7 @@ def show_stats():
         stats = group.stats
         if stats is None:
             stats = GroupStats(group.id)
+            db.session.flush()
             stats.update()
             db.session.add(stats)
             db.session.commit()
@@ -95,6 +96,7 @@ def show_stats():
             stats.update()
             db.session.commit()
 
+        print(f'Group {group.name} stats updated at {stats.updated_at}')
         stats_list.append(stats)
 
     return render_template("group/stats.html", stats_list=stats_list)
@@ -269,12 +271,14 @@ def show_group_matches(group_name):
     stats = group.stats
     if stats is None:
         stats = GroupStats(group.id)
+        db.session.flush()
         stats.update()
         db.session.add(stats)
         db.session.commit()
     elif stats.updated_at is None or group.updated_at > stats.updated_at:
         stats.update()
         db.session.commit()
+    print(f'Group {group.name} stats updated at {stats.updated_at}')
 
     left_ci = stats.left_score_confidence_interval_lower, stats.left_score_confidence_interval_upper
     right_ci = stats.right_score_confidence_interval_lower, stats.right_score_confidence_interval_upper
@@ -718,12 +722,14 @@ def plot_groups_confidence_intervals():
         stats = group.stats
         if stats is None:
             stats = GroupStats(group_id)
+            db.session.flush()
             stats.update()
             db.session.add(stats)
             db.session.commit()
         elif stats.updated_at is None or group.updated_at > stats.updated_at:
             stats.update()
             db.session.commit()
+        print(f'Group {group.name} stats updated at {stats.updated_at}')
 
         stats_list.append(stats)
 

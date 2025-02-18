@@ -682,6 +682,7 @@ def plot_groups_confidence_intervals():
         return jsonify({"error": "No groups selected."}), 400
 
     group_ids = [int(id) for id in group_ids_raw[0].split(",")]
+    group_ids.reverse()
     stats_list = [GroupStats(group_id) for group_id in group_ids]
     image_dir = os.path.join(current_app.static_folder, "images")
     try:

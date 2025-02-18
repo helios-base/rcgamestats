@@ -679,8 +679,7 @@ def plot_groups():
     """
     group_ids_raw = request.form.getlist("group_ids")
     if not group_ids_raw or len(group_ids_raw) == 0 or group_ids_raw[0] == "":
-        flash("No groups selected.", "error")
-        return redirect(url_for("group.show_stats"))
+        return jsonify({"error": "No groups selected."}), 400
 
     group_ids = [int(id) for id in group_ids_raw[0].split(",")]
     stats_list = [GroupStats(group_id) for group_id in group_ids]
@@ -690,8 +689,9 @@ def plot_groups():
             os.makedirs(image_dir)
         image_path = plot_confidence_intervals(image_dir, stats_list)
     except Exception as e:
-        flash(f"Failed to plot stats: {str(e)}", "error")
-        return redirect(url_for("group.show_stats"))
+        return jsonify({"error": str(e)}), 500
+        # flash(f"Failed to plot stats: {str(e)}", "error")
+        # return redirect(url_for("group.show_stats"))
 
     return send_file(image_path, mimetype="image/png")
 

@@ -163,12 +163,12 @@ def plot_confidence_intervals(image_dir, stats_list):
     axes[0].set_yticks(np.arange(len(stats_list)))
     axes[0].set_yticklabels([__split_group_name(st.group.name) for st in stats_list])
     axes[0].set_xlabel('Left')
-    axes[0].set_title('95% Confidence Interval of Scores')
+    axes[0].set_title('95% Confidence Interval of Left Scores')
     axes[0].set_ylim(-1, len(stats_list))
 
     axes[1].set_yticks([])  # hide y-axis
     axes[1].set_xlabel('Right')
-    axes[1].set_title('95% Confidence Interval of Conceded')
+    axes[1].set_title('95% Confidence Interval of Right Scores')
     axes[1].set_ylim(-1, len(stats_list))
 
     plt.tight_layout()

@@ -85,7 +85,7 @@
 </table>
 
 <canvas id="matchScoresHistogram" width="300" height="50"></canvas>
-<canvas id="ciChart" width="300" height="20"></canvas>
+<canvas id="ciChart" width="300" height="30"></canvas>
 <canvas id="hostsHistogram" width="300" height="50"></canvas>
 
 <h3>Matches</h3>
@@ -281,6 +281,7 @@
                         const centerY = yScale.getPixelForValue(chart.data.labels[i]);
                         const xLower = xScale.getPixelForValue(error.lower);
                         const xUpper = xScale.getPixelForValue(error.upper);
+                        const xMean = xScale.getPixelForValue(error.mean); // 平均値の位置
                         // 描画設定
                         ctx.save();
                         ctx.strokeStyle = dataset.errorBarColor || 'black';
@@ -300,6 +301,21 @@
                         ctx.moveTo(xUpper, centerY - 4);
                         ctx.lineTo(xUpper, centerY + 4);
                         ctx.stroke();
+                        // -------------------------------
+                        // 各エラーバー上部にテキストを描画
+                        ctx.fillStyle = 'black';
+                        ctx.font = '10px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        // 少し上にずらすためのオフセット
+                        const yOffset = centerY - 6;
+                        // 下限値
+                        ctx.fillText(parseFloat(error.lower).toFixed(3), xLower, yOffset);
+                        // 平均値
+                        ctx.fillText(parseFloat(error.mean).toFixed(3), xMean, yOffset - 8);
+                        // 上限値
+                        ctx.fillText(parseFloat(error.upper).toFixed(3), xUpper, yOffset);
+                        // -------------------------------
                         ctx.restore();
                     });
                 });
@@ -333,8 +349,10 @@
                         ctx.strokeStyle = dataset.borderColor[i] || dataset.borderColor; // 色は dataset から
                         ctx.beginPath();
                         // バーの上下の位置に合わせて線を引く
-                        const barTop = barMeta.y - barMeta.height / 2;
-                        const barBottom = barMeta.y + barMeta.height / 2;
+                        // const barTop = barMeta.y - barMeta.height / 2;
+                        // const barBottom = barMeta.y + barMeta.height / 2;
+                        const barTop = barMeta.y - 10;
+                        const barBottom = barMeta.y + 10;
                         ctx.moveTo(xPixel, barTop);
                         ctx.lineTo(xPixel, barBottom);
                         ctx.stroke();

@@ -136,6 +136,6 @@ class Match:
             print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (Match::run) Error running the match.")
             return False
 
-        result_csv = os.path.join(log_dir, f"{self.log_file_name}.csv")
+        result_csv = os.path.join(log_dir, f"{self.log_file_name}.result.csv")
         self.set_result(result_csv)
         return True

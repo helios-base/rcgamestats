@@ -1,0 +1,118 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}Stats{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
+    <a href="{{ url_for('group.index') }}">Show Active Groups</a>
+</div>
+
+<div class="button-container">
+<form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups_confidence_intervals') }}" target="_blank">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="plot">
+    <input type="hidden" name="group_ids" id="filtered-ids">
+    <button type="submit" onclick="submitInPopup()">Plot Confidence Intervals</button>
+</form>
+</div>
+
+<table id="stats-table" class="tablesorter">
+    <thead>
+        <tr>
+            <th class="stats">Created At</th>
+            <th class="stats" id="lborder">Left</th>
+            <th class="stats">Right</th>
+            <th class="stats" id="lborder">Total</th>
+            <th class="stats">Left Win</th>
+            <th class="stats">Draw</th>
+            <th class="stats">Right Win</th>
+            <th class="stats" id="lborder">Left Win Rate</th>
+            <th class="stats">Draw Rate</th>
+            <th class="stats">Right Win Rate</th>
+            <th class="stats" id="lborder">Left Goal</th>
+            <th class="stats">Right Goal</th>
+            <th class="stats" id="lborder">Left Ave. Goal</th>
+            <th class="stats">Right Ave. Goal</th>
+            <th class="stats" id="lborder">Left Max Goal</th>
+            <th class="stats">Right Max Goal</th>
+            <th class="stats" id="lborder">Left Scored</th>
+            <th class="stats">Right Scored</th>
+            <th class="stats" id="lborder">Left Score Rate</th>
+            <th class="stats">Right Score Rate</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stats in stats_list %}
+        <tr data-id="{{ stats.group.id }}"{% if stats.group.status.value == 'approved' %} class="approved"{%elif stats.group.status.value == 'rejected' %} class="rejected"{% elif stats.group.status.value == 'under_review' %} class="under_review"{% endif %}>
+            <td class="stats"><a href="{{ url_for('group.show_group_matches', group_name=stats.group.name) }}" title="{{ stats.group.name }}">{{ stats.group.created_at }}</a></td>
+            <td class="stats" id="lborder">{{ stats.group.left_team.name }}</td>
+            <td class="stats">{{ stats.group.right_team.name }}</td>
+            <td class="stats" id="lborder">{{ stats.completed_count }}</td>
+            <td class="stats">{{ stats.left_win }}</td>
+            <td class="stats">{{ stats.draw }}</td>
+            <td class="stats">{{ stats.right_win }}</td>
+            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
+            <td class="stats" id="lborder">{{ stats.left_sum_of_scores }}</td>
+            <td class="stats">{{ stats.right_sum_of_scores }}</td>
+            <td class="stats" id="lborder">{{ stats.left_mean_score|round(3) }}</td>
+            <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
+            <td class="stats" id="lborder">{{ stats.left_max_score }}</td>
+            <td class="stats">{{ stats.right_max_score }}</td>
+            <td class="stats" id="lborder">{{ stats.left_scored_games }}</td>
+            <td class="stats">{{ stats.right_scored_games }}</td>
+            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    $(function () {
+        $('#stats-table').tablesorter({
+            sortList: [[0, 1]], // sort by the first column in descending order
+            duplicateSpan : true, // default setting
+
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
+
+        $('#filtered-form').on('submit', function() {
+            var filteredIds = [];
+            $('#stats-table tbody tr:visible').each(function() {
+                filteredIds.push($(this).data('id'));
+            });
+            if (filteredIds.length === 0) {
+                alert('No groups are selected.');
+                return;
+            }
+            $('#filtered-ids').val(filteredIds.join(','));
+        });
+    });
+
+    function submitInPopup() {
+        // ポップアップウィンドウをあらかじめ指定
+        // var features = "width=1200,height=600,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes";
+        const width = 1200, height = 600;
+        const left = (window.screen.width / 2) - (width / 2);
+        const top = (window.screen.height / 2) - (height / 2);
+        var features = `width=${width},height=${height},top=${top},left=${left},menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes`;
+        var popupWindow = window.open("about:blank", "PlotPopup", features);
+        // フォームのtargetをポップアップウィンドウの名前に設定
+        document.getElementById("filtered-form").target = "PlotPopup";
+        // フォーム送信
+        document.getElementById("filtered-form").submit();
+    }
+</script>
+{% endblock %}
+

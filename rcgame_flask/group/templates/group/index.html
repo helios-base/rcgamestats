@@ -13,7 +13,7 @@
     <a href="{{ url_for('group.show_archived_groups') }}">Show Archived Groups</a>
 </div>
 <div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
-    <a href="{{ url_for('group.show_summaries') }}">Show Summary</a>
+    <a href="{{ url_for('group.show_stats') }}">Show Stats</a>
 </div>
 
 <form action="{{ url_for('group.bulk_action') }}" method="post">
@@ -31,6 +31,7 @@
         <thead>
             <tr>
                 <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th></th>
                 <th>Name</th>
                 <th>Created At</th>
                 <th>Left Team</th>
@@ -41,43 +42,20 @@
                 <th>Log Files</th>
             </tr>
         </thead>
-        <tbody>
-            {% for group in groups if group.is_active %}
-              {% set scheduled_count = group.matches.count() %}
-              {% set completed_count = completed_counts.get(group.id, 0) %}
+        <tbody>{% for group in groups if group.is_active %}{% set scheduled_count = group.matches.count() %}{% set completed_count = completed_counts.get(group.id, 0) %}
             <tr{% if group.status.value == 'approved' %} class="approved"{%elif group.status.value == 'rejected' %} class="rejected"{% elif group.status.value == 'under_review' %} class="under_review"{% endif %}>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
+                <td><a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
                 <td class="time">{{ group.created_at }}</td>
-                <td>
-                    {% if group.left_team %}
-                    {{ group.left_team.name }},
-                    {{ group.left_team.version }}
-                    {% else %}
-                    <span class="error">Not found</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if group.right_team %}
-                    {{ group.right_team.name }},
-                    {{ group.right_team.version }}
-                    {% else %}
-                    <span class="error">Not found</span>
-                    {% endif %}
-                </td>
+                <td>{% if group.left_team %}{{ group.left_team.name }}, {{ group.left_team.version }}{% else %}<span class="error">Not found</span>{% endif %}</td>
+                <td>{% if group.right_team %}{{ group.right_team.name }}, {{ group.right_team.version }}{% else %}<span class="error">Not found</span>{% endif %}</td>
                 <td>{{ scheduled_count}}</td>
-                <td>
-                    {% if completed_count == scheduled_count %}
-                    <span class="success">{{ completed_count }}</span>
-                    {% else %}
-                    <span class="error">{{ completed_count }}</span>
-                    {% endif %}
-                </td>
+                <td>{% if completed_count == scheduled_count %}<span class="success">{{ completed_count }}</span>{% else %}<span class="error">{{ completed_count }}</span>{% endif %}</td>
                 <td class="description">{{ group.description }}</td>
                 <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
             </tr>
-            {% endfor %}
-        </tbody>
+        {% endfor %}</tbody>
     </table>
 </form>
 
@@ -86,8 +64,9 @@
         $('#group-table').tablesorter({
             headers: {
                 0: { sorter: false, filter: false },
-                7: { sorter: false },
-                8: { sorter: false, filter: false }
+                1: { sorter: false, filter: false },
+                8: { sorter: false },
+                9: { sorter: false, filter: false }
             },
             sortList: [[2, 1]], // sort by the third column in descending order
             widgets: ['filter'],

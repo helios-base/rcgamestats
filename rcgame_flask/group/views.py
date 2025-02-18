@@ -3,6 +3,7 @@ import shutil
 import glob
 import re
 import secrets
+import json
 from datetime import datetime
 from rcgame_flask.app import db, csrf
 from flask import (
@@ -10,6 +11,7 @@ from flask import (
     render_template,
     redirect,
     url_for,
+    send_file,
     flash,
     jsonify,
     request,
@@ -18,8 +20,9 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
-from rcgame_flask.group.models import Group, Match, GroupStats, GroupStatus, MatchStatus
+from rcgame_flask.group.models import Group, Match, GroupStatus, MatchStatus
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
+from rcgame_flask.group.stats import GroupStats, plot_confidence_intervals
 from rcgame_flask.team.models import Team
 from rcgame_flask.config import config
 from rcgame_flask import googlesheet
@@ -39,6 +42,25 @@ def create_group_name(created_at, team_left, team_right, use_version=False):
     return f"{time_str}-{team_left.name}_{team_left.version}-{team_right.name}_{team_right.version}"
 
 
+def save_group_metadata(group):
+    metadata = {
+        "name": group.name,
+        "created_at": group.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        "left_team": group.left_team.name,
+        "left_team_version": group.left_team.version,
+        "right_team": group.right_team.name,
+        "right_team_version": group.right_team.version,
+        "description": group.description,
+        "scheduled_matches": group.matches.count(),
+    }
+    log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    metadata_file_path = os.path.join(log_dir, "group_info.json")
+    with open(metadata_file_path, 'w') as metadata_file:
+        json.dump(metadata, metadata_file, indent=4)
+
+
 @group.route("/")
 @login_required
 def index():
@@ -55,16 +77,16 @@ def index():
     return render_template("group/index.html", groups=group_list, completed_counts=completed_counts)
 
 
-@group.route("/summary/")
+@group.route("/stats/")
 @login_required
-def show_summaries():
+def show_stats():
     """
-    Show summary of all groups.
+    Show stats of all groups.
     """
     group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    summary_list = [GroupStats(group.id) for group in group_list]
-    return render_template("group/summary.html", summary_list=summary_list)
+    stats_list = [GroupStats(group.id) for group in group_list]
+    return render_template("group/stats.html", stats_list=stats_list)
 
 
 @group.route("/archived/")
@@ -124,6 +146,8 @@ def create():
             db.session.rollback()
             flash(f"Group [{group_name}] cannot be created.")
             return redirect(url_for("group.create"))
+
+        save_group_metadata(group)
 
         for i in range(int(form.number_of_matches.data)):
             match = Match(
@@ -193,6 +217,8 @@ def create_roundrobin():
                     flash(f"Group name [{group_name}] already exists.")
                     continue
 
+                save_group_metadata(group)
+
                 for i in range(int(form.number_of_matches.data)):
                     match = Match(
                         group_index=i + 1,
@@ -209,26 +235,6 @@ def create_roundrobin():
     return render_template("group/create_roundrobin.html", form=form)
 
 
-@group.route("/<int:group_id>/")
-@login_required
-def show_group_matches_by_id(group_id):
-    """
-    Show all matches associated with a group.
-    """
-    group = Group.query.get_or_404(group_id)
-    matches = Match.query.filter_by(group_id=group_id).all()
-
-    use_googlesheet = True
-    if config.GOOGLE_DOC_ID is None or config.GOOGLE_KEY_PATH is None:
-        use_googlesheet = False
-    return render_template(
-        "group/detail.html",
-        group=group,
-        matches=matches,
-        use_googlesheet=use_googlesheet
-    )
-
-
 @group.route("/<string:group_name>/")
 @login_required
 def show_group_matches(group_name):
@@ -242,16 +248,17 @@ def show_group_matches(group_name):
 
     matches = Match.query.filter_by(group_id=group.id).all()
 
-    use_googlesheet = True
-    if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "":
-        use_googlesheet = False
+    use_googlesheet = False if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "" else True
 
     stats = GroupStats(group.id)
+    left_ci, right_ci = stats.compute_confidence_intervals()
     return render_template(
         "group/detail.html",
         group=group,
         matches=matches,
         stats=stats,
+        left_score_confidence_interval=left_ci,
+        right_score_confidence_interval=right_ci,
         use_googlesheet=use_googlesheet
     )
 
@@ -347,6 +354,8 @@ def edit_group(group_id):
         group.description = form.description.data
         db.session.commit()
 
+        save_group_metadata(group)
+
         flash(
             f"Updated group {group.name} with {form.additional_matches.data} matches."
         )
@@ -421,7 +430,7 @@ def bulk_set_status_groups(group_ids, status):
 
         group.status = status
         db.session.commit()
-        flash(f"Group [{group.name}] has been set to [{status.value}].")
+        # flash(f"Group [{group.name}] has been set to [{status.value}].")
 
     return redirect(url_for("group.index"))
 
@@ -580,14 +589,24 @@ def upload_group_results_to_google_sheet(group_id):
 #
 
 
-@group.route("/<int:group_id>/<int:match_id>/reset", methods=["POST"])
+@group.route("/reset_match", methods=["POST"])
 @login_required
-def reset_match(group_id, match_id):
+def reset_match():
     """
     Reset a match.
     """
+    match_id = request.form.get("match_id")
+    if not match_id:
+        flash("Match ID is missing.", "error")
+        return redirect(url_for("group.detail", group_id=request.args.get("group_id")))
+
     match = Match.query.get(match_id)
-    if match and match.processed == MatchStatus.COMPLETED:
+    if match is None:
+        flash(f"Match ID {match_id} not found.")
+        return redirect(url_for("group.show_group_matches", group_name=group.name))
+
+    group_name = match.group.name
+    if match.processed == MatchStatus.COMPLETED:
         log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
         log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
         for log_file_path in log_file_paths:
@@ -602,7 +621,7 @@ def reset_match(group_id, match_id):
         match.token = None
         db.session.commit()
         flash(f"Match {match.group_index} has been reset.")
-    elif match and match.processed == MatchStatus.IN_PROGRESS:
+    elif match.processed == MatchStatus.IN_PROGRESS:
         match.host_name = None
         match.start_time = None
         match.processed = MatchStatus.UNEXECUTED
@@ -613,7 +632,7 @@ def reset_match(group_id, match_id):
     else:
         flash("Match not found or not in progress or completed.")
 
-    return redirect(url_for("group.show_group_matches_by_id", group_id=group_id))
+    return redirect(url_for("group.show_group_matches", group_name=group_name))
 
 
 @group.route("/<string:group_name>/<int:group_index>/log/", methods=["GET"])
@@ -651,6 +670,31 @@ def show_match_log(group_name, group_index):
         "group/log_files.html", dir_name=dir_name, file_names=file_names
     )
 
+
+@group.route("/plot_confidence_intervals", methods=["POST"])
+@login_required
+def plot_groups_confidence_intervals():
+    """
+    Plot match results.
+    """
+    group_ids_raw = request.form.getlist("group_ids")
+    if not group_ids_raw or len(group_ids_raw) == 0 or group_ids_raw[0] == "":
+        return jsonify({"error": "No groups selected."}), 400
+
+    group_ids = [int(id) for id in group_ids_raw[0].split(",")]
+    group_ids.reverse()
+    stats_list = [GroupStats(group_id) for group_id in group_ids]
+    image_dir = os.path.join(current_app.static_folder, "images")
+    try:
+        if not os.path.exists(image_dir):
+            os.makedirs(image_dir)
+        image_path = plot_confidence_intervals(image_dir, stats_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+        # flash(f"Failed to plot stats: {str(e)}", "error")
+        # return redirect(url_for("group.show_stats"))
+
+    return send_file(image_path, mimetype="image/png")
 
 #
 # Client API

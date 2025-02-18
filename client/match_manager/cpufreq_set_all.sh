@@ -1,5 +1,11 @@
 #!/bin/sh
 
+sudo -n cpufreq-set --help > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+  echo "cpufreq-set cannot be executed without password."
+  exit 1
+fi
+
 NUM=`nproc --all`
 
 i=0

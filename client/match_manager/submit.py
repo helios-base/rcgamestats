@@ -42,13 +42,13 @@ def submit_result(match):
 
     tmp_dir = config.TEMPORAL_DIR
     file_paths = glob.glob(os.path.join(tmp_dir, f"{match.log_file_name}*"))
-    print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Result file_paths:", file_paths)
+    # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Result file_paths:", file_paths)
     #files = [('log_file', (os.path.basename(file_path), open(file_path, 'rb'))) for file_path in file_paths]
     files = [('log_file', (open(file_path, 'rb'))) for file_path in file_paths]
     #files = [(os.path.basename(file_path), open(file_path, 'rb')) for file_path in file_paths]
 
-    print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Result match_data:", match_data)
-    print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Result files:", files)
+    print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) ", match_data)
+    # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Result files:", files)
     response = requests.post(url, headers=headers, data=match_data, files=files)
     try:
         response.raise_for_status()

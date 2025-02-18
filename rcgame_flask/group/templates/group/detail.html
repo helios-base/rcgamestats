@@ -10,12 +10,12 @@
     <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
 </div>
 {% if use_googlesheet %}
-    <div class="button-container">
-        <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit">Upload to Google Spreadsheet</button>
-        </form>
-    </div>
+<div class="button-container">
+    <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Upload to Google Spreadsheet</button>
+    </form>
+</div>
 {% endif %}
 
 <h2>Group Name: {{ group.name }}</h2>
@@ -42,49 +42,50 @@
 <table>
     <thead>
         <tr>
-            <th class="summary">Total</th>
-            <th class="summary" id="lborder">Left Win</th>
-            <th class="summary">Draw</th>
-            <th class="summary">Right Win</th>
-            <th class="summary" id="lborder">Left Win Rate</th>
-            <th class="summary">Draw Rate</th>
-            <th class="summary">Right Win Rate</th>
-            <th class="summary" id="lborder">Left Goal</th>
-            <th class="summary">Right Goal</th>
-            <th class="summary" id="lborder">Left Ave. Goal</th>
-            <th class="summary">Right Ave. Goal</th>
-            <th class="summary" id="lborder">Left Max Goal</th>
-            <th class="summary">Right Max Goal</th>
-            <th class="summary" id="lborder">Left Scored</th>
-            <th class="summary">Right Scored</th>
-            <th class="summary" id="lborder">Left Score Rate</th>
-            <th class="summary">Right Score Rate</th>
+            <th class="stats">Total</th>
+            <th class="stats" id="lborder">Left Win</th>
+            <th class="stats">Draw</th>
+            <th class="stats">Right Win</th>
+            <th class="stats" id="lborder">Left Win Rate</th>
+            <th class="stats">Draw Rate</th>
+            <th class="stats">Right Win Rate</th>
+            <th class="stats" id="lborder">Left Goal</th>
+            <th class="stats">Right Goal</th>
+            <th class="stats" id="lborder">Left Ave. Goal</th>
+            <th class="stats">Right Ave. Goal</th>
+            <th class="stats" id="lborder">Left Max Goal</th>
+            <th class="stats">Right Max Goal</th>
+            <th class="stats" id="lborder">Left Scored</th>
+            <th class="stats">Right Scored</th>
+            <th class="stats" id="lborder">Left Score Rate</th>
+            <th class="stats">Right Score Rate</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td class="summary">{{ stats.completed_count }}</td>
-            <td class="summary" id="lborder">{{ stats.left_win }}</td>
-            <td class="summary">{{ stats.draw }}</td>
-            <td class="summary">{{ stats.right_win }}</td>
-            <td class="summary" id="lborder">{{ stats.left_win_rate * 100 }} %</td>
-            <td class="summary">{{ stats.draw_rate * 100 }} %</td>
-            <td class="summary">{{ stats.right_win_rate * 100 }} %</td>
-            <td class="summary" id="lborder">{{ stats.left_goals }}</td>
-            <td class="summary">{{ stats.right_goals }}</td>
-            <td class="summary" id="lborder">{{ stats.left_ave_goal }}</td>
-            <td class="summary">{{ stats.right_ave_goal }}</td>
-            <td class="summary" id="lborder">{{ stats.left_max_goal }}</td>
-            <td class="summary">{{ stats.right_max_goal }}</td>
-            <td class="summary" id="lborder">{{ stats.left_scored_count }}</td>
-            <td class="summary">{{ stats.right_scored_count }}</td>
-            <td class="summary" id="lborder">{{ stats.left_score_rate * 100 }} %</td>
-            <td class="summary">{{ stats.right_score_rate * 100 }} %</td>
+            <td class="stats">{{ stats.completed_count }}</td>
+            <td class="stats" id="lborder">{{ stats.left_win }}</td>
+            <td class="stats">{{ stats.draw }}</td>
+            <td class="stats">{{ stats.right_win }}</td>
+            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
+            <td class="stats" id="lborder">{{ stats.left_sum_of_scores }}</td>
+            <td class="stats">{{ stats.right_sum_of_scores }}</td>
+            <td class="stats" id="lborder">{{ stats.left_mean_score|round(3) }}</td>
+            <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
+            <td class="stats" id="lborder">{{ stats.left_max_score }}</td>
+            <td class="stats">{{ stats.right_max_score }}</td>
+            <td class="stats" id="lborder">{{ stats.left_scored_games }}</td>
+            <td class="stats">{{ stats.right_scored_games }}</td>
+            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
         </tr>
     </tbody>
 </table>
 
 <canvas id="matchScoresHistogram" width="300" height="50"></canvas>
+<canvas id="ciChart" width="300" height="30"></canvas>
 <canvas id="hostsHistogram" width="300" height="50"></canvas>
 
 <h3>Matches</h3>
@@ -103,6 +104,10 @@
     <select class="gotoPage" title="Select page number"></select>
 </div>
 
+<form id="resetForm" method="post" action="{{ url_for('group.reset_match', group_id=group.id) }}" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="match_id" id="matchId" value="">
+</form>
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
@@ -117,40 +122,30 @@
         </tr>
     </thead>
     <tbody>
-        {% for match in matches %}
-        <tr>
+        {% for match in matches %}<tr>
             <td>{{ match.group_index }}</td>
             <td>{{ match.start_time }}</td>
             <td>{{ match.end_time }}</td>
-            <td style="text-align: right; padding-right: 10px;">{{ match.left_score }}</td>
-            <td style="text-align: right; padding-right: 10px;">{{ match.right_score }}</td>
+            <td>{{ match.left_score }}</td>
+            <td>{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
-            <td>
-                {% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
-                <form id="reset-form-{{ match.id }}"
-                    action="{{ url_for('group.reset_match', group_id=group.id, match_id=match.id) }}" method="post"
-                    style="display:none;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                </form>
-                <a href="#"
-                    onclick="event.preventDefault(); if (confirm('Really reset?')) { document.getElementById('reset-form-{{ match.id }}').submit(); }">{{
-                    match.processed.value }}</a>
-                {% else %}
-                {{ match.processed.value }}
-                {% endif %}
-            </td>
-            <td>
-                {%if match.processed.value == 'completed' %}
-                <a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}">Log</a>
-                {% endif %}
-            </td>
+            <td>{% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
+                <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { resetMatch('{{ match.id }}'); }">{{ match.processed.value }}</a>
+            {% else %}{{ match.processed.value }}{% endif %}</td>
+            <td>{%if match.processed.value == 'completed' %}<a href="{{ url_for('group.show_match_log', group_name=group.name, group_index=match.group_index) }}">Log</a>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
 <script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='chartjs-plugin-datalabels.js')}}"></script>
 <script>
+    function resetMatch(matchId) {
+        document.getElementById('matchId').value = matchId;
+        document.getElementById('resetForm').submit();
+    }
+
     $(function () {
         $('#match-table').tablesorter(
             {
@@ -169,18 +164,23 @@
                 }
             }
         ).tablesorterPager({
-                container: $(".pager"),
-                size: 100,
-                output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
-            }
-        );
+            container: $(".pager"),
+            size: 100,
+            output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
+        });
 
         // prepare data for histograms
         var leftScoreCounts = {{ stats.left_score_counts | tojson }};
+
         var rightScoreCounts = {{ stats.right_score_counts | tojson }};
         var scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
         var leftData = scoreLabels.map(label => leftScoreCounts[label] || 0);
         var rightData = scoreLabels.map(label => rightScoreCounts[label] || 0);
+
+        var leftTotal = leftData.reduce((acc, cur) => acc + cur, 0);
+        var rightTotal = rightData.reduce((acc, cur) => acc + cur, 0);
+
+        Chart.register(ChartDataLabels);
 
         // draw match scores histogram
         var ctx = document.getElementById('matchScoresHistogram').getContext('2d');
@@ -192,24 +192,47 @@
                     {
                         label: 'Left Team Scores',
                         data: leftData,
-                        // backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        // borderColor: 'rgba(75, 192, 192, 1)',
                         backgroundColor: 'rgba(255, 215, 0, 0.2)',
                         borderColor: 'rgba(255, 215, 0, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        categoryPercentage: 0.9,
+                        barPercentage: 0.99
                     },
                     {
                         label: 'Right Team Scores',
                         data: rightData,
-                        // backgroundColor: 'rgba(192, 75, 75, 0.2)',
-                        // borderColor: 'rgba(192, 75, 75, 1)',
                         backgroundColor: 'rgba(240, 20, 20, 0.2)',
                         borderColor: 'rgba(240, 20, 20, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        categoryPercentage: 0.9,
+                        barPercentage: 0.99
                     }
                 ]
             },
             options: {
+                plugins: {
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'end',
+                        font: {
+                            weight: 'bold'
+                        },
+                        color: 'black',
+                        formatter: function(value, context) {
+                            var datasetIndex = context.datasetIndex;
+                            var percentage = "";
+                            if (datasetIndex === 0 && leftTotal > 0) {
+                                percentage = ((value / leftTotal) * 100).toFixed(1) + "%";
+                            } else if (datasetIndex === 1 && rightTotal > 0) {
+                                percentage = ((value / rightTotal) * 100).toFixed(1) + "%";
+                            } else {
+                                percentage = "0%";
+                            }
+                            return value + " (" + percentage + ")";
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         title: {
@@ -228,10 +251,194 @@
                         },
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            callback: function (value) {
+                                return Number.isInteger(value) ? value : null;
+                            }
                         }
                     }
                 }
+            },
+            plugins: [ChartDataLabels]
+        });
+
+        // 
+        // draw confidence interval chart
+        //
+        // カスタムプラグイン：afterDatasetsDraw フックで横方向エラーバーを描画
+        Chart.register({
+            id: 'horizontalErrorBars',
+            afterDatasetsDraw: (chart, easing) => {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                // 各バーに対してエラーバーを描画
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (!dataset.errorBars) return; // errorBars プロパティがなければ何もしない
+                    dataset.errorBars.forEach((error, i) => {
+                        // 横バー用：y軸は各ラベルの中心位置、x軸はそれぞれ下限、上限に合わせる
+                        const centerY = yScale.getPixelForValue(chart.data.labels[i]);
+                        const xLower = xScale.getPixelForValue(error.lower);
+                        const xUpper = xScale.getPixelForValue(error.upper);
+                        const xMean = xScale.getPixelForValue(error.mean); // 平均値の位置
+                        // 描画設定
+                        ctx.save();
+                        ctx.strokeStyle = dataset.errorBarColor || 'black';
+                        ctx.lineWidth = 1;
+                        // 横方向のエラーバー線
+                        ctx.beginPath();
+                        ctx.moveTo(xLower, centerY);
+                        ctx.lineTo(xUpper, centerY);
+                        ctx.stroke();
+                        // 左側キャップ
+                        ctx.beginPath();
+                        ctx.moveTo(xLower, centerY - 4);
+                        ctx.lineTo(xLower, centerY + 4);
+                        ctx.stroke();
+                        // 右側キャップ
+                        ctx.beginPath();
+                        ctx.moveTo(xUpper, centerY - 4);
+                        ctx.lineTo(xUpper, centerY + 4);
+                        ctx.stroke();
+                        // -------------------------------
+                        // 各エラーバー上部にテキストを描画
+                        ctx.fillStyle = 'black';
+                        ctx.font = '10px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        // 少し上にずらすためのオフセット
+                        const yOffset = centerY - 6;
+                        // 下限値
+                        ctx.fillText(parseFloat(error.lower).toFixed(3), xLower, yOffset);
+                        // 平均値
+                        ctx.fillText(parseFloat(error.mean).toFixed(3), xMean, yOffset - 8);
+                        // 上限値
+                        ctx.fillText(parseFloat(error.upper).toFixed(3), xUpper, yOffset);
+                        // -------------------------------
+                        ctx.restore();
+                    });
+                });
             }
+        });
+
+        // カスタムプラグイン：afterDatasetsDraw フックで平均値の縦線を描画
+        Chart.register({
+            id: 'meanLinePlugin',
+            afterDatasetsDraw: (chart, easing) => {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+
+                // meaanMarkers プロパティに平均値の配列をセットしていると仮定
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (!dataset.meanMarkers) return; // meanMarkers がない場合は処理しない
+
+                    dataset.meanMarkers.forEach((mean, i) => {
+                        // 対応するラベルのバーの中心位置を取得
+                        // 横方向バー (indexAxis: 'y') の場合、y軸はカテゴリ位置となる
+                        const barMeta = chart.getDatasetMeta(datasetIndex).data[i];
+                        if (!barMeta) return;
+
+                        const centerY = barMeta.y;
+                        // x軸座標は平均値に対応する位置
+                        const xPixel = xScale.getPixelForValue(mean);
+
+                        ctx.save();
+                        ctx.lineWidth = 3; // 太い縦線
+                        ctx.strokeStyle = dataset.borderColor[i] || dataset.borderColor; // 色は dataset から
+                        ctx.beginPath();
+                        // バーの上下の位置に合わせて線を引く
+                        // const barTop = barMeta.y - barMeta.height / 2;
+                        // const barBottom = barMeta.y + barMeta.height / 2;
+                        const barTop = barMeta.y - 10;
+                        const barBottom = barMeta.y + 10;
+                        ctx.moveTo(xPixel, barTop);
+                        ctx.lineTo(xPixel, barBottom);
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                });
+            }
+        });
+
+        // 信頼区間の値はサーバ計算済みの変数から取得
+        var leftMean = {{ stats.left_mean_score }};
+        var leftCI_lower = {{ left_score_confidence_interval[0] }};
+        var leftCI_upper = {{ left_score_confidence_interval[1] }};
+        var rightMean = {{ stats.right_mean_score }};
+        var rightCI_lower = {{ right_score_confidence_interval[0] }};
+        var rightCI_upper = {{ right_score_confidence_interval[1] }};
+
+        // ヒストグラムと同じ x 軸範囲に合わせるための値（例：0～maxScore など）
+        // var numericLabels = scoreLabels.map(Number);
+        // var xMin = Math.min(leftCI_lower, rightCI_lower, Math.min.apply(null, numericLabels)) - 1;
+        // var xMax = Math.max(leftCI_upper, rightCI_upper, Math.max.apply(null, numericLabels)) + 1;
+        var xMin = Math.round(Math.min(leftCI_lower, rightCI_lower) - 1);
+        var xMax = Math.round(Math.max(leftCI_upper, rightCI_upper) + 1);
+
+        // 信頼区間のエラーバー情報は各データポイントごとに配列で用意
+        // ここでは、2つのデータ "Left" と "Right" のみ描画する
+        var errorBarsData = [
+            { mean: leftMean, lower: leftCI_lower, upper: leftCI_upper },
+            { mean: rightMean, lower: rightCI_lower, upper: rightCI_upper }
+        ];
+
+        // 平均値の位置のみセットする（棒グラフ自体は描画せず縦線のみ描画）
+        var meanMarkers = [leftMean, rightMean];
+
+        // 信頼区間のグラフの作成（横方向バー）
+        var ctxCI = document.getElementById('ciChart').getContext('2d');
+        var ciChart = new Chart(ctxCI, {
+            type: 'bar',
+            data: {
+                labels: ['Left', 'Right'],
+                datasets: [{
+                    // 平均値の棒グラフは描画せず、meanMarkers に平均値のみ保持
+                    label: 'Mean Score',
+                    data: [null, null],
+                    meanMarkers: meanMarkers,
+                    errorBars: errorBarsData, // 信頼区間のエラーバー情報をセット
+                    backgroundColor: ['rgba(0, 0, 0, 0)'], // 描画しないので透明
+                    borderColor: ['rgba(255, 215, 0, 1)', 'rgba(240, 20, 20, 1)'],
+                    borderWidth: 1,
+                    errorBarColor: 'black' // エラーバーの色
+                }]
+            },
+            options: {
+                indexAxis: 'y',  // 横方向バーにする
+                scales: {
+                    x: {
+                        min: xMin,
+                        max: xMax,
+                        title: {
+                            display: true,
+                            text: 'Mean Score and 95% Confidence Interval'
+                        },
+                        grid: {
+                            display: true
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Team'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            },
+            plugins: ['meanLinePlugin', 'horizontalErrorBars']
         });
 
         // draw hosts histogram
@@ -272,11 +479,16 @@
                         },
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            callback: function (value) {
+                                return Number.isInteger(value) ? value : null;
+                            }
                         }
                     }
                 }
             }
         });
-    });
+    }); // end of $(function() { ... });
 </script>
 {% endblock %}

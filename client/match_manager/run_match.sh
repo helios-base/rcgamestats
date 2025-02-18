@@ -54,12 +54,12 @@ opt="$opt server::game_log_dir = '$log_dir' server::text_log_dir = '$log_dir'"
 opt="$opt server::log_date_format = '%Y%m%d%H%M%S-'"
 #opt="$opt server::nr_normal_halfs = 2 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
 opt="$opt server::nr_normal_halfs = 1 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
-opt="$opt server::half_time = 30 server::extra_half_time = 100"
+opt="$opt server::half_time = 300 server::extra_half_time = 100"
 opt="$opt server::synch_mode = $synch_mode"
 opt="$opt server::auto_mode = true"
 opt="$opt server::team_l_start = '$team_l_start'"
 opt="$opt server::team_r_start = '$team_r_start'"
-opt="$opt CSVSaver::save = true CSVSaver::filename = '${log_name}.csv'"
+opt="$opt CSVSaver::save = true CSVSaver::filename = '${log_name}.result.csv'"
 #opt="$opt server::fixed_teamname_l = 'L' server::fixed_teamname_r = 'R'"
 
 echo "[$logtime] @$hostname left=$left_name right=$right_name synch_mode=$synch_mode"
@@ -83,7 +83,7 @@ fi
 # prepare logs
 #
 
-mv ${log_name}.csv $log_dir
+mv ${log_name}*.csv $log_dir
 
 echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname compressing debug log files..."
 
@@ -115,3 +115,5 @@ echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname sending log & result files to $server
 if [ -x $current_path/cpufreq_set_all.sh ]; then
     $current_path/cpufreq_set_all.sh powersave
 fi
+
+exit 0

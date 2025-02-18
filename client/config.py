@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -21,10 +22,20 @@ root_dir = Path(__file__).resolve().parent
 # load .env file in the root directory
 load_dotenv(root_dir / ".env")
 
+def get_hostname():
+    """
+    Return the hostname from the 'hostname' command.
+    """
+    try:
+        return subprocess.check_output(["hostname"], universal_newlines=True).strip()
+    except Exception as e:
+        print(f"Error getting hostname: {e}")
+        return "unknown"
+
 
 class Config:
     API_KEY = os.getenv("API_KEY", "unknown")
-    HOST_NAME = os.getenv("HOST_NAME", "unknown")
+    HOST_NAME = os.getenv("HOST_NAME") or get_hostname()
     SERVER_URL = os.getenv("SERVER_URL", "127.0.0.1:5000")
     RUN_SCRIPT =  os.path.join(os.path.dirname(__file__), 'match_manager', 'run_match.sh')
     TEAM_DIR = os.getenv("TEAM_DIR", os.path.expandvars('$HOME/rcgamestats/teams'))

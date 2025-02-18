@@ -31,7 +31,7 @@ input[type=submit] { align-self: start; min-width: 10em; }
 
 .matchup-info { font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em; }
 .success { font-weight: bold; }
-.error { color: #910101; background-color: white; }
+.error { color: white; background-color: rgb(22, 46, 180); }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { border: 1px solid #000000; padding: 1px 4px; word-wrap: break-word; max-width: 200px; }
@@ -55,6 +55,10 @@ td *:last-child {
 }
 
 .table-cb { width: 1%; white-space: nowrap; }
+td.index{
+    text-align: center;
+    width: 5em;
+}
 td.time {
     word-wrap: normal;
     white-space: nowrap;
@@ -76,11 +80,15 @@ td.description {
     vertical-align: middle;
     max-width: 10ch;
 }
+td.score {
+    text-align: right;
+    padding-right: 10px;
+}
 
-th.summary {
+th.stats {
     font-size: 8pt;
 }
-td.summary {
+td.stats {
     font-size: 10pt;
     white-space: nowrap; /* テキストを1行にする */
     overflow: hidden; /* 溢れたテキストを隠す */
@@ -90,6 +98,33 @@ td.summary {
 #lborder{
     border-left: 3px solid #000; /* 左側の境界線を太くする */
 }
+
+/* group-tableの2列目のセルに対して幅をコンテンツに合わせる */
+#group-table th:nth-child(2),
+#group-table td:nth-child(2) {
+    white-space: nowrap;
+    width: 1%;
+}
+
+/* index column */
+#match-table td:nth-child(1) {
+    text-align: center;
+    width: 5em;
+}
+/* time columns */
+#match-table td:nth-child(2),
+#match-table  td:nth-child(3) {
+    white-space: nowrap;
+    width: 1%;
+    padding: 0 6px;
+}
+/* score columns */
+#match-table td:nth-child(4),
+#match-table  td:nth-child(5) {
+    text-align: right;
+    padding-right: 10px;
+}
+
 
 .footer-nav { 
     display: flex;

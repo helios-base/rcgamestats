@@ -139,6 +139,7 @@
 </table>
 
 <script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script>
     function resetMatch(matchId) {
         document.getElementById('matchId').value = matchId;
@@ -176,6 +177,11 @@
         var leftData = scoreLabels.map(label => leftScoreCounts[label] || 0);
         var rightData = scoreLabels.map(label => rightScoreCounts[label] || 0);
 
+        var leftTotal = leftData.reduce((acc, cur) => acc + cur, 0);
+        var rightTotal = rightData.reduce((acc, cur) => acc + cur, 0);
+
+        Chart.register(ChartDataLabels);
+
         // draw match scores histogram
         var ctx = document.getElementById('matchScoresHistogram').getContext('2d');
         var matchScoresHistogram = new Chart(ctx, {
@@ -204,6 +210,29 @@
                 ]
             },
             options: {
+                plugins: {
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'end',
+                        font: {
+                            weight: 'bold'
+                        },
+                        color: 'black',
+                        formatter: function(value, context) {
+                            var datasetIndex = context.datasetIndex;
+                            var percentage = "";
+                            if (datasetIndex === 0 && leftTotal > 0) {
+                                percentage = ((value / leftTotal) * 100).toFixed(1) + "%";
+                            } else if (datasetIndex === 1 && rightTotal > 0) {
+                                percentage = ((value / rightTotal) * 100).toFixed(1) + "%";
+                            } else {
+                                percentage = "0%";
+                            }
+                            return value + " (" + percentage + ")";
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         title: {
@@ -230,7 +259,8 @@
                         }
                     }
                 }
-            }
+            },
+            plugins: [ChartDataLabels]
         });
 
         // 

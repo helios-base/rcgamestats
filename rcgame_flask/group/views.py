@@ -250,11 +250,14 @@ def show_group_matches(group_name):
     use_googlesheet = False if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "" else True
 
     stats = GroupStats(group.id)
+    left_ci, right_ci = stats.compute_confidence_intervals()
     return render_template(
         "group/detail.html",
         group=group,
         matches=matches,
         stats=stats,
+        left_score_confidence_interval=left_ci,
+        right_score_confidence_interval=right_ci,
         use_googlesheet=use_googlesheet
     )
 

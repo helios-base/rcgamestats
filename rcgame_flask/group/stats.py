@@ -48,8 +48,8 @@ class GroupStats():
         self.right_score_counts = {i: 0 for i in range(6)}
         self.left_mean_score = 0.0
         self.right_mean_score = 0.0
-        self.left_score_confidence_interval = (0.0, 0.0)
-        self.right_score_confidence_interval = (0.0, 0.0)
+        # self.left_score_confidence_interval = (0.0, 0.0)
+        # self.right_score_confidence_interval = (0.0, 0.0)
         self.host_counts = {}
 
         self.__calculate()
@@ -88,7 +88,26 @@ class GroupStats():
         self.left_score_counts = {i: int(count) for i, count in enumerate(np.bincount(left_scores, minlength=6))}
         self.right_score_counts = {i: int(count) for i, count in enumerate(np.bincount(right_scores, minlength=6))}
 
+        self.left_mean_score = np.mean(left_scores)
+        self.right_mean_score = np.mean(right_scores)
+        # self.left_mean_score, self.left_score_confidence_interval = compute_confidence_interval(left_scores)
+        # self.right_mean_score, self.right_score_confidence_interval = compute_confidence_interval(right_scores)
+
+        self.host_counts = Counter(match.host_name for match in matches)
+
+    def compute_confidence_intervals(self):
+        """
+        Compute confidence interval for the mean scores of left and right teams.
+        """
+        if self.completed_count == 0:
+            return
+
+        matches = Match.query.filter_by(group_id=self.group_id, processed=MatchStatus.COMPLETED).all()
+
+        left_scores = np.array([match.left_score for match in matches if match.left_score >= 0])
+        right_scores = np.array([match.right_score for match in matches if match.right_score >= 0])
+
         self.left_mean_score, self.left_score_confidence_interval = compute_confidence_interval(left_scores)
         self.right_mean_score, self.right_score_confidence_interval = compute_confidence_interval(right_scores)
 
-        self.host_counts = Counter(match.host_name for match in matches)
+        return self.left_score_confidence_interval, self.right_score_confidence_interval

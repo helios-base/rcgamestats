@@ -20,9 +20,9 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
-from rcgame_flask.group.models import Group, Match, GroupStatus, MatchStatus
+from rcgame_flask.group.models import Group, Match, GroupStatus, MatchStatus, GroupStats
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
-from rcgame_flask.group.stats import GroupStats, plot_confidence_intervals
+from rcgame_flask.group.stats import plot_confidence_intervals
 from rcgame_flask.team.models import Team
 from rcgame_flask.config import config
 from rcgame_flask import googlesheet
@@ -85,7 +85,17 @@ def show_stats():
     """
     group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    stats_list = [GroupStats(group.id) for group in group_list]
+    for group in group_list:
+        stats = GroupStats.query.filter_by(group_id=group.id).first()
+        if stats is None:
+            stats = GroupStats(group.id)
+            stats.update()
+            db.session.add(stats)
+            db.session.commit()
+        elif stats.updated_at is None or group.updated_at > stats.updated_at:
+            stats.update()
+            db.session.commit()
+    stats_list = GroupStats.query.filter(GroupStats.group_id.in_([group.id for group in group_list])).all()
     return render_template("group/stats.html", stats_list=stats_list)
 
 
@@ -151,7 +161,7 @@ def create():
 
         for i in range(int(form.number_of_matches.data)):
             match = Match(
-                group_index=i + 1,
+                index=i + 1,
                 group_id=group.id,
                 left_team_id=team_left_id,
                 right_team_id=team_right_id,
@@ -221,7 +231,7 @@ def create_roundrobin():
 
                 for i in range(int(form.number_of_matches.data)):
                     match = Match(
-                        group_index=i + 1,
+                        index=i + 1,
                         group_id=group.id,
                         left_team_id=left_id,
                         right_team_id=right_id,
@@ -250,8 +260,18 @@ def show_group_matches(group_name):
 
     use_googlesheet = False if config.GOOGLE_DOC_ID == "" or config.GOOGLE_KEY_PATH == "" else True
 
-    stats = GroupStats(group.id)
-    left_ci, right_ci = stats.compute_confidence_intervals()
+    stats = GroupStats.query.filter_by(group_id=group.id).first()
+    if stats is None:
+        stats = GroupStats(group.id)
+        stats.update()
+        db.session.add(stats)
+        db.session.commit()
+    elif stats.updated_at is None or group.updated_at > stats.updated_at:
+        stats.update()
+        db.session.commit()
+
+    left_ci = stats.left_score_confidence_interval_lower, stats.left_score_confidence_interval_upper
+    right_ci = stats.right_score_confidence_interval_lower, stats.right_score_confidence_interval_upper
     return render_template(
         "group/detail.html",
         group=group,
@@ -343,12 +363,12 @@ def edit_group(group_id):
         number_of_matches = group.matches.count()
         for i in range(int(form.additional_matches.data)):
             match = Match(
-                group_index=number_of_matches + i + 1,
+                index=number_of_matches + i + 1,
                 group_id=group.id,
                 left_team_id=group.left_team_id,
                 right_team_id=group.right_team_id,
             )
-            print(f"Adding match {match.group_index} to group {group.name}")
+            print(f"Adding match {match.index} to group {group.name}")
             db.session.add(match)
         print(f"Old description: {group.description}, New description: {form.description.data}")
         group.description = form.description.data
@@ -620,7 +640,7 @@ def reset_match():
         match.log_file_name = None
         match.token = None
         db.session.commit()
-        flash(f"Match {match.group_index} has been reset.")
+        flash(f"Match {match.index} has been reset.")
     elif match.processed == MatchStatus.IN_PROGRESS:
         match.host_name = None
         match.start_time = None
@@ -628,16 +648,16 @@ def reset_match():
         match.log_file_name = None
         match.token = None
         db.session.commit()
-        flash(f"Match {match.group_index} has been reset.")
+        flash(f"Match {match.index} has been reset.")
     else:
         flash("Match not found or not in progress or completed.")
 
     return redirect(url_for("group.show_group_matches", group_name=group_name))
 
 
-@group.route("/<string:group_name>/<int:group_index>/log/", methods=["GET"])
+@group.route("/<string:group_name>/<int:index>/log/", methods=["GET"])
 @login_required
-def show_match_log(group_name, group_index):
+def show_match_log(group_name, index):
     """
     Show log files for a match.
     """
@@ -645,7 +665,7 @@ def show_match_log(group_name, group_index):
     if group is None:
         return jsonify({"error": "Group not found"}), 404
 
-    match = Match.query.filter_by(group_id=group.id, group_index=group_index).first()
+    match = Match.query.filter_by(group_id=group.id, index=index).first()
 
     if match is None:
         return jsonify({"error": "Match not found"}), 404
@@ -683,7 +703,22 @@ def plot_groups_confidence_intervals():
 
     group_ids = [int(id) for id in group_ids_raw[0].split(",")]
     group_ids.reverse()
-    stats_list = [GroupStats(group_id) for group_id in group_ids]
+
+    for group_id in group_ids:
+        group = Group.query.get(group_id)
+        if group is None:
+            return jsonify({"error": f"Group ID {group_id} not found."}),
+        stats = GroupStats.query.filter_by(group_id=group_id).first()
+        if stats is None:
+            stats = GroupStats(group_id)
+            stats.update()
+            db.session.add(stats)
+            db.session.commit()
+        elif stats.updated_at is None or group.updated_at > stats.updated_at:
+            stats.update()
+            db.session.commit()
+
+    stats_list = GroupStats.query.filter(GroupStats.group_id.in_(group_ids)).all()
     image_dir = os.path.join(current_app.static_folder, "images")
     try:
         if not os.path.exists(image_dir):
@@ -731,7 +766,7 @@ def request_match():
     right_team_version = match.right_team.version
 
     start_time = datetime.now().replace(microsecond=0)
-    log_file_name = f"{str(match.group_index).zfill(5)}-{left_team_name}-{right_team_name}-{host_name}"
+    log_file_name = f"{str(match.index).zfill(5)}-{left_team_name}-{right_team_name}-{host_name}"
 
     match.host_name = host_name
     match.start_time = start_time
@@ -748,7 +783,7 @@ def request_match():
             "match_id": match.id,
             "group_id": match.group_id,
             "group_name": match.group.name,
-            "group_index": match.group_index,
+            "index": match.index,
             "host_name": match.host_name,
             "start_time": start_time,
             "left_team_name": left_team_name,
@@ -769,10 +804,10 @@ def submit_result():
     """
     Submit a match result.
     """
-    print("(submit_result) request.form:", request.form)
+    # print("(submit_result) request.form:", request.form)
     data = request.form.to_dict()
-    print("(submit_result) match_result:", data)
-    print("(submit_result) files:", request.files)
+    # print("(submit_result) match_result:", data)
+    # print("(submit_result) files:", request.files)
 
     try:
         match_id = data.get("match_id")
@@ -796,7 +831,7 @@ def submit_result():
     if match.right_team.name != right_team_name:
         return jsonify({"error": "Right team name do not match."}), 400
 
-    print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.group_index)
+    # print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.index)
 
     if match.token != token:
         return jsonify({"error": "Token does not match."}), 401
@@ -814,9 +849,8 @@ def submit_result():
     common_name = match.log_file_name
     for file in request.files.getlist("log_file"):
         if file and file.filename:
-            #file.save(os.path.join(log_dir, file.filename))
             new_file_name = re.sub(r'^[^.]+', common_name, file.filename)
-            print(f"Saving log file {file.filename} as {new_file_name} ...")
+            print(f"Saving log file as {group.name}/{new_file_name}")
             file.save(os.path.join(log_dir, new_file_name))
 
     # Update the match record
@@ -824,9 +858,11 @@ def submit_result():
     match.left_score = left_score
     match.right_score = right_score
     match.processed = MatchStatus.COMPLETED
+
+    group.updated_at = end_time
     db.session.commit()
 
-    return jsonify({"message": "Match result submitted."})
+    return jsonify({"message": f"Accepted the result of match {match_id}."})
 
 
 @group.route("/decline_assignment", methods=["POST"])

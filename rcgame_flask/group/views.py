@@ -24,6 +24,7 @@ from rcgame_flask.group.models import Group, Match, GroupStatus, MatchStatus, Gr
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
 from rcgame_flask.group.stats import plot_confidence_intervals
 from rcgame_flask.team.models import Team
+from rcgame_flask.host.models import Host
 from rcgame_flask.config import config
 from rcgame_flask import googlesheet
 
@@ -790,6 +791,15 @@ def request_match():
 
     db.session.commit()
 
+    host = Host.query.filter_by(name=host_name).first()
+    if host is None:
+        host = Host(name=host_name)
+        print(f"Adding host {host.name} ...")
+        db.session.add(host)
+        db.session.commit()
+    else:
+        print(f"Host {host.name} already exists.")
+
     synch_mode = match.left_team.synch_mode and match.right_team.synch_mode
 
     return jsonify(
@@ -876,6 +886,15 @@ def submit_result():
     group.updated_at = end_time
     db.session.commit()
 
+    host = Host.query.filter_by(name=match.host_name).first()
+    if host is None:
+        host = Host(name=match.host_name)
+        print(f"Adding host {host.name} ...")
+        db.session.add(host)
+    else:
+        print(f"Host {host.name} already exists.")
+
+    db.session.commit()
     return jsonify({"message": f"Accepted the result of match {match_id}."})
 
 

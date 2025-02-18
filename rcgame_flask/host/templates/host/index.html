@@ -7,15 +7,13 @@
 <table>
     <thead>
         <tr>
-            <th>ID</th>
             <th>Host Name</th>
         </tr>
     </thead>
     <tbody>
-        {% for host in host_list %}
+        {% for host in hosts %}
         <tr>
-            <td>{{ host.id }}</td>
-            <td>{{ host.name }}</td>
+            <td><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
         </tr>
         {% endfor %}
     </tbody>

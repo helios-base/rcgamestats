@@ -115,3 +115,5 @@ echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname sending log & result files to $server
 if [ -x $current_path/cpufreq_set_all.sh ]; then
     $current_path/cpufreq_set_all.sh powersave
 fi
+
+exit 0

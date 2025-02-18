@@ -216,7 +216,7 @@ def create_roundrobin():
 
                 pairs_counts[(team_left.name, team_right.name)] = pairs_counts.get((team_left.name, team_right.name), 0) + 1
                 if pairs_counts[(team_left.name, team_right.name)] > 1:
-                    group_name = f"{group_name}-{pairs_counts[(team_left.name, team_right.name)]}"
+                    group_name = f"{group_name}_{pairs_counts[(team_left.name, team_right.name)]}"
 
                 group = Group(
                     name=group_name,

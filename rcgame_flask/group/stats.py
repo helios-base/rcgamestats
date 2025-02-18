@@ -23,6 +23,8 @@ def __split_group_name(name):
     parts = name.split('-') # split by '-'
     if len(parts) == 4:  # if there are 4 parts, split into two lines
         return "{}-{}\n{}-{}".format(parts[0], parts[1], parts[2], parts[3])
+    elif len(parts) > 4:
+        return "{}-{}\n{}".format(parts[0], parts[1], '-'.join(parts[2:]))
     return name
 
 
@@ -35,7 +37,10 @@ def plot_confidence_intervals(image_dir, stats_list):
     import matplotlib.pyplot as plt
 
     # fig, axes = plt.subplots(1, 2, figsize=(16, 9), gridspec_kw={'wspace': 0})
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'wspace': 0})
+    # fig, axes = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'wspace': 0})
+    fig_height = min(max(6, len(stats_list) * 0.4), 12)
+    fig_width = 12  # min(max(12, fig_height*2), 19)
+    fig, axes = plt.subplots(1, 2, figsize=(fig_width, fig_height), gridspec_kw={'wspace': 0})
     for i, st in enumerate(stats_list):
         left_ci = st.left_score_confidence_interval_lower, st.left_score_confidence_interval_upper
         right_ci = st.right_score_confidence_interval_lower, st.right_score_confidence_interval_upper
@@ -48,10 +53,12 @@ def plot_confidence_intervals(image_dir, stats_list):
         for i in range(len(stats_list)):
             ax.axhline(y=i, color='gray', linestyle='--', linewidth=0.5)
 
-    plt.subplots_adjust(wspace=0.0)
+    # plt.subplots_adjust(wspace=0.0)
+    plt.subplots_adjust(left=0.3, wspace=0.0)
     axes[0].set_ylabel('Group')
     axes[0].set_yticks(np.arange(len(stats_list)))
-    axes[0].set_yticklabels([__split_group_name(st.group.name) for st in stats_list])
+    axes[0].set_yticklabels([__split_group_name(st.group.name) for st in stats_list], fontsize=8)
+    # axes[0].set_yticklabels([st.group.name for st in stats_list])
     axes[0].set_xlabel('Left')
     axes[0].set_title('95% Confidence Interval of Left Scores')
     axes[0].set_ylim(-1, len(stats_list))

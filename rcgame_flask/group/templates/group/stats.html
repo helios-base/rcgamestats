@@ -92,6 +92,10 @@
             $('#stats-table tbody tr:visible').each(function() {
                 filteredIds.push($(this).data('id'));
             });
+            if (filteredIds.length === 0) {
+                alert('No groups are selected.');
+                return;
+            }
             $('#filtered-ids').val(filteredIds.join(','));
         });
     });

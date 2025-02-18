@@ -678,7 +678,7 @@ def plot_groups():
     Plot match results.
     """
     group_ids_raw = request.form.getlist("group_ids")
-    if not group_ids_raw:
+    if not group_ids_raw or len(group_ids_raw) == 0 or group_ids_raw[0] == "":
         flash("No groups selected.", "error")
         return redirect(url_for("group.show_stats"))
 

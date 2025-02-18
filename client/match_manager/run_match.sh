@@ -59,7 +59,7 @@ opt="$opt server::synch_mode = $synch_mode"
 opt="$opt server::auto_mode = true"
 opt="$opt server::team_l_start = '$team_l_start'"
 opt="$opt server::team_r_start = '$team_r_start'"
-opt="$opt CSVSaver::save = true CSVSaver::filename = '${log_name}.csv'"
+opt="$opt CSVSaver::save = true CSVSaver::filename = '${log_name}.result.csv'"
 #opt="$opt server::fixed_teamname_l = 'L' server::fixed_teamname_r = 'R'"
 
 echo "[$logtime] @$hostname left=$left_name right=$right_name synch_mode=$synch_mode"
@@ -83,7 +83,7 @@ fi
 # prepare logs
 #
 
-mv ${log_name}.csv $log_dir
+mv ${log_name}*.csv $log_dir
 
 echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname compressing debug log files..."
 

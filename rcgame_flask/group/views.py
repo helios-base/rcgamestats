@@ -35,11 +35,9 @@ group = Blueprint("group", __name__, template_folder="templates", url_prefix="/g
 # Group management
 #
 
-def create_group_name(created_at, team_left, team_right, use_version=False):
+def create_group_name(created_at, team_left, team_right):
     time_str = created_at.strftime('%Y%m%d-%H%M%S')
-    if not use_version:
-        return f"{time_str}-{team_left.name}-{team_right.name}"
-    return f"{time_str}-{team_left.name}_{team_left.version}-{team_right.name}_{team_right.version}"
+    return f"{time_str}-{team_left.name}-{team_right.name}"
 
 
 def save_group_metadata(group):
@@ -192,6 +190,7 @@ def create_roundrobin():
     form.left_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
     form.right_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
 
+    pairs_counts = {}
     if form.validate_on_submit():
         created_count = 0
         for left_id in form.left_teams.data:
@@ -213,7 +212,11 @@ def create_roundrobin():
                     continue
 
                 now = datetime.now().replace(microsecond=0)
-                group_name = create_group_name(now, team_left, team_right, use_version=True)
+                group_name = create_group_name(now, team_left, team_right)
+
+                pairs_counts[(team_left.name, team_right.name)] = pairs_counts.get((team_left.name, team_right.name), 0) + 1
+                if pairs_counts[(team_left.name, team_right.name)] > 1:
+                    group_name = f"{group_name}-{pairs_counts[(team_left.name, team_right.name)]}"
 
                 group = Group(
                     name=group_name,

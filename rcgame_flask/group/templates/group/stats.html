@@ -102,7 +102,11 @@
 
     function submitInPopup() {
         // ポップアップウィンドウをあらかじめ指定
-        var features = "width=1200,height=600,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes";
+        // var features = "width=1200,height=600,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes";
+        const width = 1200, height = 600;
+        const left = (window.screen.width / 2) - (width / 2);
+        const top = (window.screen.height / 2) - (height / 2);
+        var features = `width=${width},height=${height},top=${top},left=${left},menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes`;
         var popupWindow = window.open("about:blank", "PlotPopup", features);
         // フォームのtargetをポップアップウィンドウの名前に設定
         document.getElementById("filtered-form").target = "PlotPopup";

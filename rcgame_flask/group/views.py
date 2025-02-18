@@ -429,7 +429,7 @@ def bulk_set_status_groups(group_ids, status):
 
         group.status = status
         db.session.commit()
-        flash(f"Group [{group.name}] has been set to [{status.value}].")
+        # flash(f"Group [{group.name}] has been set to [{status.value}].")
 
     return redirect(url_for("group.index"))
 

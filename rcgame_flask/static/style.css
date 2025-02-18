@@ -99,6 +99,33 @@ td.stats {
     border-left: 3px solid #000; /* 左側の境界線を太くする */
 }
 
+/* group-tableの2列目のセルに対して幅をコンテンツに合わせる */
+#group-table th:nth-child(2),
+#group-table td:nth-child(2) {
+    white-space: nowrap;
+    width: 1%;
+}
+
+/* index column */
+#match-table td:nth-child(1) {
+    text-align: center;
+    width: 5em;
+}
+/* time columns */
+#match-table td:nth-child(2),
+#match-table  td:nth-child(3) {
+    white-space: nowrap;
+    width: 1%;
+    padding: 0 6px;
+}
+/* score columns */
+#match-table td:nth-child(4),
+#match-table  td:nth-child(5) {
+    text-align: right;
+    padding-right: 10px;
+}
+
+
 .footer-nav { 
     display: flex;
     flex-direction: column;

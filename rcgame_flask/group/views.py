@@ -11,6 +11,7 @@ from flask import (
     render_template,
     redirect,
     url_for,
+    send_file,
     flash,
     jsonify,
     request,
@@ -21,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.models import require_api_key
 from rcgame_flask.group.models import Group, Match, GroupStatus, MatchStatus
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
-from rcgame_flask.group.stats import GroupStats
+from rcgame_flask.group.stats import GroupStats, plot_confidence_intervals
 from rcgame_flask.team.models import Team
 from rcgame_flask.config import config
 from rcgame_flask import googlesheet
@@ -679,17 +680,20 @@ def plot_groups():
     group_ids_raw = request.form.getlist("group_ids")
     if not group_ids_raw:
         flash("No groups selected.", "error")
-        return redirect(url_for("group.index"))
+        return redirect(url_for("group.show_stats"))
 
     group_ids = [int(id) for id in group_ids_raw[0].split(",")]
+    stats_list = [GroupStats(group_id) for group_id in group_ids]
+    image_dir = os.path.join(current_app.static_folder, "images")
+    try:
+        if not os.path.exists(image_dir):
+            os.makedirs(image_dir)
+        image_path = plot_confidence_intervals(image_dir, stats_list)
+    except Exception as e:
+        flash(f"Failed to plot stats: {str(e)}", "error")
+        return redirect(url_for("group.show_stats"))
 
-    for id in group_ids:
-        group = Group.query.get(id)
-        if group is None:
-            flash(f"Group ID {id} not found.", "error")
-            return redirect(url_for("group.index"))
-        print(f"Plotting match results for group: id={id} name=[{group.name}]")
-    return jsonify({"message": "Plotting match results."})
+    return send_file(image_path, mimetype="image/png")
 
 #
 # Client API

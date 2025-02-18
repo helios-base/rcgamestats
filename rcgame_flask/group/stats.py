@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import scipy.stats as stats
 from collections import Counter
@@ -111,3 +112,54 @@ class GroupStats():
         self.right_mean_score, self.right_score_confidence_interval = compute_confidence_interval(right_scores)
 
         return self.left_score_confidence_interval, self.right_score_confidence_interval
+
+
+def __plot_confidence_interval(ax, mean_scores, ci_scores, y, color):
+    """
+    Plot the confidence interval of the mean score
+    """
+    ax.errorbar(x=mean_scores, y=y, xerr=[[mean_scores - ci_scores[0]], [ci_scores[1] - mean_scores]], fmt='o', color=color, elinewidth=2, capsize=5)
+    ax.text(mean_scores, y+0.1, f'{mean_scores:.3f}', color=color, fontsize=10, ha='center')
+    ax.text(ci_scores[0], y+0.1, f'{ci_scores[0]:.3f}', color=color, fontsize=10, ha='center')
+    ax.text(ci_scores[1], y+0.1, f'{ci_scores[1]:.3f}', color=color, fontsize=10, ha='center')
+
+
+def plot_confidence_intervals(image_dir, stats_list):
+    """
+    Plot the confidence intervals of the mean scores of left and right teams for the given group ids.
+    """
+    import matplotlib
+    matplotlib.use('Agg')  # Must be called before importing matplotlib.pyplot to avoid interactive mode
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6), gridspec_kw={'wspace': 0})
+    for i, st in enumerate(stats_list):
+        left_ci, right_ci = st.compute_confidence_intervals()
+        y = i
+        __plot_confidence_interval(axes[0], st.left_mean_score, left_ci, y, 'blue')
+        __plot_confidence_interval(axes[1], st.right_mean_score, right_ci, y, 'red')
+
+    # draw horizontal lines
+    for ax in axes:
+        for i in range(len(stats_list)):
+            ax.axhline(y=i, color='gray', linestyle='--', linewidth=0.5)
+
+    plt.subplots_adjust(wspace=0.0)
+    axes[0].set_ylabel('Group')
+    axes[0].set_yticks(np.arange(len(stats_list)))
+    axes[0].set_yticklabels([st.group.name for st in stats_list])
+    axes[0].set_xlabel('Left')
+    axes[0].set_title('95% Confidence Interval of Scores')
+    axes[0].set_ylim(-1, len(stats_list))
+
+    axes[1].set_yticks([])  # hide y-axis
+    axes[1].set_xlabel('Right')
+    axes[1].set_title('95% Confidence Interval of Conceded')
+    axes[1].set_ylim(-1, len(stats_list))
+
+    plt.tight_layout()
+    filename = 'confidence_intervals.png'
+    filepath = os.path.join(image_dir, filename)
+    plt.savefig(filepath)
+
+    return filepath

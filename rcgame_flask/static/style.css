@@ -85,10 +85,10 @@ td.score {
     padding-right: 10px;
 }
 
-th.summary {
+th.stats {
     font-size: 8pt;
 }
-td.summary {
+td.stats {
     font-size: 10pt;
     white-space: nowrap; /* テキストを1行にする */
     overflow: hidden; /* 溢れたテキストを隠す */

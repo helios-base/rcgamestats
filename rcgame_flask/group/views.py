@@ -76,16 +76,16 @@ def index():
     return render_template("group/index.html", groups=group_list, completed_counts=completed_counts)
 
 
-@group.route("/summary/")
+@group.route("/stats/")
 @login_required
-def show_summaries():
+def show_stats():
     """
-    Show summary of all groups.
+    Show stats of all groups.
     """
     group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    summary_list = [GroupStats(group.id) for group in group_list]
-    return render_template("group/summary.html", summary_list=summary_list)
+    stats_list = [GroupStats(group.id) for group in group_list]
+    return render_template("group/stats.html", stats_list=stats_list)
 
 
 @group.route("/archived/")

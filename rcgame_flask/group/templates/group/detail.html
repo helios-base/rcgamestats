@@ -42,44 +42,44 @@
 <table>
     <thead>
         <tr>
-            <th class="summary">Total</th>
-            <th class="summary" id="lborder">Left Win</th>
-            <th class="summary">Draw</th>
-            <th class="summary">Right Win</th>
-            <th class="summary" id="lborder">Left Win Rate</th>
-            <th class="summary">Draw Rate</th>
-            <th class="summary">Right Win Rate</th>
-            <th class="summary" id="lborder">Left Goal</th>
-            <th class="summary">Right Goal</th>
-            <th class="summary" id="lborder">Left Ave. Goal</th>
-            <th class="summary">Right Ave. Goal</th>
-            <th class="summary" id="lborder">Left Max Goal</th>
-            <th class="summary">Right Max Goal</th>
-            <th class="summary" id="lborder">Left Scored</th>
-            <th class="summary">Right Scored</th>
-            <th class="summary" id="lborder">Left Score Rate</th>
-            <th class="summary">Right Score Rate</th>
+            <th class="stats">Total</th>
+            <th class="stats" id="lborder">Left Win</th>
+            <th class="stats">Draw</th>
+            <th class="stats">Right Win</th>
+            <th class="stats" id="lborder">Left Win Rate</th>
+            <th class="stats">Draw Rate</th>
+            <th class="stats">Right Win Rate</th>
+            <th class="stats" id="lborder">Left Goal</th>
+            <th class="stats">Right Goal</th>
+            <th class="stats" id="lborder">Left Ave. Goal</th>
+            <th class="stats">Right Ave. Goal</th>
+            <th class="stats" id="lborder">Left Max Goal</th>
+            <th class="stats">Right Max Goal</th>
+            <th class="stats" id="lborder">Left Scored</th>
+            <th class="stats">Right Scored</th>
+            <th class="stats" id="lborder">Left Score Rate</th>
+            <th class="stats">Right Score Rate</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td class="summary">{{ stats.completed_count }}</td>
-            <td class="summary" id="lborder">{{ stats.left_win }}</td>
-            <td class="summary">{{ stats.draw }}</td>
-            <td class="summary">{{ stats.right_win }}</td>
-            <td class="summary" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
-            <td class="summary">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
-            <td class="summary">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
-            <td class="summary" id="lborder">{{ stats.left_sum_of_scores }}</td>
-            <td class="summary">{{ stats.right_sum_of_scores }}</td>
-            <td class="summary" id="lborder">{{ stats.left_mean_score|round(3) }}</td>
-            <td class="summary">{{ stats.right_mean_score|round(3) }}</td>
-            <td class="summary" id="lborder">{{ stats.left_max_score }}</td>
-            <td class="summary">{{ stats.right_max_score }}</td>
-            <td class="summary" id="lborder">{{ stats.left_scored_games }}</td>
-            <td class="summary">{{ stats.right_scored_games }}</td>
-            <td class="summary" id="lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
-            <td class="summary">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
+            <td class="stats">{{ stats.completed_count }}</td>
+            <td class="stats" id="lborder">{{ stats.left_win }}</td>
+            <td class="stats">{{ stats.draw }}</td>
+            <td class="stats">{{ stats.right_win }}</td>
+            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
+            <td class="stats" id="lborder">{{ stats.left_sum_of_scores }}</td>
+            <td class="stats">{{ stats.right_sum_of_scores }}</td>
+            <td class="stats" id="lborder">{{ stats.left_mean_score|round(3) }}</td>
+            <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
+            <td class="stats" id="lborder">{{ stats.left_max_score }}</td>
+            <td class="stats">{{ stats.right_max_score }}</td>
+            <td class="stats" id="lborder">{{ stats.left_scored_games }}</td>
+            <td class="stats">{{ stats.right_scored_games }}</td>
+            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
         </tr>
     </tbody>
 </table>

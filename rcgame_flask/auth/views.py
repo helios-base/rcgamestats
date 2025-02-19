@@ -62,55 +62,6 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
-@auth.route("/register", methods=["GET", "POST"])
-def register():
-    """
-    Register page
-    """
-    form = UserRegistrationForm()
-    if form.validate_on_submit():
-        username = form.username.data
-        email = form.email.data
-        password = form.password.data
-        try:
-            type = UserType(form.type.data)
-        except ValueError:
-            type = UserType.USER
-
-        if username == "":
-            username = email
-
-        new_user = User(username=username, email=email, type=type)
-        new_user.set_password(password)
-        new_user.auth_provider = "local"
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-        except Exception as e:
-            flash(f"Error: {e}")
-            return redirect(url_for("auth.register"))
-
-        if not AllowedEmail.query.filter_by(email=email).first():
-            allowed_email = AllowedEmail(email=email, type=type)
-            try:
-                db.session.add(allowed_email)
-                db.session.commit()
-            except Exception as e:
-                flash(f"Error: {e}")
-
-        api_key = APIKey(
-            key=APIKey.generate_api_key(),
-            user_id=new_user.id,
-            scope=type
-        )
-        db.session.add(api_key)
-        db.session.commit()
-
-        flash(f"user [{username}] registered")  
-        return redirect(url_for("auth.login"))
-
-    return render_template("auth/register.html", form=form)
-
 
 @auth.route("/change_password", methods=["GET", "POST"])
 @login_required
@@ -253,7 +204,7 @@ def show_users():
         db.session.commit()
 
         flash(f"New user [{username}] registered")
-    
+
     users = User.query.all()
     return render_template("auth/users.html", users=users, form=form)
 

@@ -1,0 +1,95 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}Users{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('auth.dashboard') }}">Back to dashboard</a></li>
+</ul>
+
+<h3>Add a new user</h3>
+{% from "_formhelpers.html" import render_field %}
+<div style="border: 1px solid black; padding: 10px; width: 400px;">
+<form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+    {{ form.csrf_token }}
+    {{ form.hidden_tag() }}
+    {{ render_field(form.username) }}
+    {{ render_field(form.email) }}
+    {{ render_field(form.password) }}
+    {{ render_field(form.confirm_password) }}
+    {{ render_field(form.type)}}
+    <br>
+    {{ form.submit }}
+</form>
+</div>
+
+<h3>Existing users</h3>
+<form action="{{ url_for('auth.bulk_delete_users')}}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button id="bulk-delete-button" type="submit" disabled>Delete</button>
+    </div>
+    <table id="user-table" class="tablesorter">
+        <thead>
+            <tr>
+                <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Auth Provider</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td><input type="checkbox" name="user_ids" value="{{ user.id }}" onclick="checkCheckboxes()"></td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.auth_provider }}</td>
+                <td>{{ user.type.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('#user-table').tablesorter({
+            headers: {
+                0: { sorter: false, filter: false },
+            },
+            sortList: [[1, 0]], // sort by second column in ascending order
+        });
+    });
+
+    function toggleCheckboxes(source) {
+        var checkboxes = document.getElementsByName('user_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        var checkboxes = document.getElementsByName('user_ids');
+        var button = document.getElementById('bulk-delete-button');
+        var checked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                checked = true;
+                break;
+            }
+        }
+        button.disabled = !checked;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        checkCheckboxes();
+    });
+
+</script>
+{% endblock %}

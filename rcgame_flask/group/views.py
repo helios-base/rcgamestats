@@ -89,10 +89,9 @@ def show_stats():
         stats = group.stats
         if stats is None:
             stats = GroupStats(group.id)
-            stats.update()
             db.session.add(stats)
             db.session.commit()
-        elif stats.updated_at is None or group.updated_at > stats.updated_at:
+        if stats.updated_at is None or group.updated_at > stats.updated_at:
             stats.update()
             db.session.commit()
 
@@ -161,6 +160,10 @@ def create():
             return redirect(url_for("group.create"))
 
         save_group_metadata(group)
+
+        group_stats = GroupStats(group.id)
+        db.session.add(group_stats)
+        db.session.commit()
 
         for i in range(int(form.number_of_matches.data)):
             match = Match(
@@ -237,6 +240,10 @@ def create_roundrobin():
 
                 save_group_metadata(group)
 
+                group_stats = GroupStats(group.id)
+                db.session.add(group_stats)
+                db.session.commit()
+
                 for i in range(int(form.number_of_matches.data)):
                     match = Match(
                         index=i + 1,
@@ -271,10 +278,9 @@ def show_group_matches(group_name):
     stats = group.stats
     if stats is None:
         stats = GroupStats(group.id)
-        stats.update()
         db.session.add(stats)
         db.session.commit()
-    elif stats.updated_at is None or group.updated_at > stats.updated_at:
+    if stats.updated_at is None or group.updated_at > stats.updated_at:
         stats.update()
         db.session.commit()
     print(f'Group {group.name} stats updated at {stats.updated_at}')
@@ -721,10 +727,9 @@ def plot_groups_confidence_intervals():
         stats = group.stats
         if stats is None:
             stats = GroupStats(group_id)
-            stats.update()
             db.session.add(stats)
             db.session.commit()
-        elif stats.updated_at is None or group.updated_at > stats.updated_at:
+        if stats.updated_at is None or group.updated_at > stats.updated_at:
             stats.update()
             db.session.commit()
         print(f'Group {group.name} stats updated at {stats.updated_at}')

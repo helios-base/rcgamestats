@@ -24,26 +24,6 @@ def get_csrf_token():
     return jsonify({'csrf_token': token})
 
 
-@auth.route("/create_api_key", methods=["GET"])
-def create_api_key():
-    """
-    Create API key
-    """
-    scope = current_user.type
-    expires_in = None
-
-    api_key = APIKey(
-        key=APIKey.generate_api_key(),
-        user_id=current_user.id,
-        scope=scope,
-        expires_at=datetime.now(timezone.utc) + timedelta(seconds=expires_in) if expires_in else None
-    )
-    db.session.add(api_key)
-    db.session.commit()
-
-    return redirect(url_for('auth.api_keys'))
-
-
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     """
@@ -154,7 +134,7 @@ def change_password():
 
 
 #
-# Google User Management
+# Google login
 #
 
 
@@ -222,7 +202,12 @@ def login_google_callback():
     return redirect(url_for("auth.login"))
 
 
-@auth.route("/allowed_emails", methods=["GET", "POST"])
+#
+# Admin actions
+#
+
+
+@auth.route("/admin/allowed_emails", methods=["GET", "POST"])
 @login_required
 @admin_required
 def show_allowed_emails():
@@ -250,7 +235,7 @@ def show_allowed_emails():
     return render_template("auth/allowed_emails.html", emails=emails, form=form)
 
 
-@auth.route("/auth/bulk_delete_allowed_emails", methods=["POST"])
+@auth.route("/admin/bulk_delete_allowed_emails", methods=["POST"])
 @login_required
 @admin_required
 def bulk_delete_allowed_emails():
@@ -285,7 +270,7 @@ def dashboard():
     return render_template("auth/dashboard.html")
 
 
-@auth.route("/api_keys")
+@auth.route("/api_key")
 @login_required
 def api_keys():
     """
@@ -295,11 +280,30 @@ def api_keys():
 
 
 #
-# API actions
+# APIKey actions
 #
 
+@auth.route("/api_key/create", methods=["GET"])
+def create_api_key():
+    """
+    Create API key
+    """
+    scope = current_user.type
+    expires_in = None
 
-@auth.route("/api_keys/<int:key_id>/delete", methods=["POST"])
+    api_key = APIKey(
+        key=APIKey.generate_api_key(),
+        user_id=current_user.id,
+        scope=scope,
+        expires_at=datetime.now(timezone.utc) + timedelta(seconds=expires_in) if expires_in else None
+    )
+    db.session.add(api_key)
+    db.session.commit()
+
+    return redirect(url_for('auth.api_keys'))
+
+
+@auth.route("/api_key/<int:key_id>/delete", methods=["POST"])
 @login_required
 def delete_api_key(key_id):
     """

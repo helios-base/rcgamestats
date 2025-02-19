@@ -4,9 +4,9 @@
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
-    <a href="{{ url_for('group.index') }}">Show Active Groups</a>
-</div>
+<ul class="submenu">
+    <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
+</ul>
 
 <form id="bulk-action-form" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

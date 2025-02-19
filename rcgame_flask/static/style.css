@@ -26,6 +26,26 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }
 
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 5px 0;
+}
+.submenu li {
+    margin: 0;
+    padding: 0;
+}
+    
+.submenu li:not(:last-child)::after {
+    content: "/";
+    margin: 0 5px;
+    color: #666;
+}
+
 .bg-true { background: #d4ede3; }
 .bg-false { background: #f8d7da; }
 

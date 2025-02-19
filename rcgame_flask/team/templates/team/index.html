@@ -5,12 +5,12 @@
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
-<a href="{{ url_for('team.upload') }}">Upload a new team</a>
-</div>
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
-    <a href="{{ url_for('team.show_archived') }}">Show Archived Teams</a>
-</div>
+<ul class="submenu">
+    <li><a href="{{ url_for('team.upload') }}">Upload a new team</a></li>
+</ul>
+<ul class="submenu">
+    <li><a href="{{ url_for('team.show_archived') }}">Show Archived Teams</a></li>
+</ul>
 
 <form action="{{ url_for('team.bulk_archive')}}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

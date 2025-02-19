@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, EmailField, SubmitField, PasswordField, SelectField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, Regexp
-from rcgame_flask.auth.models import User
+from rcgame_flask.auth.models import User, AllowedEmail
 
 
 class LoginForm(FlaskForm):
@@ -86,6 +86,31 @@ class UserRegistrationForm(FlaskForm):
             and any(c.isdigit() for c in password.data)
         ):
             raise ValidationError("Password must contain both letters and numbers")
+
+
+class EmailRegistrationForm(FlaskForm):
+    """
+    Email registration form input class
+    """
+
+    email = EmailField(
+        "Email: ",
+        validators=[DataRequired("email address is required")]
+    )
+    type = SelectField(
+        "User Type: ",
+        choices=[("user", "User"), ("admin", "Admin")],
+        default="user",
+    )
+    submit = SubmitField("Register")
+
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError("email address already exists")
+        mail = AllowedEmail.query.filter_by(email=email.data).first()
+        if mail:
+            raise ValidationError("email address already exists")
 
 
 class PasswordChangeForm(FlaskForm):

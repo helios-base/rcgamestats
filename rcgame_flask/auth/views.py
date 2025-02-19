@@ -6,7 +6,7 @@ from flask_wtf.csrf import generate_csrf
 from authlib.integrations.base_client.errors import OAuthError
 from rcgame_flask.app import db
 from rcgame_flask.auth.decorators import admin_required
-from rcgame_flask.auth.forms import LoginForm, UserRegistrationForm, PasswordChangeForm
+from rcgame_flask.auth.forms import LoginForm, UserRegistrationForm, PasswordChangeForm, EmailRegistrationForm
 from rcgame_flask.auth.models import User, AllowedEmail, APIKey, UserType
 
 auth = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
@@ -206,15 +206,32 @@ def login_google_callback():
     return redirect(url_for("auth.login"))
 
 
-@auth.route("/allowed_emails", methods=["GET"])
+@auth.route("/allowed_emails", methods=["GET", "POST"])
 @login_required
 @admin_required
 def show_allowed_emails():
     """
     Show allowed emails
     """
+    form = EmailRegistrationForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        try:
+            type = UserType(form.type.data)
+        except ValueError:
+            type = UserType.USER
+        if not AllowedEmail.query.filter_by(email=email).first():
+            allowed_email = AllowedEmail(email=email, type=type)
+            try:
+                db.session.add(allowed_email)
+                db.session.commit()
+            except Exception as e:
+                flash(f"Error: {e}")
+        else:
+            flash(f"Email [{email}] already exists")
+
     emails = AllowedEmail.query.all()
-    return render_template("auth/allowed_emails.html", emails=emails)
+    return render_template("auth/allowed_emails.html", emails=emails, form=form)
 
 
 @auth.route("/auth/bulk_delete_allowed_emails", methods=["POST"])

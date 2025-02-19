@@ -10,6 +10,17 @@
     <li><a href="{{ url_for('auth.dashboard') }}">Back to dashboard</a></li>
 </ul>
 
+{% from "_formhelpers.html" import render_field %}
+<form action="{{ url_for('auth.show_allowed_emails')}}" method="post">
+    {{ form.csrf_token }}
+    {{ form.hidden_tag() }}
+    {{ render_field(form.email) }}
+    {{ render_field(form.type) }}
+    <br>
+    {{ form.submit }}
+</form>
+
+
 <form action="{{ url_for('auth.bulk_delete_allowed_emails')}}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">

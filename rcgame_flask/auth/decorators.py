@@ -10,7 +10,7 @@ def roles_required(*roles):
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
                 return jsonify({"error": "Login required."}), 401
-            if current_user.type not in roles:
+            if current_user.type.value not in roles:
                 return jsonify({"error": "Unauthorized access."}), 403
             return f(*args, **kwargs)
 

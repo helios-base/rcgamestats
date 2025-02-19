@@ -43,6 +43,7 @@ def create_api_key():
 
     return redirect(url_for('auth.api_keys'))
 
+
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     """
@@ -157,7 +158,12 @@ def login_google_callback():
         user_info = resp.json()
         email = user_info['email']
 
-        if not AllowedEmail.query.filter_by(email=email).first():
+        if not email:
+            flash("Google account does not have an email")
+            return redirect(url_for("auth.login"))
+
+        allowed_email = AllowedEmail.query.filter_by(email=email).first()
+        if not allowed_email:
             flash(f"[{email}] is not allowed to login.")
             return redirect(url_for("auth.login"))
 
@@ -167,7 +173,8 @@ def login_google_callback():
                 username=user_info["email"],
                 email=user_info["email"],
                 auth_provider="google",
-                password=''
+                password='',
+                type=allowed_email.type
             )
             db.session.add(user)
             db.session.commit()

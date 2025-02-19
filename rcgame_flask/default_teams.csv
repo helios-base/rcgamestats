@@ -1,2 +1,3 @@
+name,version,synch_mode,archive_path,description
 cyrus2024,v1,true,./teams/cyrus2024/v1/cyrus2024.tar.gz,""
 helios2024,v1,true,./teams/helios2024/v1/helios2024.tar.gz,""

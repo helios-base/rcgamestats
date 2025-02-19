@@ -7,7 +7,6 @@ from flask_wtf.csrf import CSRFProtect
 from authlib.integrations.flask_client import OAuth
 from rcgame_flask.config import config
 
-
 db = SQLAlchemy()
 csrf = CSRFProtect()
 # LoginManagerインスタンス
@@ -64,15 +63,23 @@ def create_app(test_config=None):
 
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')
-    
+
     from rcgame_flask.group import views as group_views
     app.register_blueprint(group_views.group, url_prefix='/group')
-    
+
     from rcgame_flask.team import views as team_views
     app.register_blueprint(team_views.team, url_prefix='/team')
 
     from rcgame_flask.host import views as host_views
     app.register_blueprint(host_views.host, url_prefix='/host')
+
+    # set Enums as global variables for Jinja templates
+    from rcgame_flask.auth.models import UserType
+    from rcgame_flask.group.models import GroupStatus
+    from rcgame_flask.group.models import MatchStatus
+    app.jinja_env.globals['UserType'] = UserType
+    app.jinja_env.globals['GroupStatus'] = GroupStatus
+    app.jinja_env.globals['MatchStatus'] = MatchStatus
 
     @app.route('/')
     @login_required

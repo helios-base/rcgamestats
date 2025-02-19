@@ -19,7 +19,7 @@
             <tr>
                 <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Email</th>
-                <th>Registered At</th>
+                <th>Type</th>
             </tr>
         </thead>
         <tbody>
@@ -27,7 +27,7 @@
             <tr>
                 <td><input type="checkbox" name="email_ids" value="{{ email.id }}" onclick="checkCheckboxes()"></td>
                 <td>{{ email.email }}</td>
-                <td class="time">{{ email.registered_at }}</td>
+                <td>{{ email.type.value }}</td>
             </tr>
             {% endfor %}
         </tbody>

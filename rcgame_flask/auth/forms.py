@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, EmailField, SubmitField, PasswordField
+from wtforms import StringField, EmailField, SubmitField, PasswordField, SelectField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, Regexp
 from rcgame_flask.auth.models import User
 
@@ -23,9 +23,9 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Login")
 
 
-class SignUpForm(FlaskForm):
+class UserRegistrationForm(FlaskForm):
     """
-    Singup form input class
+    User registration form input class
     """
 
     username = StringField(
@@ -57,7 +57,13 @@ class SignUpForm(FlaskForm):
             EqualTo("password", "Passwords must match"),
         ],
     )
-    submit = SubmitField("Sign Up")
+    type = SelectField(
+        "User Type: ",
+        choices=[("user", "User"), ("admin", "Admin")],
+        default="user",
+    )
+
+    submit = SubmitField("Register")
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
@@ -70,7 +76,7 @@ class SignUpForm(FlaskForm):
             raise ValidationError("email address already exists")
 
     def validate_password(self, password):
-        SignUpForm.validate_password_strength(password)
+        UserRegistrationForm.validate_password_strength(password)
 
     # check if the password contains both letters and numbers
     @staticmethod
@@ -109,4 +115,4 @@ class PasswordChangeForm(FlaskForm):
 
     # check if the password contains both letters and numbers
     def validate_new_password(self, new_password):
-        SignUpForm.validate_password_strength(new_password)
+        UserRegistrationForm.validate_password_strength(new_password)

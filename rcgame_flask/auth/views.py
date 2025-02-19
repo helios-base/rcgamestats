@@ -6,8 +6,8 @@ from flask_wtf.csrf import generate_csrf
 from authlib.integrations.base_client.errors import OAuthError
 from rcgame_flask.app import db
 from rcgame_flask.auth.decorators import admin_required
-from rcgame_flask.auth.forms import LoginForm, SignUpForm, PasswordChangeForm
-from rcgame_flask.auth.models import User, AllowedEmail, APIKey
+from rcgame_flask.auth.forms import LoginForm, UserRegistrationForm, PasswordChangeForm
+from rcgame_flask.auth.models import User, AllowedEmail, APIKey, UserType
 
 auth = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
 
@@ -87,20 +87,38 @@ def register():
     """
     Register page
     """
-    form = SignUpForm()
+    form = UserRegistrationForm()
     if form.validate_on_submit():
         username = form.username.data
         email = form.email.data
         password = form.password.data
+        try:
+            type = UserType(form.type.data)
+        except ValueError:
+            type = UserType.USER
 
         if username == "":
-            username = None
-        new_user = User(username=username, email=email)
+            username = email
+        new_user = User(username=username, email=email, type=type)
         new_user.set_password(password)
+        new_user.auth_provider = "local"
 
-        db.session.add(new_user)
-        db.session.commit()
-        flash("user registered")  
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+        except Exception as e:
+            flash(f"Error: {e}")
+            return redirect(url_for("auth.register"))
+
+        if not AllowedEmail.query.filter_by(email=email).first():
+            allowed_email = AllowedEmail(email=email, type=type)
+            try:
+                db.session.add(allowed_email)
+                db.session.commit()
+            except Exception as e:
+                flash(f"Error: {e}")
+    
+        flash(f"user [{username}] registered")  
         return redirect(url_for("auth.login"))
 
     return render_template("auth/register.html", form=form)

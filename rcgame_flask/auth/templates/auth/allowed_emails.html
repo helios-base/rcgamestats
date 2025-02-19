@@ -6,8 +6,9 @@
 
 {% block content %}
 <h2>Allowed Emails</h2>
-
-
+<ul class="submenu">
+    <li><a href="{{ url_for('auth.dashboard') }}">Back to dashboard</a></li>
+</ul>
 
 <form action="{{ url_for('auth.bulk_delete_allowed_emails')}}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

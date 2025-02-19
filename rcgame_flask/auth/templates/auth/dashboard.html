@@ -14,7 +14,7 @@
 </ul>
 {% endif %}
 
-{% if current_user['type'] == 'admin' %}
+{% if current_user['type'] == UserType.ADMIN %}
 <p><a href="{{ url_for('auth.register') }}">Add New User</a></p>
 {% endif %}
 

@@ -61,7 +61,7 @@ class Match(db.Model):
 class GroupStats(db.Model):
     __tablename__ = 'group_stats'
     id = db.Column(db.Integer, primary_key=True)
-    group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), unique=True, nullable=False)
     updated_at = db.Column(db.DateTime)
     completed_count = db.Column(db.Integer)
     left_win = db.Column(db.Integer)

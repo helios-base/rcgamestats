@@ -144,7 +144,7 @@ def login_google_callback():
     """
     try:
         token = current_app.oauth.google.authorize_access_token()
-        resp = current_app.oauth.google.get('https://www.googleapis.com/oauth2/v1/userinfo', token=token)
+        resp = current_app.oauth.google.get('https://www.googleapis.com/oauth2/v2/userinfo', token=token)
         user_info = resp.json()
         email = user_info['email']
 

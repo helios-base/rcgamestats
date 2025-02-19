@@ -8,6 +8,7 @@ from rcgame_flask.app import db
 from rcgame_flask.auth.decorators import admin_required
 from rcgame_flask.auth.forms import LoginForm, UserRegistrationForm, PasswordChangeForm, EmailRegistrationForm
 from rcgame_flask.auth.models import User, AllowedEmail, APIKey, UserType
+from rcgame_flask.config import config
 
 auth = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
 
@@ -223,6 +224,12 @@ def bulk_delete_users():
         if record:
             if record.email == current_user.email:
                 flash("Cannot delete own user")
+                continue
+            if record.username == config.ADMIN_USERNAME:
+                flash("Cannot delete the default admin user")
+                continue
+            if record.type == UserType.ADMIN:
+                flash("Cannot delete admin user")
                 continue
             count += 1
             db.session.delete(record)

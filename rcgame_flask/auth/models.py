@@ -21,6 +21,14 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password, password)
 
 
+class AllowedEmail(db.Model):
+    __tablename__ = 'allowed_email'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    registered_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+
+
 class APIKey(db.Model):
     __tablename__ = 'api_key'
     id = db.Column(db.Integer, primary_key=True)

@@ -5,8 +5,9 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import generate_csrf
 from authlib.integrations.base_client.errors import OAuthError
 from rcgame_flask.app import db
+from rcgame_flask.auth.decorators import admin_required
 from rcgame_flask.auth.forms import LoginForm, SignUpForm, PasswordChangeForm
-from rcgame_flask.auth.models import User, APIKey
+from rcgame_flask.auth.models import User, AllowedEmail, APIKey
 
 auth = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
 
@@ -124,7 +125,7 @@ def change_password():
 
 
 #
-# Google Login
+# Google User Management
 #
 
 
@@ -167,6 +168,35 @@ def login_google_callback():
     flash("Google account cannot be verified")
     return redirect(url_for("auth.login"))
 
+
+@auth.route("/allowed_emails", methods=["GET"])
+@login_required
+@admin_required
+def show_allowed_emails():
+    """
+    Show allowed emails
+    """
+    emails = AllowedEmail.query.all()
+    return render_template("auth/allowed_emails.html", emails=emails)
+
+
+@auth.route("/auth/bulk_delete_allowed_emails", methods=["POST"])
+@login_required
+@admin_required
+def bulk_delete_allowed_emails():
+    """
+    Bulk delete allowed emails
+    """
+    email_ids = request.form.getlist("email_ids")
+    for email_id in email_ids:
+        record = AllowedEmail.query.filter_by(id=email_id).first()
+        if record:
+            db.session.delete(record)
+    db.session.commit()
+    flash("Emails deleted")
+    return redirect(url_for("auth.show_allowed_emails"))
+
+
 #
 # Dashboard
 #
@@ -192,6 +222,11 @@ def api_keys():
     API keys
     """
     return render_template("auth/api_keys.html", user=current_user)
+
+
+#
+# API actions
+#
 
 
 @auth.route("/api_keys/<int:key_id>/delete", methods=["POST"])

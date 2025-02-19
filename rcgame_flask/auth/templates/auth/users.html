@@ -47,7 +47,15 @@
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.auth_provider }}</td>
-                <td>{{ user.type.value }}</td>
+                <td>
+                    <form id="change-form-{{ user.id }}" action="{{ url_for('auth.change_user_type', user_id=user.id) }}"
+                        method="post" style="display:none;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    </form>
+                    <a href="#" onclick="event.preventDefault(); if (confirm('Really change the role?')) document.getElementById('change-form-{{ user.id }}').submit();">
+                    {{ user.type.value }}
+                    </a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

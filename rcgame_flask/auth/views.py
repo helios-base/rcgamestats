@@ -210,7 +210,37 @@ def show_users():
     return render_template("auth/users.html", users=users, form=form)
 
 
-@auth.route("/admin/bulk_delete_users", methods=["POST"])
+@auth.route("/admin/users/<int:user_id>/change_type", methods=["POST"])
+@login_required
+@admin_required
+def change_user_type(user_id):
+    """
+    Change user type
+    """
+    print(f"Current user: {current_user.username}")
+    print(f"target User ID: {user_id}")
+    user = User.query.get(user_id)
+    if user:
+        if user.email == current_user.email:
+            flash(f"Cannot change own user type mail {user.email}")
+        elif user.username == config.ADMIN_USERNAME:
+            flash("Cannot change the default admin user type")
+        # elif user.type == UserType.ADMIN and current_user.username != config.ADMIN_USERNAME:
+        #     flash("Cannot change admin user type by non-default admin user")
+        else:
+            try:
+                old_type = user.type
+                new_type = UserType.ADMIN if old_type == UserType.USER else UserType.USER
+                user.type = new_type
+                db.session.commit()
+                flash(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]")
+            except ValueError:
+                flash("Invalid user type")
+
+    return redirect(url_for("auth.show_users"))
+
+
+@auth.route("/admin/users/bulk_delete", methods=["POST"])
 @login_required
 @admin_required
 def bulk_delete_users():
@@ -266,7 +296,7 @@ def show_allowed_emails():
     return render_template("auth/allowed_emails.html", emails=emails, form=form)
 
 
-@auth.route("/admin/bulk_delete_allowed_emails", methods=["POST"])
+@auth.route("/admin/allowed_emails/bulk_delete", methods=["POST"])
 @login_required
 @admin_required
 def bulk_delete_allowed_emails():

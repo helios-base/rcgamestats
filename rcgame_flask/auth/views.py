@@ -243,12 +243,17 @@ def bulk_delete_allowed_emails():
     Bulk delete allowed emails
     """
     email_ids = request.form.getlist("email_ids")
+    count = 0
     for email_id in email_ids:
         record = AllowedEmail.query.filter_by(id=email_id).first()
         if record:
+            if record.email == current_user.email:
+                flash("Cannot delete own email")
+                continue
+            count += 1
             db.session.delete(record)
     db.session.commit()
-    flash("Emails deleted")
+    flash(f"Deleted {count} emails")
     return redirect(url_for("auth.show_allowed_emails"))
 
 

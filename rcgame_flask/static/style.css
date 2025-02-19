@@ -145,6 +145,9 @@ td.stats {
     padding-right: 10px;
 }
 
+#email-table {
+    width: 32em;
+}
 
 .footer-nav { 
     display: flex;

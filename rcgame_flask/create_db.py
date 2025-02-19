@@ -89,6 +89,7 @@ def init_db():
             db.session.add(email)
     except ValueError as e:
         print(f'Error loading default allowed emails: {e}')
+    db.session.commit()
 
     #
     # register default teams
@@ -101,6 +102,7 @@ def init_db():
             db.session.add(team)
     except ValueError as e:
         print(f'Error loading default teams: {e}')
+    db.session.commit()
 
     #
     # create default API key for the admin user
@@ -108,7 +110,6 @@ def init_db():
     default_key = config.ADMIN_API_KEY if config.ADMIN_API_KEY else secrets.token_urlsafe(16)
     default_api_key = APIKey(key=default_key, user_id=admin.id)
     db.session.add(default_api_key)
-
     db.session.commit()
 
     print(f"Admin Username: {admin.username}")

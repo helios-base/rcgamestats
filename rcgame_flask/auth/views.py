@@ -99,10 +99,10 @@ def register():
 
         if username == "":
             username = email
+
         new_user = User(username=username, email=email, type=type)
         new_user.set_password(password)
         new_user.auth_provider = "local"
-
         try:
             db.session.add(new_user)
             db.session.commit()
@@ -117,7 +117,15 @@ def register():
                 db.session.commit()
             except Exception as e:
                 flash(f"Error: {e}")
-    
+
+        api_key = APIKey(
+            key=APIKey.generate_api_key(),
+            user_id=new_user.id,
+            scope=type
+        )
+        db.session.add(api_key)
+        db.session.commit()
+
         flash(f"user [{username}] registered")  
         return redirect(url_for("auth.login"))
 
@@ -189,12 +197,20 @@ def login_google_callback():
         if not user:
             user = User(
                 username=user_info["email"],
-                email=user_info["email"],
+                email=email,
                 auth_provider="google",
                 password='',
                 type=allowed_email.type
             )
             db.session.add(user)
+            db.session.commit()
+
+            api_key = APIKey(
+                key=APIKey.generate_api_key(),
+                user_id=user.id,
+                scope=allowed_email.type
+            )
+            db.session.add(api_key)
             db.session.commit()
 
         login_user(user)

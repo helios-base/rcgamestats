@@ -19,7 +19,7 @@ from flask import (
 )
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
-from rcgame_flask.auth.models import require_api_key
+from rcgame_flask.auth.decorators import api_key_required, admin_required
 from rcgame_flask.group.models import Group, Match, GroupStatus, MatchStatus, GroupStats
 from rcgame_flask.group.forms import GroupCreateForm, GroupEditForm, RoundrobinCreateForm
 from rcgame_flask.group.stats import plot_confidence_intervals
@@ -115,6 +115,7 @@ def show_archived_groups():
 
 @group.route("/create", methods=["GET", "POST"])
 @login_required
+@admin_required
 def create():
     """
     Create a group.
@@ -185,6 +186,7 @@ def create():
 
 @group.route("/create_roundrobin", methods=["GET", "POST"])
 @login_required
+@admin_required
 def create_roundrobin():
     """
     Create round-robin groups.
@@ -363,6 +365,7 @@ def show_group_logs(group_name):
 
 @group.route("/<int:group_id>/edit", methods=["GET", "POST"])
 @login_required
+@admin_required
 def edit_group(group_id):
     """
     Edit a group.
@@ -403,6 +406,7 @@ def edit_group(group_id):
 
 @group.route("/<int:group_id>/archive", methods=["POST"])
 @login_required
+@admin_required
 def archive_group(group_id):
     """
     Archive a group.
@@ -427,6 +431,7 @@ def archive_group(group_id):
 
 @group.route("/bulk_action", methods=["POST"])
 @login_required
+@admin_required
 def bulk_action():
     """
     Archive selected groups.
@@ -495,6 +500,7 @@ def bulk_archive_groups(group_ids):
 
 @group.route("/bulk_unarchive_groups", methods=["POST"])
 @login_required
+@admin_required
 def bulk_unarchive_groups():
     """
     Bulk unarchive groups.
@@ -520,6 +526,7 @@ def bulk_unarchive_groups():
 
 @group.route("/<int:group_id>/delete", methods=["POST"])
 @login_required
+@admin_required
 def delete_group(group_id):
     """
     Delete a group and all matches associated with it.
@@ -551,6 +558,7 @@ def delete_group(group_id):
 
 @group.route("/bulk_delete_groups", methods=["POST"])
 @login_required
+@admin_required
 def bulk_delete_groups():
     """
     Bulk delete groups.
@@ -585,6 +593,7 @@ def bulk_delete_groups():
 
 @group.route("/<int:group_id>/upload_to_google", methods=["POST"])
 @login_required
+@admin_required
 def upload_group_results_to_google_sheet(group_id):
     """
     Upload group results to Google Spreadsheet.
@@ -636,6 +645,7 @@ def upload_group_results_to_google_sheet(group_id):
 
 @group.route("/reset_match", methods=["POST"])
 @login_required
+@admin_required
 def reset_match():
     """
     Reset a match.
@@ -765,7 +775,7 @@ def plot_groups_confidence_intervals():
 
 @group.route("/request_match", methods=["POST"])
 @csrf.exempt
-@require_api_key
+@api_key_required
 def request_match():
     """
     Request a match.
@@ -833,7 +843,7 @@ def request_match():
 
 @group.route("/submit_result", methods=["POST"])
 @csrf.exempt
-@require_api_key
+@api_key_required
 def submit_result():
     """
     Submit a match result.
@@ -908,7 +918,7 @@ def submit_result():
 
 @group.route("/decline_assignment", methods=["POST"])
 @csrf.exempt
-@require_api_key
+@api_key_required
 def decline_assignment():
     """
     Decline an assigned match.

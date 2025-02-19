@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.app import db
 from rcgame_flask.config import config
-from rcgame_flask.auth.models import require_api_key
+from rcgame_flask.auth.decorators import api_key_required, admin_required
 from rcgame_flask.team.forms import TeamUploadForm
 from rcgame_flask.team.models import Team
 
@@ -39,6 +39,7 @@ def show_archived():
 
 @team.route("/<int:team_id>/toggle_active", methods=["POST"])
 @login_required
+@admin_required
 def toggle_active(team_id):
     """
     Toggle active status of a team.
@@ -51,6 +52,7 @@ def toggle_active(team_id):
 
 @team.route("/<int:team_id>/delete", methods=["POST"])
 @login_required
+@admin_required
 def delete(team_id):
     """
     Delete a team.
@@ -73,6 +75,7 @@ def delete(team_id):
 
 @team.route("/bulk_archive", methods=["POST"])
 @login_required
+@admin_required
 def bulk_archive():
     """
     Archive selected teams.
@@ -93,6 +96,7 @@ def bulk_archive():
 
 @team.route("/bulk_activate", methods=["POST"])
 @login_required
+@admin_required
 def bulk_activate():
     """
     Activate selected teams.
@@ -117,6 +121,7 @@ def bulk_activate():
 
 @team.route("/bulk_delete_active", methods=["POST"])
 @login_required
+@admin_required
 def bulk_delete():
     """
     Delete selected teams.
@@ -147,6 +152,7 @@ def bulk_delete():
 
 @team.route("/bulk_delete", methods=["POST"])
 @login_required
+@admin_required
 def bulk_delete_teams():
     """
     Delete selected teams.
@@ -177,6 +183,7 @@ def bulk_delete_teams():
 
 @team.route("/upload", methods=["GET", "POST"])
 @login_required
+@admin_required
 def upload():
     """
     Upload team data.
@@ -262,7 +269,7 @@ def download(name, version):
 
 
 @team.route("/api_download/<string:name>/<string:version>", methods=["GET"])
-@require_api_key
+@api_key_required
 def api_download(name, version):
     """
     Download the team archive.

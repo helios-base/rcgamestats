@@ -95,7 +95,8 @@ class EmailRegistrationForm(FlaskForm):
 
     email = EmailField(
         "Email: ",
-        validators=[DataRequired("email address is required")]
+        validators=[DataRequired("email address is required")],
+        render_kw={"style": "width:300px;"}
     )
     type = SelectField(
         "User Type: ",

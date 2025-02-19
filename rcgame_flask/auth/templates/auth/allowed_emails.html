@@ -11,6 +11,8 @@
 </ul>
 
 {% from "_formhelpers.html" import render_field %}
+<h3>Add a new allowed email</h3>
+<div style="border: 1px solid black; padding: 10px; width: 400px;">
 <form action="{{ url_for('auth.show_allowed_emails')}}" method="post">
     {{ form.csrf_token }}
     {{ form.hidden_tag() }}
@@ -19,8 +21,9 @@
     <br>
     {{ form.submit }}
 </form>
+</div>
 
-
+<h3>Allowed emails</h3>
 <form action="{{ url_for('auth.bulk_delete_allowed_emails')}}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">

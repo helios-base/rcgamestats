@@ -4,11 +4,14 @@
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 10px;">
-    <a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a>
-    <span style="margin: 0 5px">/</span>
-    <a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a>
-</div>
+<ul class="submenu">
+    <li><a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a></li>
+    <li><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a></li>
+</ul>
+<ul class="submenu">
+    <li><a href="{{ url_for('group.index') }}">Group List</li>
+    <li><a href="{{ url_for('group.show_stats') }}">Stats List</a></li>
+</ul>
 {% if use_googlesheet %}
 <div class="button-container">
     <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">

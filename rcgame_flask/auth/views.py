@@ -64,7 +64,9 @@ def login():
 
         flash("authentication failed")
 
-    return render_template("auth/login.html", form=form)
+    use_google_login = current_app.config.get("GOOGLE_OAUTH_CLIENT_ID") and current_app.config.get("GOOGLE_OAUTH_CLIENT_SECRET")
+
+    return render_template("auth/login.html", form=form, use_google_login=use_google_login)
 
 
 @auth.route("/logout")
@@ -134,6 +136,12 @@ def login_google():
     """
     Login with Google
     """
+
+    use_google_login = current_app.config.get("GOOGLE_OAUTH_CLIENT_ID") and current_app.config.get("GOOGLE_OAUTH_CLIENT_SECRET")
+    if not use_google_login:
+        flash("Google login is not enabled")
+        return redirect(url_for("auth.login"))
+
     redirect_uri = url_for("auth.login_google_callback", _external=True)
     return current_app.oauth.google.authorize_redirect(redirect_uri)
 

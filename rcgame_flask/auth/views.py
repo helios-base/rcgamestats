@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
+from flask import current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import generate_csrf
+from authlib.integrations.base_client.errors import OAuthError
 from rcgame_flask.app import db
 from rcgame_flask.auth.forms import LoginForm, SignUpForm, PasswordChangeForm
 from rcgame_flask.auth.models import User, APIKey
@@ -119,6 +121,55 @@ def change_password():
         return redirect(url_for("index"))
 
     return render_template("auth/change_password.html", form=form)
+
+
+#
+# Google Login
+#
+
+
+@auth.route("/login/google")
+def login_google():
+    """
+    Login with Google
+    """
+    redirect_uri = url_for("auth.login_google_callback", _external=True)
+    return current_app.oauth.google.authorize_redirect(redirect_uri)
+
+
+@auth.route("/login/google/callback")
+def login_google_callback():
+    """
+    Google login callback
+    """
+    try:
+        token = current_app.oauth.google.authorize_access_token()
+        resp = current_app.oauth.google.get('https://www.googleapis.com/oauth2/v1/userinfo', token=token)
+        user_info = resp.json()
+        email = user_info['email']
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                username=user_info["email"],
+                email=user_info["email"],
+                auth_provider="google",
+                password=''
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        login_user(user)
+        return redirect(url_for("index"))
+    except OAuthError:
+        flash(f"Exception: {OAuthError}")
+
+    flash("Google account cannot be verified")
+    return redirect(url_for("auth.login"))
+
+#
+# Dashboard
+#
 
 
 @auth.route("/dashboard")

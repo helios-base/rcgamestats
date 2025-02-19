@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from authlib.integrations.flask_client import OAuth
 from rcgame_flask.config import config
 
 
@@ -40,14 +41,25 @@ def create_app(test_config=None):
         pass
 
     from . import create_db
+
     create_db.init_app(app)
-
     Migrate(app, db)
-
     csrf.init_app(app)
+    login_manager.init_app(app)  # register the login_manager with the app
 
-    # LoginManagerとFlaskとの紐づけ
-    login_manager.init_app(app)
+    oauth = OAuth(app)
+    oauth.register(
+        name='google',
+        client_id=app.config['GOOGLE_OAUTH_CLIENT_ID'],
+        client_secret=app.config['GOOGLE_OAUTH_CLIENT_SECRET'],
+        authorize_url='https://accounts.google.com/o/oauth2/v2/auth',
+        authorize_params=None,
+        access_token_url='https://accounts.google.com/o/oauth2/token',
+        access_token_params=None,
+        refresh_token_url=None,
+        client_kwargs={'scope': 'email'},
+    )
+    app.oauth = oauth
 
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')

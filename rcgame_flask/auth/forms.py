@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
+from wtforms import StringField, EmailField, SubmitField, PasswordField
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, Regexp
 from rcgame_flask.auth.models import User
 
 
@@ -10,7 +10,8 @@ class LoginForm(FlaskForm):
     """
 
     username = StringField(
-        "Username: ", validators=[DataRequired("username is required")]
+        "Username or Email: ", 
+        validators=[DataRequired("username is required")]
     )
     password = PasswordField(
         "Password: ",
@@ -28,7 +29,19 @@ class SignUpForm(FlaskForm):
     """
 
     username = StringField(
-        "Username: ", validators=[DataRequired("username is required")]
+        "Username (optional): ",
+        validators=[
+            Optional("username is optional"),
+            Length(2, 16, "Username must be between 2 and 16 characters"),
+            Regexp(
+                r"^[a-zA-Z0-9][a-zA-Z0-9+_.-]*$",
+                message="Username must start with an alphanumeric and be alphanumeric and +, -, _ or .",
+            ),
+            ],
+    )
+    email = EmailField(
+        "Email: ",
+        validators=[DataRequired("email address is required")]
     )
     password = PasswordField(
         "Password: ",
@@ -50,6 +63,11 @@ class SignUpForm(FlaskForm):
         user = User.query.filter_by(username=username.data).first()
         if user:
             raise ValidationError("username already exists")
+
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError("email address already exists")
 
     def validate_password(self, password):
         SignUpForm.validate_password_strength(password)

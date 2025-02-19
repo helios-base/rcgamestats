@@ -44,6 +44,7 @@ def init_db():
     db.session.commit()
 
     print(f"Admin Username: {admin.username}")
+    print(f"Admin Email: {admin.email}")
     print(f"Admin password: {initial_password}")
     print(f"Admin API key: {admin.api_keys.first().key}")
 

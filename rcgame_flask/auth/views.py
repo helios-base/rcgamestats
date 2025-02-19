@@ -47,13 +47,18 @@ def login():
     """
     form = LoginForm()
     if form.validate_on_submit():
-        username = form.username.data
+        username_or_email = form.username.data
         password = form.password.data
 
-        user_record = User.query.filter_by(username=username).first()
-        if user_record is not None and user_record.check_password(password):
-            login_user(user_record)
+        user = User.query.filter(
+            (User.username == username_or_email) | (User.email == username_or_email),
+            User.auth_provider == 'local'
+        ).first()
+
+        if user and user.check_password(password):
+            login_user(user)
             return redirect(url_for("index"))
+
         flash("authentication failed")
 
     return render_template("auth/login.html", form=form)
@@ -79,9 +84,12 @@ def register():
     form = SignUpForm()
     if form.validate_on_submit():
         username = form.username.data
+        email = form.email.data
         password = form.password.data
 
-        new_user = User(username=username)
+        if username == "":
+            username = None
+        new_user = User(username=username, email=email)
         new_user.set_password(password)
 
         db.session.add(new_user)

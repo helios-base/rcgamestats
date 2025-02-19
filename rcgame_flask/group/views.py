@@ -537,6 +537,10 @@ def delete_group(group_id):
     if matches_to_delete:
         matches_to_delete.delete()
 
+    stats_to_delete = GroupStats.query.filter_by(group_id=group_id)
+    if stats_to_delete:
+        stats_to_delete.delete()
+
     group_name = group_to_delete.name
     db.session.delete(group_to_delete)
     db.session.commit()
@@ -563,10 +567,16 @@ def bulk_delete_groups():
             if os.path.exists(log_dir):
                 print(f"Delete {log_dir}")
                 shutil.rmtree(log_dir)
+
             matches = Match.query.filter_by(group_id=group_id)
             if matches:
                 matches.delete()
-                db.session.delete(group)
+
+            stats = GroupStats.query.filter_by(group_id=group_id)
+            if stats:
+                stats.delete()
+
+            db.session.delete(group)
 
     db.session.commit()
     flash(f"Deleted {len(group_ids)} groups.")

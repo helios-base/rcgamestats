@@ -149,6 +149,10 @@ def login_google_callback():
         user_info = resp.json()
         email = user_info['email']
 
+        if not AllowedEmail.query.filter_by(email=email).first():
+            flash(f"[{email}] is not allowed to login.")
+            return redirect(url_for("auth.login"))
+
         user = User.query.filter_by(email=email).first()
         if not user:
             user = User(

@@ -25,6 +25,13 @@
 </div>
 
 <h3>Existing users</h3>
+<form id="change-form"
+      action="{{ url_for('auth.change_user_type') }}"
+      method="post" style="display:none;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="user_id" id="userId" value="">
+</form>
+
 <form action="{{ url_for('auth.bulk_delete_users')}}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
@@ -48,11 +55,7 @@
                 <td>{{ user.email }}</td>
                 <td>{{ user.auth_provider }}</td>
                 <td>
-                    <form id="change-form-{{ user.id }}" action="{{ url_for('auth.change_user_type', user_id=user.id) }}"
-                        method="post" style="display:none;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    </form>
-                    <a href="#" onclick="event.preventDefault(); if (confirm('Really change the role?')) document.getElementById('change-form-{{ user.id }}').submit();">
+                    <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { changeType('{{ user.id }}'); }">
                     {{ user.type.value }}
                     </a>
                 </td>
@@ -65,6 +68,11 @@
 
 {% block scripts %}
 <script>
+    function changeType(userId) {
+        document.getElementById('userId').value = userId;
+        document.getElementById('change-form').submit();
+    }
+
     $(function () {
         $('#user-table').tablesorter({
             headers: {

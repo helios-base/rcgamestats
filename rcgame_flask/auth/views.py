@@ -210,13 +210,18 @@ def show_users():
     return render_template("auth/users.html", users=users, form=form)
 
 
-@auth.route("/admin/users/<int:user_id>/change_type", methods=["POST"])
+@auth.route("/admin/users/change_type", methods=["POST"])
 @login_required
 @admin_required
-def change_user_type(user_id):
+def change_user_type():
     """
     Change user type
     """
+    user_id = request.form.get("user_id")
+    if not user_id:
+        flash("User ID is missing.", "error")
+        return redirect(url_for("auth.show_users"))
+
     print(f"Current user: {current_user.username}")
     print(f"target User ID: {user_id}")
     user = User.query.get(user_id)

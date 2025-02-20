@@ -182,10 +182,81 @@
         var leftData = scoreLabels.map(label => leftScoreCounts[label] || 0);
         var rightData = scoreLabels.map(label => rightScoreCounts[label] || 0);
 
+        // 左チームは逆方向に伸ばすため、値を反転
+        var transformedLeftData = leftData.map(value => -value);
+
+        var maxLeft = Math.max(...leftData);
+        var maxRight = Math.max(...rightData);
+
         var leftTotal = leftData.reduce((acc, cur) => acc + cur, 0);
         var rightTotal = rightData.reduce((acc, cur) => acc + cur, 0);
 
         Chart.register(ChartDataLabels);
+
+        var fixedPositionLabelsPlugin = {
+            afterDatasetsDraw: function(chart, easing) {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const x0 = xScale.getPixelForValue(0);
+                
+                // leftTotal / rightTotal はグローバル変数で算出済み前提
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    meta.data.forEach((bar, index) => {
+                        const value = dataset.data[index];
+                        const actualValue = Math.abs(value);
+                        let percentage = "0%";
+                        if (datasetIndex === 0 && leftTotal > 0) {
+                            percentage = ((actualValue / leftTotal) * 100).toFixed(1) + "%";
+                        } else if (datasetIndex === 1 && rightTotal > 0) {
+                            percentage = ((actualValue / rightTotal) * 100).toFixed(1) + "%";
+                        }
+                        const label = actualValue + " (" + percentage + ")";
+                        
+                        ctx.save();
+                        ctx.font = "bold 11px sans-serif";
+                        ctx.fillStyle = "black";
+                        ctx.textBaseline = "middle";
+                        
+                        if (datasetIndex === 0) {
+                            // 左チーム: x < 0 のエリア。x=0 の右側に合わせる（右寄せ）
+                            ctx.textAlign = "right";
+                            ctx.fillText(label, x0 - 10, bar.y);
+                        } else {
+                            // 右チーム: x > 0 のエリア。x=0 の左側に合わせる（左寄せ）
+                            ctx.textAlign = "left";
+                            ctx.fillText(label, x0 + 10, bar.y);
+                        }
+                        ctx.restore();
+                    });
+                });
+            }
+        };
+
+        var yAxisLabelOnX0Plugin = {
+            id: 'yAxisLabelOnX0',
+            afterDraw: function(chart, easing) {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                // x=0 のピクセル位置を取得
+                const x0 = xScale.getPixelForValue(0);
+                ctx.save();
+                ctx.font = "12px sans-serif";
+                ctx.fillStyle = "black";
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // Y軸のティックラベルを一つずつ描画
+                yScale.ticks.forEach((tick, index) => {
+                    // 各ティックの中心位置を取得
+                    const yPos = yScale.getPixelForTick(index);
+                    // オフセットを調整（必要に応じて）
+                    const offsetX = 0;
+                    ctx.fillText(tick.label, x0 + offsetX, yPos);
+                });
+                ctx.restore();
+            }
+        };
 
         // draw match scores histogram
         var ctx = document.getElementById('matchScoresHistogram').getContext('2d');
@@ -196,12 +267,13 @@
                 datasets: [
                     {
                         label: 'Left Team Scores',
-                        data: leftData,
+                        data: transformedLeftData,  // 左側は反転値
                         backgroundColor: 'rgba(255, 215, 0, 0.2)',
                         borderColor: 'rgba(255, 215, 0, 1)',
                         borderWidth: 1,
                         categoryPercentage: 0.9,
-                        barPercentage: 0.99
+                        barPercentage: 0.99,
+                        stack: 'score'
                     },
                     {
                         label: 'Right Team Scores',
@@ -210,62 +282,54 @@
                         borderColor: 'rgba(240, 20, 20, 1)',
                         borderWidth: 1,
                         categoryPercentage: 0.9,
-                        barPercentage: 0.99
+                        barPercentage: 0.99,
+                        stack: 'score'
                     }
                 ]
             },
             options: {
+                indexAxis: 'y', // 横方向バー
                 plugins: {
                     datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'end',
-                        font: {
-                            weight: 'bold'
-                        },
-                        color: 'black',
-                        formatter: function(value, context) {
-                            var datasetIndex = context.datasetIndex;
-                            var percentage = "";
-                            if (datasetIndex === 0 && leftTotal > 0) {
-                                percentage = ((value / leftTotal) * 100).toFixed(1) + "%";
-                            } else if (datasetIndex === 1 && rightTotal > 0) {
-                                percentage = ((value / rightTotal) * 100).toFixed(1) + "%";
-                            } else {
-                                percentage = "0%";
-                            }
-                            return value + " (" + percentage + ")";
-                        }
+                        display: false
                     }
                 },
                 scales: {
                     x: {
+                        stacked: true,
+                        min: -Math.max(maxLeft,maxRight) - 1,
+                        max: Math.max(maxLeft, maxRight) + 1,
                         title: {
                             display: true,
-                            text: 'Scores'
+                            text: 'Number of Matches'
+                        },
+                        ticks: { 
+                             // 軸ラベルは絶対値で表示
+                            callback: function(value, index, ticks) {
+                                return Math.abs(value);
+                            }
                         },
                         grid: {
                             display: true
                         }
                     },
                     y: {
-                        beginAtZero: true,
+                        stacked: true,
+                        reverse: true,
                         title: {
                             display: true,
-                            text: 'Number of Matches'
+                            text: 'Scores'
                         },
                         grid: {
                             display: true
                         },
                         ticks: {
-                            callback: function (value) {
-                                return Number.isInteger(value) ? value : null;
-                            }
+                            display: false
                         }
                     }
                 }
             },
-            plugins: [ChartDataLabels]
+            plugins: [ChartDataLabels, fixedPositionLabelsPlugin, yAxisLabelOnX0Plugin]
         });
 
         // 

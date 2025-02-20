@@ -52,8 +52,7 @@ class Match(db.Model):
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(16))
 
-    # group = db.relationship('Group', foreign_keys=[group_id])
-    group = db.relationship('Group', backref=db.backref('matches', lazy='dynamic'))
+    group = db.relationship('Group', backref=db.backref('matches', cascade='all, delete-orphan', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
 
@@ -88,8 +87,7 @@ class GroupStats(db.Model):
     right_score_confidence_interval_upper = db.Column(db.Float)
     host_counts = db.Column(db.JSON)
 
-    group = db.relationship('Group', backref=db.backref('stats', uselist=False, lazy='joined'))
-    # group = db.relationship('Group', foreign_keys=[group_id])
+    group = db.relationship('Group', backref=db.backref('stats', cascade='all, delete-orphan', uselist=False, lazy='joined'))
 
     def __init__(self, group_id):
         self.group_id = group_id

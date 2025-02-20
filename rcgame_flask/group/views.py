@@ -262,6 +262,17 @@ def create_roundrobin():
     return render_template("group/create_roundrobin.html", form=form)
 
 
+# @group.route("/all", methods=["GET"])
+# @login_required
+# def show_all_matches():
+#     """
+#     Show all matches.
+#     """
+#     matches = Match.query.all()
+#     stats_list = GroupStats.query.all()
+#     return render_template("group/all_matches.html", matches=matches, stats_list=stats_list)
+
+
 @group.route("/<string:group_name>/")
 @login_required
 def show_group_matches(group_name):
@@ -536,23 +547,28 @@ def delete_group(group_id):
         flash(f"Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
+    # matches_to_delete = Match.query.filter_by(group_id=group_id)
+    # if matches_to_delete:
+    #     matches_to_delete.delete()
+
+    # stats_to_delete = GroupStats.query.filter_by(group_id=group_id)
+    # if stats_to_delete:
+    #     stats_to_delete.delete()
+
+    group_name = group_to_delete.name
+    db.session.delete(group_to_delete)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        flash(f"Group [{group_name}] cannot be deleted.")
+        return redirect(url_for("group.index"))
+
     log_dir = os.path.join(current_app.static_folder, "logs", group_to_delete.name)
     if os.path.exists(log_dir):
         shutil.rmtree(log_dir)
 
-    matches_to_delete = Match.query.filter_by(group_id=group_id)
-    if matches_to_delete:
-        matches_to_delete.delete()
-
-    stats_to_delete = GroupStats.query.filter_by(group_id=group_id)
-    if stats_to_delete:
-        stats_to_delete.delete()
-
-    group_name = group_to_delete.name
-    db.session.delete(group_to_delete)
-    db.session.commit()
     flash(f"The group [{group_name}] has been deleted.")
-
     return redirect(url_for("group.index"))
 
 
@@ -571,22 +587,27 @@ def bulk_delete_groups():
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group:
+            # matches = Match.query.filter_by(group_id=group_id)
+            # if matches:
+            #     matches.delete()
+
+            # stats = GroupStats.query.filter_by(group_id=group_id)
+            # if stats:
+            #     stats.delete()
+
+            db.session.delete(group)
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                flash(f"Group [{group.name}] cannot be deleted.")
+                continue
+
             log_dir = os.path.join(current_app.static_folder, "logs", group.name)
             if os.path.exists(log_dir):
                 print(f"Delete {log_dir}")
                 shutil.rmtree(log_dir)
 
-            matches = Match.query.filter_by(group_id=group_id)
-            if matches:
-                matches.delete()
-
-            stats = GroupStats.query.filter_by(group_id=group_id)
-            if stats:
-                stats.delete()
-
-            db.session.delete(group)
-
-    db.session.commit()
     flash(f"Deleted {len(group_ids)} groups.")
     return redirect(url_for("group.show_archived_groups"))
 

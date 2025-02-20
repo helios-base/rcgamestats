@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}API Keys{% endblock %}</h1>
+{% endblock %}
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('auth.dashboard') }}">Back to dashboard</a></li>
+</ul>
+<h2>All API Keys</h2>
+
+<table style="width: 32em; border: 1px solid black; table-layout: auto;">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Owner</th>
+            <th>Key Value</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        {% for key in user.api_keys %}
+        <tr>
+            <td>{{ key.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ key.key }}</td>
+            <td>
+                <form id="delete-form-{{ key.id }}" action="{{ url_for('auth.admin_delete_api_key', key_id=key.id) }}"
+                    method="post" style="display:none;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+                <a href="#"
+                    onclick="event.preventDefault(); if (confirm('Really delete?')) { document.getElementById('delete-form-{{ key.id }}').submit(); }">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

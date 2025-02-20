@@ -55,7 +55,7 @@
                 <td>{{ user.email }}</td>
                 <td>{{ user.auth_provider }}</td>
                 <td>
-                    <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { changeType('{{ user.id }}'); }">
+                    <a href="#" onclick="event.preventDefault(); if (confirm('Really change?')) { changeType('{{ user.id }}'); }">
                     {{ user.type.value }}
                     </a>
                 </td>

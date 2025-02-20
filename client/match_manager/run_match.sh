@@ -52,8 +52,8 @@ opt="$opt server::game_log_fixed_name = '$log_name' server::text_log_fixed_name 
 opt="$opt server::game_log_compression = 9 server::text_log_compression = 9"
 opt="$opt server::game_log_dir = '$log_dir' server::text_log_dir = '$log_dir'"
 opt="$opt server::log_date_format = '%Y%m%d%H%M%S-'"
-#opt="$opt server::nr_normal_halfs = 2 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
-opt="$opt server::nr_normal_halfs = 1 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
+opt="$opt server::nr_normal_halfs = 2 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
+#opt="$opt server::nr_normal_halfs = 1 server::nr_extra_halfs = 0 server::penalty_shoot_outs = false"
 opt="$opt server::half_time = 300 server::extra_half_time = 100"
 opt="$opt server::synch_mode = $synch_mode"
 opt="$opt server::auto_mode = true"
@@ -80,40 +80,73 @@ if [ -x $right_path/kill ]; then
 fi
 
 #
-# prepare logs
+# move csv files to log directory
 #
-
 mv ${log_name}*.csv $log_dir
 
+#
+# validate game log
+#
+echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname validating game log..."
+if command -v rcgvalidator >/dev/null 2>&1; then
+    rcgvalidator ${log_dir}/${log_name}.rcg* > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "[$logtime] @$hostname rcgvalidator failed"
+        exit 1
+    fi
+fi
+
+#
+# analyzer game log and generate compressed csv files
+#
+echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname analyzing game log..."
+if command -v rcg2csv >/dev/null 2>&1; then
+    rcg2csv ${log_dir}/${log_name}.rcg* > /dev/null 2>&1
+    if [ -e ${log_dir}/${log_name}.tracking.csv ]; then
+        gzip -f ${log_dir}/${log_name}.tracking.csv
+    fi
+fi
+if command -v rcg2data >/dev/null 2>&1; then
+    rcg2data ${log_dir}/${log_name}.rcg* > /dev/null 2>&1
+    if [ -e ${log_dir}/${log_name}.event.csv ]; then
+        gzip -f ${log_dir}/${log_name}.event.csv
+    fi
+fi
+
+#
+# compress debug log files
+#
 echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname compressing debug log files..."
 
 debug_log_dir="${log_name}"
 mkdir -p $debug_log_dir
+
+# move log files
 if [ -e stdout.log ]; then
 	mv stdout.log ${debug_log_dir}
 fi
 if [ -e stderr.log ]; then
 	mv stderr.log ${debug_log_dir}
 fi
-#mv stdout.log stderr.log ${debug_log_dir}
 
+# move ocl files
 if [ -e /tmp/HELIOS*-1.ocl ]; then
-#	sleep 3.5
 	mv /tmp/HELIOS*.ocl ${debug_log_dir}
 else
 	echo "[$logtime] @$hostname ocl not found"
 fi
 
+# compress and move debug log files
 sleep 0.1
 tar czf ${log_name}.tar.gz ${debug_log_dir}/*
 rm -rf ${debug_log_dir}
 
 mv ${log_name}.tar.gz $log_dir
 
-echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname sending log & result files to $server"
-
 if [ -x $current_path/cpufreq_set_all.sh ]; then
     $current_path/cpufreq_set_all.sh powersave
 fi
+
+echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname finished."
 
 exit 0

@@ -85,6 +85,18 @@ fi
 mv ${log_name}*.csv $log_dir
 
 #
+# validate game log
+#
+echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname validating game log..."
+if command -v rcgvalidator >/dev/null 2>&1; then
+    rcgvalidator ${log_dir}/${log_name}.rcg* > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "[$logtime] @$hostname rcgvalidator failed"
+        exit 1
+    fi
+fi
+
+#
 # analyzer game log and generate compressed csv files
 #
 echo "[`date "+%Y%m%d-%H%M%S"`] @$hostname analyzing game log..."

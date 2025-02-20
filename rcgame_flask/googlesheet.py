@@ -195,7 +195,7 @@ def upload_group_results(group_name, group_time, left_name, right_name, desc, ma
     # Create a dictionary to store the group records
     local_records = []
     for match in match_records:
-        if match.processed != "processed":
+        if match.processed.value != "processed":
             continue
 
         point = (

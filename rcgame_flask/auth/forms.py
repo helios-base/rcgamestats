@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
-from rcgame_flask.auth.models import User
+from wtforms import StringField, EmailField, SubmitField, PasswordField, SelectField
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, Regexp
+from rcgame_flask.auth.models import User, AllowedEmail
 
 
 class LoginForm(FlaskForm):
@@ -10,7 +10,8 @@ class LoginForm(FlaskForm):
     """
 
     username = StringField(
-        "Username: ", validators=[DataRequired("username is required")]
+        "Username or Email: ", 
+        validators=[DataRequired("username is required")]
     )
     password = PasswordField(
         "Password: ",
@@ -22,13 +23,25 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Login")
 
 
-class SignUpForm(FlaskForm):
+class UserRegistrationForm(FlaskForm):
     """
-    Singup form input class
+    User registration form input class
     """
 
     username = StringField(
-        "Username: ", validators=[DataRequired("username is required")]
+        "Username (optional): ",
+        validators=[
+            Optional("username is optional"),
+            Length(2, 16, "Username must be between 2 and 16 characters"),
+            Regexp(
+                r"^[a-zA-Z0-9][a-zA-Z0-9+_.-]*$",
+                message="Username must start with an alphanumeric and be alphanumeric and +, -, _ or .",
+            ),
+            ],
+    )
+    email = EmailField(
+        "Email: ",
+        validators=[DataRequired("email address is required")]
     )
     password = PasswordField(
         "Password: ",
@@ -44,15 +57,26 @@ class SignUpForm(FlaskForm):
             EqualTo("password", "Passwords must match"),
         ],
     )
-    submit = SubmitField("Sign Up")
+    type = SelectField(
+        "User Type: ",
+        choices=[("user", "User"), ("admin", "Admin")],
+        default="user",
+    )
+
+    submit = SubmitField("Register")
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
         if user:
             raise ValidationError("username already exists")
 
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError("email address already exists")
+
     def validate_password(self, password):
-        SignUpForm.validate_password_strength(password)
+        UserRegistrationForm.validate_password_strength(password)
 
     # check if the password contains both letters and numbers
     @staticmethod
@@ -62,6 +86,32 @@ class SignUpForm(FlaskForm):
             and any(c.isdigit() for c in password.data)
         ):
             raise ValidationError("Password must contain both letters and numbers")
+
+
+class EmailRegistrationForm(FlaskForm):
+    """
+    Email registration form input class
+    """
+
+    email = EmailField(
+        "Email: ",
+        validators=[DataRequired("email address is required")],
+        render_kw={"style": "width:300px;"}
+    )
+    type = SelectField(
+        "User Type: ",
+        choices=[("user", "User"), ("admin", "Admin")],
+        default="user",
+    )
+    submit = SubmitField("Register")
+
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError("email address already exists")
+        mail = AllowedEmail.query.filter_by(email=email.data).first()
+        if mail:
+            raise ValidationError("email address already exists")
 
 
 class PasswordChangeForm(FlaskForm):
@@ -91,4 +141,4 @@ class PasswordChangeForm(FlaskForm):
 
     # check if the password contains both letters and numbers
     def validate_new_password(self, new_password):
-        SignUpForm.validate_password_strength(new_password)
+        UserRegistrationForm.validate_password_strength(new_password)

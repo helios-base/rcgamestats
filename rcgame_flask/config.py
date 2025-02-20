@@ -16,6 +16,13 @@ class Config:
     WTF_CSRF_ENABLED = True
     WTF_CSRF_SECRET_KEY = os.getenv("WTF_CSRF_SECRET_KEY", "my_wtf_csrf_secret_key")
 
+    ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "example@example.com")
+    ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
+
+    GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
+    GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+
     GOOGLE_DOC_ID = os.getenv("GOOGLE_DOC_ID", "")
     GOOGLE_KEY_PATH = os.getenv("GOOGLE_KEY_PATH", "")
 

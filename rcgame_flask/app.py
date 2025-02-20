@@ -4,8 +4,8 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from authlib.integrations.flask_client import OAuth
 from rcgame_flask.config import config
-
 
 db = SQLAlchemy()
 csrf = CSRFProtect()
@@ -40,26 +40,46 @@ def create_app(test_config=None):
         pass
 
     from . import create_db
+
     create_db.init_app(app)
-
     Migrate(app, db)
-
     csrf.init_app(app)
+    login_manager.init_app(app)  # register the login_manager with the app
 
-    # LoginManagerとFlaskとの紐づけ
-    login_manager.init_app(app)
+    if app.config['GOOGLE_OAUTH_CLIENT_ID'] and app.config['GOOGLE_OAUTH_CLIENT_SECRET']:
+        oauth = OAuth(app)
+        oauth.register(
+            name='google',
+            client_id=app.config['GOOGLE_OAUTH_CLIENT_ID'],
+            client_secret=app.config['GOOGLE_OAUTH_CLIENT_SECRET'],
+            authorize_url='https://accounts.google.com/o/oauth2/v2/auth',
+            authorize_params=None,
+            access_token_url='https://accounts.google.com/o/oauth2/token',
+            access_token_params=None,
+            refresh_token_url=None,
+            client_kwargs={'scope': 'email'},
+        )
+        app.oauth = oauth
 
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')
-    
+
     from rcgame_flask.group import views as group_views
     app.register_blueprint(group_views.group, url_prefix='/group')
-    
+
     from rcgame_flask.team import views as team_views
     app.register_blueprint(team_views.team, url_prefix='/team')
 
     from rcgame_flask.host import views as host_views
     app.register_blueprint(host_views.host, url_prefix='/host')
+
+    # set Enums as global variables for Jinja templates
+    from rcgame_flask.auth.models import UserType
+    from rcgame_flask.group.models import GroupStatus
+    from rcgame_flask.group.models import MatchStatus
+    app.jinja_env.globals['UserType'] = UserType
+    app.jinja_env.globals['GroupStatus'] = GroupStatus
+    app.jinja_env.globals['MatchStatus'] = MatchStatus
 
     @app.route('/')
     @login_required

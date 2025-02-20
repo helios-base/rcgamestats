@@ -1,0 +1,94 @@
+{% extends 'table-base.html' %}
+
+{% block header %}
+<h1>{% block title %}Allowed Emails{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('auth.dashboard') }}">Back to dashboard</a></li>
+</ul>
+
+{% from "_formhelpers.html" import render_field %}
+<h3>Add a new allowed email</h3>
+<div style="border: 1px solid black; padding: 10px; width: 400px;">
+<form action="{{ url_for('auth.show_allowed_emails')}}" method="post">
+    {{ form.csrf_token }}
+    {{ form.hidden_tag() }}
+    {{ render_field(form.email) }}
+    {{ render_field(form.type) }}
+    <br>
+    {{ form.submit }}
+</form>
+</div>
+
+<h3>Allowed emails</h3>
+<form action="{{ url_for('auth.bulk_delete_allowed_emails')}}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button id="bulk-delete-button" type="submit" disabled>Delete</button>
+    </div>
+    <table id="email-table" class="tablesorter">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Email</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for email in emails %}
+            <tr>
+                <td><input type="checkbox" name="email_ids" value="{{ email.id }}" onclick="checkCheckboxes()"></td>
+                <td>{{ email.email }}</td>
+                <td>{{ email.type.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('#email-table').tablesorter({
+            headers: {
+                0: { sorter: false, filter: false }
+            },
+            sortList: [[1, 0]], // sort by the second column in ascending order
+        });
+    });
+
+
+    function toggleCheckboxes(source) {
+        checkboxes = document.getElementsByName('email_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        var checkboxes = document.getElementsByName('email_ids');
+        var buttons = [
+            document.getElementById('bulk-delete-button')
+        ];
+        var anyChecked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                anyChecked = true;
+                break;
+            }
+        }
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].disabled = !anyChecked;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        checkCheckboxes();
+    });
+
+</script>
+{% endblock %}

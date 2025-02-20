@@ -1,24 +1,37 @@
 import secrets
 from datetime import datetime, timezone
-from functools import wraps
-from flask import request, jsonify
+from enum import Enum
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from rcgame_flask.app import db, login_manager
 
 
+class UserType(Enum):
+    USER = 'user'
+    ADMIN = 'admin'
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    type = db.Column(db.String(50), nullable=False, default='user')
+    auth_provider = db.Column(db.String(50), nullable=False, default='local')  # local, google ...
+    type = db.Column(db.Enum(UserType), default=UserType.USER)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+
+class AllowedEmail(db.Model):
+    __tablename__ = 'allowed_email'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    type = db.Column(db.Enum(UserType), default=UserType.USER)
 
 
 class APIKey(db.Model):
@@ -28,14 +41,14 @@ class APIKey(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     expires_at = db.Column(db.DateTime, nullable=True)
-    scope = db.Column(db.String(255), nullable=True)
+    scope = db.Column(db.Enum(UserType), default=UserType.USER)
 
     user = db.relationship('User', backref=db.backref('api_keys', lazy='dynamic'))
 
     @staticmethod
     def generate_api_key():
         return secrets.token_hex(16)
-    
+
     def is_expired(self):
         return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at
 
@@ -43,31 +56,3 @@ class APIKey(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-
-
-def require_api_key(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        """
-        Decorator function to check for a valid API key in the request headers.
-
-        Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            Response: JSON response with an error message and a 401 status code if the API key is invalid.
-            Otherwise, it returns the decorated function's response.
-        """
-        api_key = request.headers.get("x-api-key")
-        if api_key is None:
-            return jsonify({"error": "Missing API key."}), 401
-        record = APIKey.query.filter_by(key=api_key).first()
-        if record is None:
-            return jsonify({"error": "Invalid or missing API key."}), 401
-        if record.is_expired():
-            return jsonify({"error": "API key has expired."}), 401
-        return f(*args, **kwargs)
-
-    return decorated_function

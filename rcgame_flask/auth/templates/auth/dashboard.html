@@ -1,18 +1,26 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Dashboard{% endblock %}</h1>
+<h1>{% block title %}Dashboard{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
 
-  <h2>Welcome, {{ current_user.username }}!</h2>
+<h2>Welcome, {{ current_user.username }}!</h2>
 
-    {% if current_user['type'] == 'admin' %}
-      <p><a href="{{ url_for('auth.register') }}">Add New User</a></p>
-    {% endif %}
+{% if current_user['type'] == UserType.ADMIN %}
+<h3>Admin menu</h3>
+<ul class="submenu">
+  <li><a href="{{ url_for('auth.show_users') }}">Users</a></li>
+  <li><a href="{{ url_for('auth.show_allowed_emails') }}">Allowed emails</a></li>
+</ul>
+{% endif %}
 
-    <p><a href="{{ url_for('auth.change_password') }}">Change Password</a></p>
-
-    <p><a href="{{ url_for('auth.api_keys') }}">API Keys</a></p>
+<h3>User menu</h3>
+<ul class="submenu">
+  <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
+</ul>
+<ul class="submenu">
+  <li><a href="{{ url_for('auth.api_keys') }}">API Keys</a></li>
+</ul>
 {% endblock %}

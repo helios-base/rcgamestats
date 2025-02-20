@@ -394,3 +394,44 @@ def delete_api_key(key_id):
     db.session.commit()
     flash("API key deleted")
     return redirect(url_for("auth.api_keys"))
+
+
+@auth.route("/admin/api_key")
+@login_required
+@admin_required
+def admin_api_keys():
+    """
+    Admin API keys
+    """    
+    users = User.query.all()
+    return render_template("auth/admin_api_keys.html", users=users)
+
+
+@auth.route("/admin/api_key/<int:key_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def admin_delete_api_key(key_id):
+    """
+    Delete API key
+    """
+    api_key = APIKey.query.get(key_id)
+    if api_key is None:
+        flash("API key not found")
+        return redirect(url_for("auth.api_keys"))
+
+    user = User.query.get(api_key.user_id)
+    if user is None:
+        flash("User not found")
+
+    if user.type == UserType.ADMIN:
+        if user.id != current_user.id:
+            flash("Cannot delete other admin user's API key")
+            return redirect(url_for("auth.admin_api_keys"))
+        elif len(user.api_keys.all()) == 1:
+            flash("Cannot delete the only API key of the admin user")
+            return redirect(url_for("auth.admin_api_keys"))
+
+    db.session.delete(api_key)
+    db.session.commit()
+    flash("API key deleted")
+    return redirect(url_for("auth.admin_api_keys"))

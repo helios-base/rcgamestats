@@ -43,7 +43,7 @@ class APIKey(db.Model):
     expires_at = db.Column(db.DateTime, nullable=True)
     scope = db.Column(db.Enum(UserType), default=UserType.USER)
 
-    user = db.relationship('User', backref=db.backref('api_keys', lazy='dynamic'))
+    user = db.relationship('User', backref=db.backref('api_keys', cascade='all, delete-orphan', lazy='dynamic'))
 
     @staticmethod
     def generate_api_key():

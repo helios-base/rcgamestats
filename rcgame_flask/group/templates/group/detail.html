@@ -214,22 +214,47 @@
                         const label = actualValue + " (" + percentage + ")";
                         
                         ctx.save();
-                        ctx.font = "bold 12px sans-serif";
+                        ctx.font = "bold 11px sans-serif";
                         ctx.fillStyle = "black";
                         ctx.textBaseline = "middle";
                         
                         if (datasetIndex === 0) {
                             // 左チーム: x < 0 のエリア。x=0 の右側に合わせる（右寄せ）
                             ctx.textAlign = "right";
-                            ctx.fillText(label, x0 - 4, bar.y);
+                            ctx.fillText(label, x0 - 10, bar.y);
                         } else {
                             // 右チーム: x > 0 のエリア。x=0 の左側に合わせる（左寄せ）
                             ctx.textAlign = "left";
-                            ctx.fillText(label, x0 + 4, bar.y);
+                            ctx.fillText(label, x0 + 10, bar.y);
                         }
                         ctx.restore();
                     });
                 });
+            }
+        };
+
+        var yAxisLabelOnX0Plugin = {
+            id: 'yAxisLabelOnX0',
+            afterDraw: function(chart, easing) {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                // x=0 のピクセル位置を取得
+                const x0 = xScale.getPixelForValue(0);
+                ctx.save();
+                ctx.font = "12px sans-serif";
+                ctx.fillStyle = "black";
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // Y軸のティックラベルを一つずつ描画
+                yScale.ticks.forEach((tick, index) => {
+                    // 各ティックの中心位置を取得
+                    const yPos = yScale.getPixelForTick(index);
+                    // オフセットを調整（必要に応じて）
+                    const offsetX = 0;
+                    ctx.fillText(tick.label, x0 + offsetX, yPos);
+                });
+                ctx.restore();
             }
         };
 
@@ -272,9 +297,8 @@
                 scales: {
                     x: {
                         stacked: true,
-                        // x軸は左右に広がるので、最小値は左チーム、最大値は右チームで調整
-                        min: -maxLeft - 1,
-                        max: maxRight + 1,
+                        min: -Math.max(maxLeft,maxRight) - 1,
+                        max: Math.max(maxLeft, maxRight) + 1,
                         title: {
                             display: true,
                             text: 'Number of Matches'
@@ -298,11 +322,14 @@
                         },
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            display: false
                         }
                     }
                 }
             },
-            plugins: [ChartDataLabels, fixedPositionLabelsPlugin]
+            plugins: [ChartDataLabels, fixedPositionLabelsPlugin, yAxisLabelOnX0Plugin]
         });
 
         // 

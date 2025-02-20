@@ -11,12 +11,12 @@ from flask import (
     render_template,
     redirect,
     url_for,
-    send_file,
     flash,
     jsonify,
     request,
     current_app,
 )
+from flask import send_file, send_from_directory
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.auth.decorators import api_key_required, admin_required
@@ -160,8 +160,6 @@ def create():
             flash(f"Group [{group_name}] cannot be created.")
             return redirect(url_for("group.create"))
 
-        save_group_metadata(group)
-
         group_stats = GroupStats(group.id)
         db.session.add(group_stats)
         db.session.commit()
@@ -176,6 +174,7 @@ def create():
             db.session.add(match)
         db.session.commit()
 
+        save_group_metadata(group)
         flash(
             f"Created group {group_name} with {form.number_of_matches.data} matches for {team_left.name} vs. {team_right.name}."
         )
@@ -240,8 +239,6 @@ def create_roundrobin():
                     flash(f"Group name [{group_name}] already exists.")
                     continue
 
-                save_group_metadata(group)
-
                 group_stats = GroupStats(group.id)
                 db.session.add(group_stats)
                 db.session.commit()
@@ -255,7 +252,10 @@ def create_roundrobin():
                     )
                     db.session.add(match)
                 db.session.commit()
+
+                save_group_metadata(group)
                 created_count += 1
+
         flash(f"Created {created_count} round-robin groups with {form.number_of_matches.data} matches each.")
         return redirect(url_for("group.index"))
 
@@ -309,6 +309,23 @@ def show_group_matches(group_name):
         right_score_confidence_interval=right_ci,
         use_googlesheet=use_googlesheet
     )
+
+
+@group.route("/download/<path:dir_name>/<path:file_name>", methods=["GET"])
+@login_required
+def download_file(dir_name, file_name):
+    """
+    Download a file.
+    """
+    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
+    print(f"log_dir=[{log_dir}]")
+    print(f"filename=[{file_name}]")
+    try:
+        response = send_from_directory(log_dir, file_name, as_attachment=True)
+        response.headers["Content-Encoding"] = "identity"
+        return response
+    except FileNotFoundError:
+        return jsonify({"error": "File not found."}), 404
 
 
 @group.route("/<int:group_id>/logs/", methods=["GET"])

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block header %}
-  <h1>{% block title %}Log Files{% endblock %}</h1>
+<h1>{% block title %}Log Files{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -9,13 +9,12 @@
   <a href="{{ url_for('group.show_group_matches', group_name=dir_name) }}">Back to Group</a>
   </a>
   {% if file_names %}
-    <h3>Log Files:</h3>
+  <h3>Log Files:</h3>
   {% else %}
-    <h3>No log files found.</h3>
+  <h3>No log files found.</h3>
   {% endif %}
-<ul>
-  {% for file_name in file_names %}
-    <li><a href="{{ url_for('static', filename='logs/' ~ dir_name ~ '/' ~ file_name) }}">{{ file_name }}</a></li>
-  {% endfor %}
-</ul>
+  <ul>
+    {% for file_name in file_names %}<li><a href="{{ url_for('group.download_file', dir_name=dir_name, file_name=file_name) }}">{{ file_name }}</a></li>
+    {% endfor %}
+  </ul>
 {% endblock %}

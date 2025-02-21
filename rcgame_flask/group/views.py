@@ -986,21 +986,25 @@ def decline_assignment():
 # Admin API
 #
 
-@group.route("/api/create_group", methods=["POST"])
+@group.route("/admin/create_group", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
-def api_create_group():
+def admin_api_create_group():
     """
     Create a group.
     """
     data = request.get_json()
 
-    left_team_name = data.get("left_team_name")
-    left_team_version = data.get("left_team_version")
-    right_team_name = data.get("right_team_name")
-    right_team_version = data.get("right_team_version")
-    number_of_matches = data.get("number_of_matches")
-    description = data.get("description")
+    try:
+        group_name = data.get("group_name")
+        left_team_name = data.get("left_team_name")
+        left_team_version = data.get("left_team_version")
+        right_team_name = data.get("right_team_name")
+        right_team_version = data.get("right_team_version")
+        number_of_matches = data.get("number_of_matches")
+        description = data.get("description") or ""
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
     if left_team_name is None or right_team_name is None:
         return jsonify({"error": "Missing team names."}), 400
@@ -1020,7 +1024,7 @@ def api_create_group():
         return jsonify({"error": "Invalid number of matches."}), 400
 
     now = datetime.now().replace(microsecond=0)
-    group_name = create_group_name(now, left_team, right_team)
+    # group_name = create_group_name(now, left_team, right_team)
 
     group = Group(
         name=group_name,
@@ -1048,8 +1052,108 @@ def api_create_group():
             right_team_id=right_team.id,
         )
         db.session.add(match)
-    db.session.commit()
+    
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": f"Failed to create matches for group [{group_name}]."}), 400
 
     save_group_metadata(group)
 
-    return jsonify({"message": f"Created group {group_name}."})
+    return jsonify({"message": "Group created successfully.",
+                    "group_id": group.id,
+                    "group_name": group.name,
+                    "number_of_matches": number_of_matches})
+
+
+@group.route("/admin/submit_result", methods=["POST"])
+@csrf.exempt
+@admin_api_key_required
+def admin_api_submit_result():
+    """
+    Submit a match result.
+    """
+    data = request.form.to_dict()
+    # print("(submit_result) match_result:", data)
+    # print("(submit_result) files:", request.files)
+
+    try:
+        group_id = data.get("group_id")
+        host_name = data.get("host_name")
+        left_team_name = data.get("left_team_name")
+        right_team_name = data.get("right_team_name")
+        left_team_version = data.get("left_team_version")
+        right_team_version = data.get("right_team_version")
+        left_score = data.get("left_score")
+        right_score = data.get("right_score")
+        log_file_name = data.get("log_file_name")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    start_time = datetime.now().replace(microsecond=0)
+    end_time = start_time
+
+    group = Group.query.filter_by(id=group_id).first()
+    if group is None:
+        return jsonify({"error": "Group not found."}), 404
+
+    left_team = Team.query.filter_by(name=left_team_name, version=left_team_version).first()
+    if left_team is None:
+        return jsonify({"error": "Left team not found."}), 404
+
+    right_team = Team.query.filter_by(name=right_team_name, version=right_team_version).first()
+    if right_team is None:
+        return jsonify({"error": "Right team not found."}), 404
+
+    match = Match.query.filter(
+        Match.group_id == group.id,
+        Match.left_team_id == left_team.id,
+        Match.right_team_id == right_team.id,
+        Match.processed != MatchStatus.COMPLETED
+    ).first()
+
+    if match is None:
+        return jsonify({"error": f"No uncompleted match in the group {group_name}"}), 404
+
+    # Create the log directory
+    log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Save the log files
+    common_name = log_file_name
+    for file in request.files.getlist("log_file"):
+        if file and file.filename:
+            new_file_name = re.sub(r'^[^.]+', common_name, file.filename)
+            print(f"Saving log file as {group.name}/{new_file_name}")
+            file.save(os.path.join(log_dir, new_file_name))
+
+    # Update the match record
+    match.host_name = host_name
+    match.start_time = start_time
+    match.end_time = end_time
+    match.left_score = left_score
+    match.right_score = right_score
+    match.log_file_name = log_file_name
+    match.processed = MatchStatus.COMPLETED
+
+    group.updated_at = end_time
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    host = Host.query.filter_by(name=host_name).first()
+    if host is None:
+        host = Host(name=host_name)
+        print(f"Adding host {host.name} ...")
+        db.session.add(host)
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"message": f"Accepted the result of match index={match.index}."})

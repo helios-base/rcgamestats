@@ -11,6 +11,7 @@ from rcgame_flask.config import config
 from rcgame_flask.auth.decorators import api_key_required, admin_required
 from rcgame_flask.team.forms import TeamUploadForm
 from rcgame_flask.team.models import Team
+from rcgame_flask.group.models import Group
 
 
 team = Blueprint("team", __name__, template_folder="templates", url_prefix="/team")
@@ -60,7 +61,7 @@ def toggle_active(team_id):
 @team.route("/<int:team_id>/delete", methods=["POST"])
 @login_required
 @admin_required
-def delete(team_id):
+def delete_team(team_id):
     """
     Delete a team.
     """
@@ -69,6 +70,11 @@ def delete(team_id):
         if team.is_active:
             flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
             return redirect(url_for("team.index"))
+
+        if Group.query.filter((Group.left_team_id == team_id) | (Group.right_team_id == team_id)).count() > 0:
+            flash(f"Team {team.name} ({team.version}) is used in a group. Delete the group first.")
+            return redirect(url_for("team.index"))
+
         # Delete the archive file
         abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
         if os.path.exists(abs_path):
@@ -80,10 +86,10 @@ def delete(team_id):
     return redirect(url_for("team.index"))
 
 
-@team.route("/bulk_archive", methods=["POST"])
+@team.route("/archive_teams", methods=["POST"])
 @login_required
 @admin_required
-def bulk_archive():
+def archive_teams():
     """
     Archive selected teams.
     """
@@ -101,10 +107,10 @@ def bulk_archive():
     return redirect(url_for("team.index"))
 
 
-@team.route("/bulk_activate", methods=["POST"])
+@team.route("/activate_teams", methods=["POST"])
 @login_required
 @admin_required
-def bulk_activate():
+def activate_teams():
     """
     Activate selected teams.
     """
@@ -116,7 +122,7 @@ def bulk_activate():
             continue
 
         if team.version == "":
-            flash(f"Team {team.name} has no version.")
+            flash(f"Team {team.name} has no version. Activation is not allowed.")
             continue
 
         if team.is_active:
@@ -130,10 +136,10 @@ def bulk_activate():
     return redirect(url_for("team.show_archived"))
 
 
-@team.route("/bulk_delete_active", methods=["POST"])
+@team.route("/delete_teams", methods=["POST"])
 @login_required
 @admin_required
-def bulk_delete():
+def delete_teams():
     """
     Delete selected teams.
     """
@@ -148,36 +154,9 @@ def bulk_delete():
             flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
             continue
 
-        # Delete the archive file
-        abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
-        if os.path.exists(abs_path):
-            print(f"Delete {abs_path}")
-            shutil.rmtree(abs_path)
-
-        db.session.delete(team)
-        db.session.commit()
-        flash(f"Team {team.name} ({team.version}) deleted.")
-
-    return redirect(url_for("team.show_archived"))
-
-
-@team.route("/bulk_delete", methods=["POST"])
-@login_required
-@admin_required
-def bulk_delete_teams():
-    """
-    Delete selected teams.
-    """
-    team_ids = request.form.getlist("team_ids")
-    for team_id in team_ids:
-        team = Team.query.get(team_id)
-        if team is None:
-            flash(f"Team {team_id} not found.")
-            continue
-
-        if team.is_active:
-            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
-            continue
+        if Group.query.filter((Group.left_team_id == team_id) | (Group.right_team_id == team_id)).count() > 0:
+            flash(f"Team {team.name} ({team.version}) is used in a group. Delete the group first.")
+            return redirect(url_for("team.show_archived"))
 
         # Delete the archive file
         abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
@@ -187,7 +166,7 @@ def bulk_delete_teams():
 
         db.session.delete(team)
         db.session.commit()
-        flash(f"Team {team.name} ({team.version}) deleted.")
+        flash(f"Deleted team {team.name} ({team.version}).")
 
     return redirect(url_for("team.show_archived"))
 

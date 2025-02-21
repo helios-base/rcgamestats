@@ -1,11 +1,7 @@
 #!/bin/sh
 
 URL="http://127.0.0.1:5000"
-KEY="xxxxxxxx"
-
-left_team_version="0"
-right_team_version="0"
-
+KEY="xxxxxx"
 
 # This script is used to upload the group only by specifying the group directory
 # The group directory should be in the format of "YYYYMMDD-HHMMSS-left-right{-*}"
@@ -48,8 +44,6 @@ opt="$opt -a $KEY"
 opt="$opt -g $dir_path"
 opt="$opt -n $group_name"
 opt="$opt -l $left_team"
-opt="$opt -L $left_team_version"
 opt="$opt -r $right_team"
-opt="$opt -R $right_team_version"
 
 python run.py $opt

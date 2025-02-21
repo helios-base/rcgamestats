@@ -123,8 +123,8 @@ def create():
     form = GroupCreateForm()
 
     teams = Team.query.filter_by(is_active=True).all()
-    form.team_left.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
-    form.team_right.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
+    form.team_left.choices = [(t.id, f"{t.name}:{t.version}") for t in teams if t.version != ""]
+    form.team_right.choices = [(t.id, f"{t.name}:{t.version}") for t in teams if t.version != ""]
 
     if form.validate_on_submit():
         team_left_id = form.team_left.data
@@ -193,8 +193,8 @@ def create_roundrobin():
     form = RoundrobinCreateForm()
 
     teams = Team.query.filter_by(is_active=True).all()
-    form.left_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
-    form.right_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams]
+    form.left_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams if t.version != ""]
+    form.right_teams.choices = [(t.id, f"{t.name}:{t.version}") for t in teams if t.version != ""]
 
     pairs_counts = {}
     if form.validate_on_submit():
@@ -700,6 +700,10 @@ def reset_match():
 
     group_name = match.group.name
     if match.processed == MatchStatus.COMPLETED:
+        if match.left_team.version == "" or match.right_team.version == "":
+            flash("Team versions are missing.", "error")
+            return redirect(url_for("group.show_group_matches", group_name=group.name))
+
         log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
         log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
         for log_file_path in log_file_paths:
@@ -1010,18 +1014,30 @@ def admin_api_create_group():
         return jsonify({"error": "Missing team names."}), 400
 
     if left_team_version is None or right_team_version is None:
-        return jsonify({"error": "Missing team versions."}), 400
-
-    left_team = Team.query.filter_by(name=left_team_name, version=left_team_version).first()
-    if left_team is None:
-        return jsonify({"error": "Left team not found."}), 404
-
-    right_team = Team.query.filter_by(name=right_team_name, version=right_team_version).first()
-    if right_team is None:
-        return jsonify({"error": "Right team not found."}), 404
+        return jsonify({"error": "Missing team versions."}), 400   
 
     if number_of_matches is None or number_of_matches <= 0:
         return jsonify({"error": "Invalid number of matches."}), 400
+
+    left_team = Team.query.filter_by(name=left_team_name, version=left_team_version).first()
+    if left_team is None:
+        if left_team_version == "":
+            team = Team(name=left_team_name, version="", archive_path="", is_active=False)
+            db.session.add(team)
+            db.session.commit()
+            left_team = team
+        else:
+            return jsonify({"error": "Left team not found."}), 404
+
+    right_team = Team.query.filter_by(name=right_team_name, version=right_team_version).first()
+    if right_team is None:
+        if right_team_version == "":
+            team = Team(name=right_team_name, version="", archive_path="", is_active=False)
+            db.session.add(team)
+            db.session.commit()
+            right_team = team
+        else:
+            return jsonify({"error": "Right team not found."}), 404
 
     now = datetime.now().replace(microsecond=0)
     # group_name = create_group_name(now, left_team, right_team)
@@ -1050,9 +1066,10 @@ def admin_api_create_group():
             group_id=group.id,
             left_team_id=left_team.id,
             right_team_id=right_team.id,
+            processed=MatchStatus.IN_PROGRESS,
         )
         db.session.add(match)
-    
+
     try:
         db.session.commit()
     except IntegrityError:
@@ -1114,7 +1131,7 @@ def admin_api_submit_result():
     ).first()
 
     if match is None:
-        return jsonify({"error": f"No uncompleted match in the group {group_name}"}), 404
+        return jsonify({"error": f"No uncompleted match in the group {group.name}"}), 404
 
     # Create the log directory
     log_dir = os.path.join(current_app.static_folder, "logs", group.name)

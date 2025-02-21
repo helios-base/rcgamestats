@@ -9,9 +9,9 @@ class Config:
         self.GROUP_DIR = os.getenv("GROUP_DIR", "unknown")
         self.GROUP_NAME = os.getenv("GROUP_NAME", "unknown")
         self.LEFT_TEAM_NAME = os.getenv("LEFT_TEAM_NAME", "unknown")
-        self.LEFT_TEAM_VERSION = os.getenv("LEFT_TEAM_VERSION", "unknown")
+        self.LEFT_TEAM_VERSION = os.getenv("LEFT_TEAM_VERSION", "")
         self.RIGHT_TEAM_NAME = os.getenv("RIGHT_TEAM_NAME", "unknown")
-        self.RIGHT_TEAM_VERSION = os.getenv("RIGHT_TEAM_VERSION", "unknown")
+        self.RIGHT_TEAM_VERSION = os.getenv("RIGHT_TEAM_VERSION", "")
         self.DESCRIPTION = os.getenv("DESCRIPTION", None)
 
     def update_from_args(self, args):
@@ -21,9 +21,9 @@ class Config:
         self.GROUP_DIR = args.group_dir
         self.GROUP_NAME = args.group_name
         self.LEFT_TEAM_NAME = args.left_team_name
-        self.LEFT_TEAM_VERSION = args.left_team_version
+        self.LEFT_TEAM_VERSION = args.left_team_version or ""
         self.RIGHT_TEAM_NAME = args.right_team_name
-        self.RIGHT_TEAM_VERSION = args.right_team_version
+        self.RIGHT_TEAM_VERSION = args.right_team_version or ""
         self.DESCRIPTION = args.description
 
 

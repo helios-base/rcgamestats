@@ -19,7 +19,6 @@ from rcgame_flask.team.models import Team
 from rcgame_flask import googlesheet
 
 
-
 @group_bp.route("/create", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -169,7 +168,6 @@ def create_roundrobin():
     return render_template("group/create_roundrobin.html", form=form)
 
 
-
 @group_bp.route("/<int:group_id>/edit", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -236,7 +234,6 @@ def archive_group(group_id):
     return redirect(url_for("group.index"))
 
 
-
 def bulk_set_status_groups(group_ids, status):
     """
     Bulk approve groups.
@@ -244,14 +241,12 @@ def bulk_set_status_groups(group_ids, status):
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group is None:
-            flash(f"Group ID {group_id} not found.", "error")
-            return redirect(url_for("group.index"))
+            return "error", f"Group ID {group_id} not found."
 
         group.status = status
         db.session.commit()
-        # flash(f"Group [{group.name}] has been set to [{status.value}].")
 
-    return redirect(url_for("group.index"))
+    return "success", f"Set {len(group_ids)} groups to [{status.value}]."
 
 
 def bulk_archive_groups(group_ids):
@@ -261,8 +256,7 @@ def bulk_archive_groups(group_ids):
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group is None:
-            flash(f"Group ID {group_id} not found.", "error")
-            return redirect(url_for("group.index"))
+            return "error", f"Group ID {group_id} not found."
 
         group.is_active = False
 
@@ -272,9 +266,8 @@ def bulk_archive_groups(group_ids):
                 match.processed = MatchStatus.ARCHIVED
 
         db.session.commit()
-        flash(f"Group [{group.name}] has been archived.")
 
-    return redirect(url_for("group.index"))
+    return "success", f"Archived {len(group_ids)} groups."
 
 
 @group_bp.route("/bulk_action", methods=["POST"])
@@ -282,27 +275,30 @@ def bulk_archive_groups(group_ids):
 @admin_required
 def bulk_action():
     """
-    Archive selected groups.
+    Bulk action
     """
-
     action = request.form.get("action")
     group_ids = request.form.getlist("group_ids")
     if not group_ids:
         flash("No groups selected.", "error")
         return redirect(url_for("group.index"))
 
+    result = "error"
+    message = ""
     if action == "archive":
-        return bulk_archive_groups(group_ids)
+        result, message = bulk_archive_groups(group_ids)
     elif action == "approve":
-        return bulk_set_status_groups(group_ids, GroupStatus.APPROVED)
+        result, message = bulk_set_status_groups(group_ids, GroupStatus.APPROVED)
     elif action == "reject":
-        return bulk_set_status_groups(group_ids, GroupStatus.REJECTED)
+        result, message = bulk_set_status_groups(group_ids, GroupStatus.REJECTED)
     elif action == "under_review":
-        return bulk_set_status_groups(group_ids, GroupStatus.UNDER_REVIEW)
+        result, message = bulk_set_status_groups(group_ids, GroupStatus.UNDER_REVIEW)
     elif action == "reset_status":
-        return bulk_set_status_groups(group_ids, GroupStatus.NORMAL)
+        result, message = bulk_set_status_groups(group_ids, GroupStatus.NORMAL)
+    else:
+        message = f"Unknown action [{action}]."
 
-    flash(f"Unknown action [{action}].", "error")
+    flash(message, result)
     return redirect(url_for("group.index"))
 
 

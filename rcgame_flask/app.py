@@ -64,8 +64,10 @@ def create_app(test_config=None):
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')
 
-    from rcgame_flask.group import views as group_views
-    app.register_blueprint(group_views.group, url_prefix='/group')
+    # from rcgame_flask.group import views as group_views
+    # app.register_blueprint(group_views.group, url_prefix='/group')
+    from rcgame_flask.group import group
+    app.register_blueprint(group, url_prefix='/group')
 
     from rcgame_flask.team import views as team_views
     app.register_blueprint(team_views.team, url_prefix='/team')

@@ -12,8 +12,8 @@
 <form id="bulk-action-form" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
-        <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('team.bulk_activate') }}" disabled>Unarchive</button>
-        <button id="bulk-delete-button" type="submit" formaction="{{ url_for('team.bulk_delete') }}" disabled>Delete</button>
+        <button id="bulk-unarchive-button" type="submit" formaction="{{ url_for('team.activate_teams') }}" disabled>Unarchive</button>
+        <button id="bulk-delete-button" type="submit" formaction="{{ url_for('team.delete_teams') }}" disabled>Delete</button>
     </div>
     <table id="team-table" class="tablesorter">
         <thead>

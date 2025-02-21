@@ -12,7 +12,7 @@
     <li><a href="{{ url_for('team.show_archived') }}">Show Archived Teams</a></li>
 </ul>
 
-<form action="{{ url_for('team.bulk_archive')}}" method="post">
+<form action="{{ url_for('team.archive_teams')}}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
         <button id="bulk-archive-button" type="submit" disabled>Archive</button>

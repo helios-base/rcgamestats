@@ -205,6 +205,7 @@ def upload():
             return render_template("team/upload.html", form=form), 400
 
         name = secure_filename(name)
+        name = name.replace("-", "")
         version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M")
         version = secure_filename(version)
 

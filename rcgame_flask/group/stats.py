@@ -1,7 +1,6 @@
 import os
+import io
 import numpy as np
-from rcgame_flask.group.models import GroupStats
-
 
 def __plot_confidence_interval(ax, mean_scores, ci_scores, y, color):
     """
@@ -28,7 +27,7 @@ def __split_group_name(name):
     return name
 
 
-def plot_confidence_intervals(image_dir, stats_list):
+def plot_confidence_intervals(stats_list):
     """
     Plot the confidence intervals of the mean scores of left and right teams for the given group ids.
     """
@@ -67,10 +66,11 @@ def plot_confidence_intervals(image_dir, stats_list):
     axes[1].set_xlabel('Right')
     axes[1].set_title('95% Confidence Interval of Right Scores')
     axes[1].set_ylim(-1, len(stats_list))
-
     plt.tight_layout()
-    filename = 'confidence_intervals.png'
-    filepath = os.path.join(image_dir, filename)
-    plt.savefig(filepath)
 
-    return filepath
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    plt.close(fig)
+
+    return buf

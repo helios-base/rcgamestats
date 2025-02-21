@@ -261,14 +261,11 @@ def plot_groups_confidence_intervals():
 
         stats_list.append(stats)
 
-    image_dir = os.path.join(current_app.static_folder, "images")
     try:
-        if not os.path.exists(image_dir):
-            os.makedirs(image_dir)
-        image_path = plot_confidence_intervals(image_dir, stats_list)
+        buf = plot_confidence_intervals(stats_list)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
         # flash(f"Failed to plot stats: {str(e)}", "error")
         # return redirect(url_for("group.show_stats"))
 
-    return send_file(image_path, mimetype="image/png")
+    return send_file(buf, mimetype="image/png")

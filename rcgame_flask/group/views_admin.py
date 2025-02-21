@@ -234,7 +234,7 @@ def archive_group(group_id):
     return redirect(url_for("group.index"))
 
 
-def bulk_set_status_groups(group_ids, status):
+def set_status_groups(group_ids, status):
     """
     Bulk approve groups.
     """
@@ -249,7 +249,7 @@ def bulk_set_status_groups(group_ids, status):
     return "success", f"Set {len(group_ids)} groups to [{status.value}]."
 
 
-def bulk_archive_groups(group_ids):
+def archive_groups(group_ids):
     """
     Bulk archive groups.
     """
@@ -286,15 +286,15 @@ def bulk_action():
     result = "error"
     message = ""
     if action == "archive":
-        result, message = bulk_archive_groups(group_ids)
+        result, message = archive_groups(group_ids)
     elif action == "approve":
-        result, message = bulk_set_status_groups(group_ids, GroupStatus.APPROVED)
+        result, message = set_status_groups(group_ids, GroupStatus.APPROVED)
     elif action == "reject":
-        result, message = bulk_set_status_groups(group_ids, GroupStatus.REJECTED)
+        result, message = set_status_groups(group_ids, GroupStatus.REJECTED)
     elif action == "under_review":
-        result, message = bulk_set_status_groups(group_ids, GroupStatus.UNDER_REVIEW)
+        result, message = set_status_groups(group_ids, GroupStatus.UNDER_REVIEW)
     elif action == "reset_status":
-        result, message = bulk_set_status_groups(group_ids, GroupStatus.NORMAL)
+        result, message = set_status_groups(group_ids, GroupStatus.NORMAL)
     else:
         message = f"Unknown action [{action}]."
 
@@ -302,10 +302,10 @@ def bulk_action():
     return redirect(url_for("group.index"))
 
 
-@group_bp.route("/bulk_unarchive_groups", methods=["POST"])
+@group_bp.route("/unarchive_groups", methods=["POST"])
 @login_required
 @admin_required
-def bulk_unarchive_groups():
+def unarchive_groups():
     """
     Bulk unarchive groups.
     """
@@ -328,47 +328,10 @@ def bulk_unarchive_groups():
     return redirect(url_for("group.show_archived_groups"))
 
 
-@group_bp.route("/<int:group_id>/delete", methods=["POST"])
+@group_bp.route("/delete_groups", methods=["POST"])
 @login_required
 @admin_required
-def delete_group(group_id):
-    """
-    Delete a group and all matches associated with it.
-    """
-    group_to_delete = Group.query.get(group_id)
-    if group_to_delete is None:
-        flash(f"Group ID {group_id} not found.")
-        return redirect(url_for("group.index"))
-
-    # matches_to_delete = Match.query.filter_by(group_id=group_id)
-    # if matches_to_delete:
-    #     matches_to_delete.delete()
-
-    # stats_to_delete = GroupStats.query.filter_by(group_id=group_id)
-    # if stats_to_delete:
-    #     stats_to_delete.delete()
-
-    group_name = group_to_delete.name
-    db.session.delete(group_to_delete)
-    try:
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        flash(f"Group [{group_name}] cannot be deleted.")
-        return redirect(url_for("group.index"))
-
-    log_dir = os.path.join(current_app.static_folder, "logs", group_to_delete.name)
-    if os.path.exists(log_dir):
-        shutil.rmtree(log_dir)
-
-    flash(f"The group [{group_name}] has been deleted.")
-    return redirect(url_for("group.index"))
-
-
-@group_bp.route("/bulk_delete_groups", methods=["POST"])
-@login_required
-@admin_required
-def bulk_delete_groups():
+def delete_groups():
     """
     Bulk delete groups.
     """

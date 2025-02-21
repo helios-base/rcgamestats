@@ -420,17 +420,23 @@ def upload_group_results_to_google_sheet(group_id):
 #
 
 
-@group_bp.route("/reset_match", methods=["POST"])
+@group_bp.route("/<int:group_id>/reset_match/", methods=["POST"])
 @login_required
 @admin_required
-def reset_match():
+def reset_match(group_id):
     """
     Reset a match.
     """
     match_id = request.form.get("match_id")
     if not match_id:
         flash("Match ID is missing.", "error")
-        return redirect(url_for("group.detail", group_id=request.args.get("group_id")))
+        # return redirect(url_for("group.detail", group_id=request.args.get("group_id")))
+        return redirect(url_for("group.detail", group_id=group_id))
+
+    group = Group.query.get(group_id)
+    if group is None:
+        flash(f"Group ID {group_id} not found.")
+        return redirect(url_for("group.index"))
 
     match = Match.query.get(match_id)
     if match is None:
@@ -440,7 +446,7 @@ def reset_match():
     group_name = match.group.name
     if match.processed == MatchStatus.COMPLETED:
         if match.left_team.version == "" or match.right_team.version == "":
-            flash("Team versions are missing.", "error")
+            flash("The match which has no team version cannot be reset.", "error")
             return redirect(url_for("group.show_group_matches", group_name=group.name))
 
         log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)

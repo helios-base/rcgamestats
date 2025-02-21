@@ -23,7 +23,7 @@ def index():
     Show active teams.
     """
     teams = Team.query.filter_by(is_active=True).all()
-   
+
     return render_template("team/index.html", teams=teams)
 
 
@@ -45,6 +45,13 @@ def toggle_active(team_id):
     Toggle active status of a team.
     """
     team = Team.query.get(team_id)
+    if team is None:
+        flash(f"Team {team_id} not found.")
+        return redirect(url_for("team.index"))
+    if not team.is_active and team.version == "":
+        flash(f"Team {team.name} has no version.")
+        return redirect(url_for("team.index"))
+
     team.is_active = not team.is_active
     db.session.commit()
     return redirect(url_for("team.index"))
@@ -106,6 +113,10 @@ def bulk_activate():
         team = Team.query.get(team_id)
         if team is None:
             flash(f"Team {team_id} not found.")
+            continue
+
+        if team.version == "":
+            flash(f"Team {team.name} has no version.")
             continue
 
         if team.is_active:
@@ -205,6 +216,7 @@ def upload():
             return render_template("team/upload.html", form=form), 400
 
         name = secure_filename(name)
+        name = name.replace("-", "")
         version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M")
         version = secure_filename(version)
 

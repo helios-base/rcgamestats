@@ -35,6 +35,13 @@ def remove_stop_file():
 
 
 def check_download_teams(match):
+    if match.left_team_version == "":
+        print("(check_download_teams) No left team version.")
+        return False
+    if match.right_team_version == "":
+        print("(check_download_teams) No right team version.")
+        return False
+
     if not team_manager.exist_team(match.left_team_name, match.left_team_version):
         if not team_manager.download_team(match.left_team_name, match.left_team_version):
             return False
@@ -51,6 +58,7 @@ def check_download_teams(match):
         return False
 
     return True
+
 
 def main():
     remove_stop_file()

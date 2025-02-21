@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
 from flask_login import current_user
-from .models import APIKey
+from .models import APIKey, UserType
 
 
 def roles_required(*roles):
@@ -46,4 +46,25 @@ def api_key_required(f):
             return jsonify({"error": "API key has expired."}), 401
         return f(*args, **kwargs)
 
+    return decorated_function
+
+
+# def admin_api_key_required(f):
+#     return admin_required(api_key_required(f))
+
+def admin_api_key_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.args.get('api_key') or request.headers.get('x-api-key')
+        if not api_key:
+            return jsonify({"error": "API key required."}), 401
+
+        record = APIKey.query.filter_by(key=api_key).first()
+        if not record:
+            return jsonify({"error": "Invalid API key."}), 401
+
+        if record.user.type != UserType.ADMIN:
+            return jsonify({"error": "Admin privileges required."}), 403
+
+        return f(*args, **kwargs)
     return decorated_function

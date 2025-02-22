@@ -64,6 +64,10 @@ def main():
     remove_stop_file()
     create_temporal_dir()
 
+    initial_sleep = config.SLEEP_TIME
+    max_sleep = config.MAX_SLEEP_TIME
+    current_sleep = initial_sleep
+
     while True:
         if os.path.exists(config.STOP_FILE_PATH):
             print("Stop file exists. The process will be finished.")
@@ -71,21 +75,27 @@ def main():
 
         remove_temporal_files()
         match = match_manager.request_match()
+
         if match:
             print("RECV:", match)
-            if not check_download_teams(match):
+            while not check_download_teams(match):
                 print("Failed to download teams.")
                 match_manager.decline_match(match)
-                print("Sleep for", config.SLEEP_TIME, "seconds.")
-                time.sleep(config.SLEEP_TIME)
-            else:
-                if match.run():
-                    match_manager.submit_result(match)
-                else:
-                    match_manager.decline_match(match)
+                print("Sleep for", initial_sleep, "seconds.")
+                time.sleep(initial_sleep)
+                continue
 
-        print("Sleep for", config.SLEEP_TIME, "seconds.")
-        time.sleep(config.SLEEP_TIME)
+            if match.run():
+                match_manager.submit_result(match)
+            else:
+                match_manager.decline_match(match)
+
+            current_sleep = initial_sleep
+        else:
+            current_sleep = min(current_sleep * 2, max_sleep)
+
+        print("Sleep for", current_sleep, "seconds.")
+        time.sleep(current_sleep)
 
 
 if __name__ == "__main__":

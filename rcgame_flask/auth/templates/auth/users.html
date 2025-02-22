@@ -55,8 +55,14 @@
                 <td>{{ user.email }}</td>
                 <td>{{ user.auth_provider }}</td>
                 <td>
+                    {% if user.type == UserType.MASTER %}
+                    {{ user.type.value }}
+                    {% elif user.type == UserType.ADMIN and current_user.type != UserType.MASTER %}
+                    {{ user.type.value }}
+                    {% else %}
                     <a href="#" onclick="event.preventDefault(); if (confirm('Really change?')) { changeType('{{ user.id }}'); }">
                     {{ user.type.value }}
+                    {% endif %}
                     </a>
                 </td>
             </tr>

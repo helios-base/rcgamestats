@@ -87,7 +87,7 @@ def show_group_matches(group_name):
 
     matches = Match.query.filter_by(group_id=group.id).all()
 
-    use_googlesheet = False if (current_user.type != UserType.ADMIN
+    use_googlesheet = False if (not current_user.is_admin
                                 or config.GOOGLE_DOC_ID == ""
                                 or config.GOOGLE_KEY_PATH == "") else True
 

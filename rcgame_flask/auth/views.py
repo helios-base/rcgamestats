@@ -245,17 +245,27 @@ def change_user_type():
     user = User.query.get(user_id)
     if user:
         if user.email == current_user.email:
-            flash(f"Cannot change own user type mail {user.email}")
-            current_app.logger.warning(f"Cannot change own user type mail {user.email}")
-        elif user.username == config.ADMIN_USERNAME:
-            flash("Cannot change the default admin user type")
+            flash(f"Cannot change own user type. mail={user.email}")
+            current_app.logger.warning(f"Cannot change own user type. mail={user.email}")
+        elif user.type == UserType.MASTER:
+            flash("Cannot change the master user type")
             current_app.logger.warning("Cannot change the default admin user type")
-        # elif user.type == UserType.ADMIN and current_user.username != config.ADMIN_USERNAME:
-        #     flash("Cannot change admin user type by non-default admin user")
+        elif user.type == UserType.ADMIN and current_user.type != UserType.MASTER:
+            flash("Cannot change the admin user type")
+            current_app.logger.warning("Cannot change the admin user type")
         else:
             try:
                 old_type = user.type
-                new_type = UserType.ADMIN if old_type == UserType.USER else UserType.USER
+                if old_type == UserType.MASTER:
+                    flash("Cannot change the master user type")
+                    current_app.logger.warning("Cannot change the master user type")
+                    return redirect(url_for("auth.show_users"))
+
+                if old_type == UserType.USER:
+                    new_type = UserType.ADMIN
+                else:
+                    new_type = UserType.USER
+
                 user.type = new_type
                 db.session.commit()
                 flash(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]")
@@ -279,14 +289,15 @@ def bulk_delete_users():
         record = User.query.filter_by(id=user_id).first()
         if record:
             if record.email == current_user.email:
-                flash("Cannot delete own user")
+                flash("Cannot delete yourself")
                 continue
-            if record.username == config.ADMIN_USERNAME:
-                flash("Cannot delete the default admin user")
+            if record.type == UserType.MASTER:
+                flash("Cannot delete master user")
                 continue
             if record.type == UserType.ADMIN:
-                flash("Cannot delete admin user")
-                continue
+                if current_user.type != UserType.MASTER:
+                    flash("Cannot delete admin user")
+                    continue
             count += 1
             db.session.delete(record)
             current_app.logger.info(f"Deleting user [{record.username}]")
@@ -501,7 +512,7 @@ def admin_delete_api_key(key_id):
         flash("User not found")
         current_app.logger.warning(f"User not found for API key [{api_key.key}]")
 
-    if user and user.type == UserType.ADMIN:
+    if user and user.is_admin:
         if user.id != current_user.id:
             flash("Cannot delete other admin user's API key")
             current_app.logger.warning(f"Cannot delete the API key of other admin user [{user.username}]")

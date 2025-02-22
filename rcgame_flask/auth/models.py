@@ -9,6 +9,7 @@ from rcgame_flask.app import db, login_manager
 class UserType(Enum):
     USER = 'user'
     ADMIN = 'admin'
+    MASTER = 'master'
 
 
 class User(UserMixin, db.Model):
@@ -25,6 +26,10 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+    @property
+    def is_admin(self):
+        return self.type == UserType.ADMIN or self.type == UserType.MASTER
 
 
 class AllowedEmail(db.Model):

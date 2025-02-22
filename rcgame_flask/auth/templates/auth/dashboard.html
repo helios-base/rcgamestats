@@ -8,7 +8,7 @@
 
 <h2>Welcome, {{ current_user.username }}!</h2>
 
-{% if current_user['type'] == UserType.ADMIN %}
+{% if current_user.is_admin %}
 <h3>Admin menu</h3>
 <ul class="submenu">
   <li><a href="{{ url_for('auth.show_users') }}">Users</a></li>

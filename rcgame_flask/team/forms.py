@@ -70,7 +70,7 @@ class TeamUploadForm(FlaskForm):
         """
         Validate the team archive file extension
         """
-        print("validate_archive_file", archive_file.data)
+        # print("validate_archive_file", archive_file.data)
         filename = archive_file.data.filename.lower()
         if (
             not filename.endswith(".tar.gz")

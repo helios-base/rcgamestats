@@ -45,7 +45,7 @@ def show_stats():
             stats.update()
             db.session.commit()
 
-        print(f'Group {group.name} stats updated at {stats.updated_at}')
+        current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
         stats_list.append(stats)
 
     return render_template("group/stats.html", stats_list=stats_list)
@@ -99,7 +99,7 @@ def show_group_matches(group_name):
     if stats.updated_at is None or group.updated_at > stats.updated_at:
         stats.update()
         db.session.commit()
-    print(f'Group {group.name} stats updated at {stats.updated_at}')
+    current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
 
     left_ci = stats.left_score_confidence_interval_lower, stats.left_score_confidence_interval_upper
     right_ci = stats.right_score_confidence_interval_lower, stats.right_score_confidence_interval_upper
@@ -121,8 +121,8 @@ def download_file(dir_name, file_name):
     Download a file.
     """
     log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
-    print(f"log_dir=[{log_dir}]")
-    print(f"filename=[{file_name}]")
+    # print(f"log_dir=[{log_dir}]")
+    # print(f"filename=[{file_name}]")
     try:
         response = send_from_directory(log_dir, file_name, as_attachment=True)
         response.headers["Content-Encoding"] = "identity"
@@ -256,7 +256,7 @@ def plot_groups_confidence_intervals():
         if stats.updated_at is None or group.updated_at > stats.updated_at:
             stats.update()
             db.session.commit()
-        print(f'Group {group.name} stats updated at {stats.updated_at}')
+        current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
 
         stats_list.append(stats)
 

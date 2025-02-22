@@ -222,7 +222,6 @@ def upload():
         version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M")
         version = secure_filename(version)
 
-        print("upload", name, version) 
         # check if the team name and the version already exist
         team = Team.query.filter_by(name=name, version=version).first()
         if team is not None:
@@ -275,7 +274,6 @@ def download(name, version):
     """
     team = Team.query.filter_by(name=name, version=version).first()
     if team:
-        print(team.archive_path)
         abs_path = os.path.join(current_app.static_folder, team.archive_path)
         try:
             return send_file(abs_path, as_attachment=True)

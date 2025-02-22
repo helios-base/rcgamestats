@@ -16,6 +16,7 @@ def decline_match(match):
 
     data = {
         "type": "decline_match",
+        "host_name": config.HOST_NAME,
         "match_id": match.match_id,
         "token": match.token,
     }

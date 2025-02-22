@@ -128,14 +128,14 @@ def login_google_callback():
         email = user_info['email']
 
         if not email:
-            flash("Google account does not have an email")
-            current_app.logger.info("Google account does not have an email")
+            flash(f"GoogleLogin: No email")
+            current_app.logger.error(f"GoogleLogin: No email")
             return redirect(url_for("auth.login"))
 
         allowed_email = AllowedEmail.query.filter_by(email=email).first()
         if not allowed_email:
             flash(f"[{email}] is not allowed to login.")
-            current_app.logger.info(f"[{email}] is not allowed to login.")
+            current_app.logger.warning(f"GoogleLogin: [{email}] is not allowed to login.")
             return redirect(url_for("auth.login"))
 
         user = User.query.filter_by(email=email).first()
@@ -157,16 +157,16 @@ def login_google_callback():
             )
             db.session.add(api_key)
             db.session.commit()
-            current_app.logger.info(f"New user [{user.username}] registered with Google")
+            current_app.logger.info(f"GoogleLogin: Registered user [{user.username}]")
 
         login_user(user)
-        current_app.logger.info(f"User [{user.username}] logged in with Google")
+        current_app.logger.info(f"GoogleLogin: LoggedIn [{user.username}]")
         return redirect(url_for("index"))
     except OAuthError:
         flash(f"Exception: {OAuthError}")
 
-    flash("Google account cannot be verified")
-    current_app.logger.warning("Google account cannot be verified")
+    flash(f"GoogleLogin: Google account {email} cannot be verified")
+    current_app.logger.warning(f"GoogleLogin: Google account {email} cannot be verified")
     return redirect(url_for("auth.login"))
 
 
@@ -209,7 +209,7 @@ def show_users():
             try:
                 db.session.add(allowed_email)
                 db.session.commit()
-                current_app.logger.info(f"New email [{email}] registered as [{type.value}]")
+                current_app.logger.info(f"Registered email [{email}] as [{type.value}]")
             except Exception as e:
                 flash(f"Error: {e}")
 
@@ -222,7 +222,7 @@ def show_users():
         db.session.commit()
 
         flash(f"New user [{username}] registered")
-        current_app.logger.info(f"New user [{username}] registered as [{type.value}]")
+        current_app.logger.info(f"Registered user [{username}] as [{type.value}]")
 
     users = User.query.all()
     return render_template("auth/users.html", users=users, form=form)
@@ -259,7 +259,7 @@ def change_user_type():
                 user.type = new_type
                 db.session.commit()
                 flash(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]")
-                current_app.logger.info(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]")
+                current_app.logger.info(f"Changed [{user.username}], from [{old_type.value}] to [{new_type.value}]")
             except ValueError:
                 flash("Invalid user type")
 
@@ -289,7 +289,7 @@ def bulk_delete_users():
                 continue
             count += 1
             db.session.delete(record)
-            current_app.logger.info(f"User [{record.username}] to be deleted")
+            current_app.logger.info(f"Deleting user [{record.username}]")
     db.session.commit()
     flash(f"Deleted {count} users")
     return redirect(url_for("auth.show_users"))
@@ -315,11 +315,12 @@ def show_allowed_emails():
                 db.session.add(allowed_email)
                 db.session.commit()
                 flash(f"New email [{email}] registered as [{type.value}]")
-                current_app.logger.info(f"New email [{email}] registered as [{type.value}]")
+                current_app.logger.info(f"Registered email [{email}] as [{type.value}]")
             except Exception as e:
                 flash(f"Error: {e}")
         else:
             flash(f"Email [{email}] already exists")
+            current_app.logger.warning(f"show_allowed_email: Email [{email}] already exists")
 
     emails = AllowedEmail.query.all()
     return render_template("auth/allowed_emails.html", emails=emails, form=form)
@@ -342,7 +343,7 @@ def bulk_delete_allowed_emails():
                 continue
             count += 1
             db.session.delete(record)
-            current_app.logger.info(f"Email [{record.email}] to be deleted")
+            current_app.logger.info(f"Delete email [{record.email}]")
     db.session.commit()
     flash(f"Deleted {count} emails")
     return redirect(url_for("auth.show_allowed_emails"))
@@ -444,7 +445,7 @@ def create_api_key():
     db.session.add(api_key)
     db.session.commit()
     flash("API key created")
-    current_app.logger.info(f"API key created for user [{current_user.username}]")
+    current_app.logger.info(f"Created API key for user [{current_user.username}]")
 
     return redirect(url_for('auth.api_keys'))
 
@@ -468,7 +469,7 @@ def delete_api_key(key_id):
     db.session.delete(api_key)
     db.session.commit()
     flash("API key deleted")
-    current_app.logger.info(f"API key deleted for user [{current_user.username}]")
+    current_app.logger.info(f"Deleted API key for user [{current_user.username}]")
     return redirect(url_for("auth.api_keys"))
 
 
@@ -513,5 +514,5 @@ def admin_delete_api_key(key_id):
     db.session.delete(api_key)
     db.session.commit()
     flash("API key deleted")
-    current_app.logger.info(f"API key deleted for user [{user.username}]")
+    current_app.logger.info(f"Deleted API key for user [{user.username}]")
     return redirect(url_for("auth.admin_api_keys"))

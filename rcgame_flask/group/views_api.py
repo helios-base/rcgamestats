@@ -87,7 +87,7 @@ def request_match():
 
     current_app.logger.info(
         # f"Match {match.id} assigned to {host_name} ({client_ip}) with synch_mode={synch_mode}."
-        f"Assigned {match.group.name}/{match.index}, {host_name} ({client_ip})"
+        f"@{host_name} Assigned {match.group.name}/{match.index}"
     )
     return jsonify(
         {
@@ -145,7 +145,7 @@ def submit_result():
     # print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.index)
 
     if match.token != token:
-        current_app.logger.error(f"Token does not match for match {match.grroup.name}/{match.index}.")
+        current_app.logger.error(f"@{match.host_name} Token does not match for {match.grroup.name}/{match.index}.")
         return jsonify({"error": "Token does not match."}), 401
 
     group = Group.query.get(match.group_id)
@@ -166,7 +166,7 @@ def submit_result():
             # print(f"Saving log file as {group.name}/{new_file_name}")
             file.save(os.path.join(log_dir, new_file_name))
             count += 1
-    current_app.logger.info(f"Saved    {group.name}/{match.index}, log files={count}")
+    current_app.logger.info(f"@{match.host_name} Saved    {group.name}/{match.index}, files={count}")
     # print(f"Saved {count} log files for match {group.name}/{match.index}.")
 
     # Update the match record
@@ -200,7 +200,7 @@ def submit_result():
 
     db.session.commit()
 
-    message = f"Accepted {group.name}/{match.index}, duration={duration}"
+    message = f"@{match.host_name} Result   {group.name}/{match.index}, {left_score} - {right_score}"
     current_app.logger.info(message)
     return jsonify({"message": message})
 
@@ -213,16 +213,21 @@ def decline_assignment():
     Decline an assigned match.
     """
     data = request.form.to_dict()
-    match_id = data.get("match_id")
-    token = data.get("token")
+    
+    try:
+        host_name = data.get("host_name")
+        match_id = data.get("match_id")
+        token = data.get("token")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
     match = Match.query.get(match_id)
     if match is None:
-        current_app.logger.error(f"deline_assignment: Match {match_id} not found.")
+        current_app.logger.error(f"@{host_name} deline_assignment: Match {match_id} not found.")
         return jsonify({"error": "Match not found."}), 404
 
     if match.token != token:
-        current_app.logger.error(f"deline_assignment: Token does not match for match {match.group.name}/{match.index}.")
+        current_app.logger.error(f"@{host_name} deline_assignment: Token does not match {match.group.name}/{match.index} @{match.host_name}")
         return jsonify({"error": "Token does not match."}), 401
 
     match.host_name = None
@@ -232,7 +237,7 @@ def decline_assignment():
     match.token = None
     db.session.commit()
 
-    current_app.logger.info(f"Match {match.group.name}/{match.index} declined.")
+    current_app.logger.info(f"@{match.host_name} Declined {match.group.name}/{match.index}")
     return jsonify({"message": "Match declined."})
 
 #
@@ -328,6 +333,7 @@ def admin_api_create_group():
 
     save_group_metadata(group)
 
+    current_app.logger.info(f"Created {group.name} matches={number_of_matches}")
     return jsonify({"message": "Group created successfully.",
                     "group_id": group.id,
                     "group_name": group.name,
@@ -390,11 +396,14 @@ def admin_api_submit_result():
 
     # Save the log files
     common_name = log_file_name
+    count = 0
     for file in request.files.getlist("log_file"):
         if file and file.filename:
             new_file_name = re.sub(r'^[^.]+', common_name, file.filename)
-            print(f"Saving log file as {group.name}/{new_file_name}")
+            # print(f"Saving log file as {group.name}/{new_file_name}")
             file.save(os.path.join(log_dir, new_file_name))
+            count += 1
+    current_app.logger.info(f"@admin Saved {group.name}/{match.index} logs={count}")
 
     # Update the match record
     match.host_name = host_name
@@ -423,4 +432,5 @@ def admin_api_submit_result():
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
 
+    current_app.logger.info(f"@admin Accepted {group.name}/{match.index}")
     return jsonify({"message": f"Accepted the result of match index={match.index}."})

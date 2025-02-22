@@ -240,8 +240,8 @@ def change_user_type():
         flash("User ID is missing.", "error")
         return redirect(url_for("auth.show_users"))
 
-    print(f"Current user: {current_user.username}")
-    print(f"target User ID: {user_id}")
+    # print(f"Current user: {current_user.username}")
+    # print(f"target User ID: {user_id}")
     user = User.query.get(user_id)
     if user:
         if user.email == current_user.email:
@@ -419,10 +419,10 @@ def dashboard():
     """
     Dashboard
     """
-    print(f"Current user: {current_user.username}")
-    print(f"API keys: {len(current_user.api_keys.all())}")
-    for key in current_user.api_keys:
-        print(f"API key: {key.key}")
+    # print(f"Current user: {current_user.username}")
+    # print(f"API keys: {len(current_user.api_keys.all())}")
+    # for key in current_user.api_keys:
+    #     print(f"API key: {key.key}")
     return render_template("auth/dashboard.html")
 
 

@@ -72,7 +72,7 @@ def request_match():
     host = Host.query.filter_by(name=host_name).first()
     if host is None:
         host = Host(name=host_name)
-        print(f"(request_match) Adding host {host.name} ...")
+        current_app.logger.info(f"@{host_name} Adding host {host_name} ...")
         db.session.add(host)
 
     host.ip_v4_address = client_ip

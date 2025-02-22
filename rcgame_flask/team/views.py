@@ -293,11 +293,18 @@ def api_download(name, version):
     """
     Download the team archive.
     """
+    client_ip = request.remote_addr
+    # In case of reverse proxy
+    x_forwarded_for = request.headers.get('X-Forwarded-For')
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(',')[0].strip()
+        
     team = Team.query.filter_by(name=name, version=version).first()
     if team:
         print(team.archive_path)
         abs_path = os.path.join(current_app.static_folder, team.archive_path)
         try:
+            current_app.logger.info(f"Send team {name} ({version}) to {client_ip}")
             return send_file(abs_path, as_attachment=True)
         except FileNotFoundError:
             abort(404)

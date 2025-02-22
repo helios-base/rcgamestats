@@ -110,10 +110,9 @@ def create_roundrobin():
     pairs_counts = {}
     if form.validate_on_submit():
         created_count = 0
+        current_app.logger.info(f"Creating round-robin groups with {form.number_of_matches.data} matches each.")
         for left_id in form.left_teams.data:
             for right_id in form.right_teams.data:
-                # print(f"trying to create pair of left_id: {left_id}, right_id: {right_id}")
-                current_app.logger.info(f"trying to create pair of left_id: {left_id}, right_id: {right_id}")
                 if left_id == right_id:
                     continue
 
@@ -247,7 +246,7 @@ def archive_group(group_id):
             match.processed = MatchStatus.ARCHIVED
 
     db.session.commit()
-    
+
     flash(f"Group [{group.name}] has been archived.")
     current_app.logger.info(f"Archived [{group.name}]")
     return redirect(url_for("group.index"))

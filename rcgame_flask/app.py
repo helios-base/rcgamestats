@@ -20,6 +20,8 @@ login_manager.login_message = "Please log in to access this page."
 
 
 def init_logging(app):
+    app.logger.handlers = []  # clear the default handler
+
     log_dir = os.path.join(app.static_folder, 'logs')
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, 'server.log')
@@ -62,8 +64,8 @@ def create_app(test_config=None):
     init_logging(app)
 
     from . import create_db
-
     create_db.init_app(app)
+
     Migrate(app, db)
     csrf.init_app(app)
     login_manager.init_app(app)  # register the login_manager with the app
@@ -82,6 +84,7 @@ def create_app(test_config=None):
             client_kwargs={'scope': 'email'},
         )
         app.oauth = oauth
+        app.logger.info('Google OAuth enabled')
 
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')

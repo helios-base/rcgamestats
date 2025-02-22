@@ -1,4 +1,6 @@
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_required
@@ -17,15 +19,33 @@ login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
 
 
+def init_logging(app):
+    log_dir = os.path.join(app.static_folder, 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, 'server.log')
+
+    handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=10)
+    formatter = logging.Formatter(
+        # '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        '%(asctime)s %(levelname)s: %(message)s'
+    )
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+
+    app.logger.addHandler(handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Server startup')
+
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     # app.config.from_mapping(
-    #     SECRET_KEY='kcairenkczczp93qhjnba;8ia',
+    #     SECRET_KEY='xxxxxxxx',
     #     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'rcgame_flask.sqlite'),
     #     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     #     WTF_CSRF_ENABLED=True,
-    #     WTF_CSRF_SECRET_KEY='kwjer283n2k3gpiue9vrdfagb',
+    #     WTF_CSRF_SECRET_KEY='xxxxxxxx',
     #     )
     app.config.from_object(config)
 
@@ -38,6 +58,8 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
+
+    init_logging(app)
 
     from . import create_db
 

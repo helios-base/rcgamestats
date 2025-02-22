@@ -2,8 +2,11 @@ import os
 import requests
 import tarfile
 import zipfile
-import shutil
+# import shutil
+import logging
 from config import config
+
+logger = logging.getLogger("client")
 
 
 def __exist_directory(team_name, version):
@@ -33,10 +36,10 @@ def __create_diirectory(team_name, version):
     try:
         os.makedirs(team_dir)
     except FileExistsError:
-        print(f"Team directory already exists: {team_dir}")
+        logger.error(f"Team directory already exists: {team_dir}")
         return None
     except OSError:
-        print(f"Failed to create team directory: {team_dir}")
+        logger.error(f"Failed to create team directory: {team_dir}")
         return None
 
     return team_dir
@@ -57,10 +60,10 @@ def __delete_directory(team_name, version):
         #shutil.rmtree(team_dir)
         return True
     except FileNotFoundError:
-        print(f"Team directory not found: {team_dir}")
+        logger.error(f"Team directory not found: {team_dir}")
         return False
     except OSError:
-        print(f"Failed to delete team directory: {team_dir}")
+        logger.error(f"Failed to delete team directory: {team_dir}")
         return False
 
 
@@ -76,12 +79,12 @@ def __extract_team(team_name, version, filename):
     """
     team_dir = os.path.join(config.TEAM_DIR, team_name, version)
     if not os.path.exists(team_dir) or not os.path.isdir(team_dir):
-        print(f"Team directory not found: {team_dir}")
+        logger.error(f"Team directory not found: {team_dir}")
         return False
 
     team_file_path = os.path.join(team_dir, filename)
     if not os.path.exists(team_file_path) or not os.path.isfile(team_file_path):
-        print(f"Team archive not found: {team_file_path}")
+        logger.error(f"Team archive not found: {team_file_path}")
         return False
 
     try:
@@ -101,13 +104,13 @@ def __extract_team(team_name, version, filename):
             with zipfile.ZipFile(team_file_path, "r") as zip_ref:
                 zip_ref.extractall(team_dir)
         else:
-            print(f"Unsupported archive format: {filename}")
+            logger.error(f"Unsupported archive format: {filename}")
             return False
     except (tarfile.TarError, zipfile.BadZipFile) as e:
-        print(f"Failed to extract team archive: {team_file_path}. Error: {e}")
+        logger.error(f"Failed to extract team archive: {team_file_path}. Error: {e}")
         return False
 
-    print(f"Successfully extracted: [{team_dir}/{filename}]")
+    logger.info(f"Successfully extracted: {team_dir}/{filename}")
     return True
 
 
@@ -121,7 +124,7 @@ def download_team(team_name, version):
         True if the team was successfully downloaded, otherwise False.
     """
     if __exist_directory(team_name, version):
-        print(f"Team directory already exists: {team_name} / {version}")
+        logger.error(f"Team directory already exists: {team_name} / {version}")
         return False
 
     team_dir = __create_diirectory(team_name, version)
@@ -139,9 +142,9 @@ def download_team(team_name, version):
     response = requests.get(url, headers=headers, stream=True)
     response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
 
-    print(f"(download) Status code: {response.status_code}")
+    logger.info(f"Download status code: {response.status_code}")
     if response.status_code != 200:
-        print(f"Failed to download team {team_name} version {version}.")
+        logger.error(f"Failed to download team {team_name} version {version}.")
         __delete_directory(team_name, version)
         return False
 
@@ -157,7 +160,7 @@ def download_team(team_name, version):
         for chunk in response.iter_content(chunk_size=8192):
             file.write(chunk)
 
-    print(f"Successfully downloaded [{team_file_path}]")
+    logger.info(f"Successfully downloaded: {team_file_path}")
     if not __extract_team(team_name, version, filename):
         __delete_directory(team_name, version)
         return False

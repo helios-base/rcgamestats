@@ -1,7 +1,11 @@
-import os
 import requests
+import logging
+import json
 from datetime import datetime
 from config import config
+
+logger = logging.getLogger("client")
+
 
 def decline_match(match):
     """
@@ -24,5 +28,6 @@ def decline_match(match):
     response = requests.post(url, headers=headers, data=data)
     response.raise_for_status()
 
-    print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] Decline match response content: {response.text}")
-
+    # compact_text = json.dumps(response.json(), separators=(",", ":"))
+    # logger.info(f"Decline match response content: {compact_text}")
+    logger.info(f"Decline match response content: {response.json()}")

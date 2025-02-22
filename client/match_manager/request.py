@@ -1,7 +1,11 @@
 import requests
-from datetime import datetime
+import logging
+import json
+# from datetime import datetime
 from config import config
 from .match import Match
+
+logger = logging.getLogger("client")
 
 
 def request_match():
@@ -24,15 +28,20 @@ def request_match():
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        print(f"HTTP error occurred: {e}")
+        logger.error(f"HTTP error occurred: {e}")
         return None
 
     # レスポンスに含まれるjsonデータに "message" が含まれている場合はエラーとして処理する
     if "message" in response.json():
-        print(f"INFO: {response.json()['message']}")
+        logger.info(f"RequestResponse {response.json()['message']}")
         return None
 
-    print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}]((request_post) Response content:", response.text)
+    # response_text = response.txt.replace("\n", "")
+    # logger.info(f"Response content: {response_text}")
+    # compact_text = json.dumps(response.json(), separators=(",", ":"))
+    # logger.info(f"Response content: {compact_text}")
+
+    # logger.info(f"RequestResponse {response.json()}")
+
     match = Match.from_json(response.json())
-    
     return match

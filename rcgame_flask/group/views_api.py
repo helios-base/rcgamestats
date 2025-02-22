@@ -28,6 +28,7 @@ def request_match():
     host_name = data.get("host_name")
 
     if host_name is None:
+        current_app.logger.error("Missing host name.")
         return jsonify({"error": "Missing host name."}), 400
 
     match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
@@ -35,7 +36,7 @@ def request_match():
         return jsonify({"message": "No unexecuted matches found."}), 200
 
     if match.group is None:
-        return jsonify({"error": "Group name found."}), 404
+        return jsonify({"error": "Group found."}), 404
     if match.left_team is None:
         return jsonify({"error": "Left team not found."}), 404
     if match.right_team is None:
@@ -84,6 +85,10 @@ def request_match():
 
     synch_mode = match.left_team.synch_mode and match.right_team.synch_mode
 
+    current_app.logger.info(
+        # f"Match {match.id} assigned to {host_name} ({client_ip}) with synch_mode={synch_mode}."
+        f"Assigned {match.group.name}/{match.index}, {host_name} ({client_ip})"
+    )
     return jsonify(
         {
             "match_id": match.id,
@@ -140,6 +145,7 @@ def submit_result():
     # print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.index)
 
     if match.token != token:
+        current_app.logger.error(f"Token does not match for match {match.grroup.name}/{match.index}.")
         return jsonify({"error": "Token does not match."}), 401
 
     group = Group.query.get(match.group_id)
@@ -153,11 +159,15 @@ def submit_result():
 
     # Save the log files
     common_name = match.log_file_name
+    count = 0
     for file in request.files.getlist("log_file"):
         if file and file.filename:
             new_file_name = re.sub(r'^[^.]+', common_name, file.filename)
-            print(f"Saving log file as {group.name}/{new_file_name}")
+            # print(f"Saving log file as {group.name}/{new_file_name}")
             file.save(os.path.join(log_dir, new_file_name))
+            count += 1
+    current_app.logger.info(f"Saved    {group.name}/{match.index}, log files={count}")
+    # print(f"Saved {count} log files for match {group.name}/{match.index}.")
 
     # Update the match record
     match.end_time = end_time
@@ -176,19 +186,23 @@ def submit_result():
     host = Host.query.filter_by(name=match.host_name).first()
     if host is None:
         host = Host(name=match.host_name)
-        print(f"(submit_result) Adding host {host.name} ...")
+        # print(f"(submit_result) Adding host {host.name} ...")
+        current_app.logger.info(f"Adding host {host.name} ...")
 
+    # The seconds of the match duration are calculated as the difference between the start and end times.
+    duration = (end_time - match.start_time).total_seconds()
     if match.left_team.synch_mode and match.right_team.synch_mode:
-        # The seconds of the match duration are calculated as the difference between the start and end times.
-        host.total_runtime_synch_mode += (end_time - match.start_time).total_seconds()
+        host.total_runtime_synch_mode += duration
         host.total_matches_synch_mode += 1
     else:
-        host.total_runtime_normal += (end_time - match.start_time).total_seconds()
+        host.total_runtime_normal += duration
         host.total_matches_normal += 1
 
     db.session.commit()
 
-    return jsonify({"message": f"Accepted the result of match {match_id}."})
+    message = f"Accepted {group.name}/{match.index}, duration={duration}"
+    current_app.logger.info(message)
+    return jsonify({"message": message})
 
 
 @group_bp.route("/decline_assignment", methods=["POST"])
@@ -204,9 +218,11 @@ def decline_assignment():
 
     match = Match.query.get(match_id)
     if match is None:
+        current_app.logger.error(f"deline_assignment: Match {match_id} not found.")
         return jsonify({"error": "Match not found."}), 404
 
     if match.token != token:
+        current_app.logger.error(f"deline_assignment: Token does not match for match {match.group.name}/{match.index}.")
         return jsonify({"error": "Token does not match."}), 401
 
     match.host_name = None
@@ -216,6 +232,7 @@ def decline_assignment():
     match.token = None
     db.session.commit()
 
+    current_app.logger.info(f"Match {match.group.name}/{match.index} declined.")
     return jsonify({"message": "Match declined."})
 
 #

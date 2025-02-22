@@ -42,9 +42,11 @@ def login():
 
         if user and user.check_password(password):
             login_user(user)
+            current_app.logger.info(f"User [{user.username}] logged in")
             return redirect(url_for("index"))
 
         flash("authentication failed")
+        current_app.logger.info(f"User [{user.username}] login failed")
 
     use_google_login = current_app.config.get("GOOGLE_OAUTH_CLIENT_ID") and current_app.config.get("GOOGLE_OAUTH_CLIENT_SECRET")
 
@@ -57,6 +59,7 @@ def logout():
     """
     Logout
     """
+    current_app.logger.info(f"User [{current_user.username}] logged out")
     logout_user()
     flash("logout done")   
 
@@ -75,11 +78,13 @@ def change_password():
     if form.validate_on_submit():
         if not current_user.check_password(form.current_password.data):
             flash("current password is incorrect")
+            current_app.logger.info(f"User [{current_user.username}] password change failed")
             return redirect(url_for("auth.change_password"))
 
         current_user.set_password(form.new_password.data)
         db.session.commit()
         flash("password changed")
+        current_app.logger.info(f"User [{current_user.username}] password changed")
         return redirect(url_for("index"))
 
     return render_template("auth/change_password.html", form=form)
@@ -99,6 +104,7 @@ def login_google():
     use_google_login = current_app.config.get("GOOGLE_OAUTH_CLIENT_ID") and current_app.config.get("GOOGLE_OAUTH_CLIENT_SECRET")
     if not use_google_login:
         flash("Google login is not enabled")
+        current_app.logger.info("Google login is not enabled")
         return redirect(url_for("auth.login"))
 
     redirect_uri = url_for("auth.login_google_callback", _external=True)
@@ -118,11 +124,13 @@ def login_google_callback():
 
         if not email:
             flash("Google account does not have an email")
+            current_app.logger.info("Google account does not have an email")
             return redirect(url_for("auth.login"))
 
         allowed_email = AllowedEmail.query.filter_by(email=email).first()
         if not allowed_email:
             flash(f"[{email}] is not allowed to login.")
+            current_app.logger.info(f"[{email}] is not allowed to login.")
             return redirect(url_for("auth.login"))
 
         user = User.query.filter_by(email=email).first()
@@ -144,13 +152,16 @@ def login_google_callback():
             )
             db.session.add(api_key)
             db.session.commit()
+            current_app.logger.info(f"New user [{user.username}] registered with Google")
 
         login_user(user)
+        current_app.logger.info(f"User [{user.username}] logged in with Google")
         return redirect(url_for("index"))
     except OAuthError:
         flash(f"Exception: {OAuthError}")
 
     flash("Google account cannot be verified")
+    current_app.logger.warning("Google account cannot be verified")
     return redirect(url_for("auth.login"))
 
 
@@ -193,6 +204,7 @@ def show_users():
             try:
                 db.session.add(allowed_email)
                 db.session.commit()
+                current_app.logger.info(f"New email [{email}] registered as [{type.value}]")
             except Exception as e:
                 flash(f"Error: {e}")
 
@@ -205,6 +217,7 @@ def show_users():
         db.session.commit()
 
         flash(f"New user [{username}] registered")
+        current_app.logger.info(f"New user [{username}] registered as [{type.value}]")
 
     users = User.query.all()
     return render_template("auth/users.html", users=users, form=form)
@@ -228,8 +241,10 @@ def change_user_type():
     if user:
         if user.email == current_user.email:
             flash(f"Cannot change own user type mail {user.email}")
+            current_app.logger.warning(f"Cannot change own user type mail {user.email}")
         elif user.username == config.ADMIN_USERNAME:
             flash("Cannot change the default admin user type")
+            current_app.logger.warning("Cannot change the default admin user type")
         # elif user.type == UserType.ADMIN and current_user.username != config.ADMIN_USERNAME:
         #     flash("Cannot change admin user type by non-default admin user")
         else:
@@ -239,6 +254,7 @@ def change_user_type():
                 user.type = new_type
                 db.session.commit()
                 flash(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]")
+                current_app.logger.info(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]")
             except ValueError:
                 flash("Invalid user type")
 
@@ -268,6 +284,7 @@ def bulk_delete_users():
                 continue
             count += 1
             db.session.delete(record)
+            current_app.logger.info(f"User [{record.username}] to be deleted")
     db.session.commit()
     flash(f"Deleted {count} users")
     return redirect(url_for("auth.show_users"))
@@ -292,6 +309,8 @@ def show_allowed_emails():
             try:
                 db.session.add(allowed_email)
                 db.session.commit()
+                flash(f"New email [{email}] registered as [{type.value}]")
+                current_app.logger.info(f"New email [{email}] registered as [{type.value}]")
             except Exception as e:
                 flash(f"Error: {e}")
         else:
@@ -318,6 +337,7 @@ def bulk_delete_allowed_emails():
                 continue
             count += 1
             db.session.delete(record)
+            current_app.logger.info(f"Email [{record.email}] to be deleted")
     db.session.commit()
     flash(f"Deleted {count} emails")
     return redirect(url_for("auth.show_allowed_emails"))
@@ -370,6 +390,8 @@ def create_api_key():
     )
     db.session.add(api_key)
     db.session.commit()
+    flash("API key created")
+    current_app.logger.info(f"API key created for user [{current_user.username}]")
 
     return redirect(url_for('auth.api_keys'))
 
@@ -393,6 +415,7 @@ def delete_api_key(key_id):
     db.session.delete(api_key)
     db.session.commit()
     flash("API key deleted")
+    current_app.logger.info(f"API key deleted for user [{current_user.username}]")
     return redirect(url_for("auth.api_keys"))
 
 
@@ -402,7 +425,7 @@ def delete_api_key(key_id):
 def admin_api_keys():
     """
     Admin API keys
-    """    
+    """
     users = User.query.all()
     return render_template("auth/admin_api_keys.html", users=users)
 
@@ -422,16 +445,20 @@ def admin_delete_api_key(key_id):
     user = User.query.get(api_key.user_id)
     if user is None:
         flash("User not found")
+        current_app.logger.warning(f"User not found for API key [{api_key.key}]")
 
-    if user.type == UserType.ADMIN:
+    if user and user.type == UserType.ADMIN:
         if user.id != current_user.id:
             flash("Cannot delete other admin user's API key")
+            current_app.logger.warning(f"Cannot delete the API key of other admin user [{user.username}]")
             return redirect(url_for("auth.admin_api_keys"))
         elif len(user.api_keys.all()) == 1:
             flash("Cannot delete the only API key of the admin user")
+            current_app.logger.warning(f"Cannot delete the only API key of the admin user [{user.username}]")
             return redirect(url_for("auth.admin_api_keys"))
 
     db.session.delete(api_key)
     db.session.commit()
     flash("API key deleted")
+    current_app.logger.info(f"API key deleted for user [{user.username}]")
     return redirect(url_for("auth.admin_api_keys"))

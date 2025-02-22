@@ -102,11 +102,11 @@ def init_db():
     admin_email = config.ADMIN_EMAIL
     initial_password = secrets.token_urlsafe(8)
 
-    admin = User(username=admin_username, type=UserType.ADMIN)
+    admin = User(username=admin_username, type=UserType.MASTER)
     admin.email = admin_email
     admin.set_password(initial_password)
     db.session.add(admin)
-    
+
     try:
         db.session.commit()
     except IntegrityError as e:

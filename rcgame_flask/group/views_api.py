@@ -61,16 +61,26 @@ def request_match():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+    client_ip = request.remote_addr
+    # In case of reverse proxy
+    x_forwarded_for = request.headers.get('X-Forwarded-For')
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(',')[0].strip()
+    # print("(request_match) host IP:", client_ip)
+
     host = Host.query.filter_by(name=host_name).first()
     if host is None:
         host = Host(name=host_name)
-        print(f"Adding host {host.name} ...")
+        print(f"(request_match) Adding host {host.name} ...")
         db.session.add(host)
-        try:
-            db.session.commit()
-        except IntegrityError as e:
-            db.session.rollback()
-            return jsonify({"error": str(e)}), 500
+
+    host.ip_v4_address = client_ip
+    # print(f"Update ip_v4 of host {host.name} to {host.ip_v4_address}")
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
     synch_mode = match.left_team.synch_mode and match.right_team.synch_mode
 
@@ -156,15 +166,28 @@ def submit_result():
     match.processed = MatchStatus.COMPLETED
 
     group.updated_at = end_time
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
     host = Host.query.filter_by(name=match.host_name).first()
     if host is None:
         host = Host(name=match.host_name)
-        print(f"Adding host {host.name} ...")
-        db.session.add(host)
+        print(f"(submit_result) Adding host {host.name} ...")
+
+    if match.left_team.synch_mode and match.right_team.synch_mode:
+        # The seconds of the match duration are calculated as the difference between the start and end times.
+        host.total_runtime_synch_mode += (end_time - match.start_time).total_seconds()
+        host.total_matches_synch_mode += 1
+    else:
+        host.total_runtime_normal += (end_time - match.start_time).total_seconds()
+        host.total_matches_normal += 1
 
     db.session.commit()
+
     return jsonify({"message": f"Accepted the result of match {match_id}."})
 
 

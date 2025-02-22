@@ -43,6 +43,7 @@ class Config:
     TEMPORAL_DIR = os.getenv("TEMPORAL_DIR", os.path.expandvars('$HOME/rcgamestats/tmp'))
     LOG_DIR = os.getenv("LOG_DIR", os.path.expandvars('$HOME/rcgamestats/log'))
     SLEEP_TIME = get_env_int("SLEEP_TIME", 5)
+    MAX_SLEEP_TIME = min(get_env_int("MAX_SLEEP_TIME", 60), 60)
 
 
 config = Config()

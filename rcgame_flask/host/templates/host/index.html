@@ -9,6 +9,7 @@
         <tr>
             <th>Host Name</th>
             <th>IPv4</th>
+            <th>Last Access</th>
             <th id="lborder">synch_mode Matches</th>
             <th>Total Runtime</th>
             <th>Average Runtime</th>
@@ -26,6 +27,7 @@
         <tr>
             <td><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
             <td>{{ host.ip_v4_address }}</td>
+            <td>{{ host.last_accessed_at }}</td>
             <td id="lborder">{{ host.total_matches_synch_mode }}</td>
             <td>{{ "%02d" % (total_s // 3600) }}:{{ "%02d" % ((total_s % 3600) // 60) }}:{{ "%02d" % (total_s % 60) }} </td>
             <td>{{ "%02d" % (average_s // 3600) }}:{{ "%02d" % ((average_s % 3600) // 60) }}:{{ "%02d" % (average_s % 60) }}</td>

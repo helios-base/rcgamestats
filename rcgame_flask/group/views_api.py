@@ -26,11 +26,34 @@ def request_match():
     """
     data = request.get_json()
     host_name = data.get("host_name")
+    start_time = datetime.now().replace(microsecond=0)
 
     if host_name is None:
         current_app.logger.error("Missing host name.")
         return jsonify({"error": "Missing host name."}), 400
 
+    # Create or update the host record
+    host = Host.query.filter_by(name=host_name).first()
+    if host is None:
+        host = Host(name=host_name)
+        current_app.logger.info(f"@{host_name} Adding host {host_name} ...")
+        db.session.add(host)
+
+    client_ip = request.remote_addr
+    # In case of reverse proxy
+    x_forwarded_for = request.headers.get('X-Forwarded-For')
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(',')[0].strip()
+
+    host.ip_v4_address = client_ip
+    host.last_accessed_at = start_time
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    # Find an unexecuted match
     match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
     if match is None:
         return jsonify({"message": "No unexecuted matches found."}), 200
@@ -42,41 +65,12 @@ def request_match():
     if match.right_team is None:
         return jsonify({"error": "Right team not found."}), 404
 
-    left_team_name = match.left_team.name
-    left_team_version = match.left_team.version
-    right_team_name = match.right_team.name
-    right_team_version = match.right_team.version
-
-    start_time = datetime.now().replace(microsecond=0)
-    log_file_name = f"{str(match.index).zfill(5)}-{left_team_name}-{right_team_name}-{host_name}"
-
+    # Assign the match to the host
     match.host_name = host_name
     match.start_time = start_time
     match.processed = MatchStatus.IN_PROGRESS
-    match.log_file_name = log_file_name
+    match.log_file_name = f"{str(match.index).zfill(5)}-{match.left_team.name}-{match.right_team.name}-{host_name}"
     match.token = secrets.token_hex(16)
-
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    client_ip = request.remote_addr
-    # In case of reverse proxy
-    x_forwarded_for = request.headers.get('X-Forwarded-For')
-    if x_forwarded_for:
-        client_ip = x_forwarded_for.split(',')[0].strip()
-    # print("(request_match) host IP:", client_ip)
-
-    host = Host.query.filter_by(name=host_name).first()
-    if host is None:
-        host = Host(name=host_name)
-        current_app.logger.info(f"@{host_name} Adding host {host_name} ...")
-        db.session.add(host)
-
-    host.ip_v4_address = client_ip
-    # print(f"Update ip_v4 of host {host.name} to {host.ip_v4_address}")
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -85,10 +79,7 @@ def request_match():
 
     synch_mode = match.left_team.synch_mode and match.right_team.synch_mode
 
-    current_app.logger.info(
-        # f"Match {match.id} assigned to {host_name} ({client_ip}) with synch_mode={synch_mode}."
-        f"@{host_name} Assigned {match.group.name}/{match.index}"
-    )
+    current_app.logger.info(f"@{host_name} Assigned {match.group.name}/{match.index}")
     return jsonify(
         {
             "match_id": match.id,
@@ -97,11 +88,11 @@ def request_match():
             "index": match.index,
             "host_name": match.host_name,
             "start_time": start_time,
-            "left_team_name": left_team_name,
-            "left_team_version": left_team_version,
-            "right_team_name": right_team_name,
-            "right_team_version": right_team_version,
-            "log_file_name": log_file_name,
+            "left_team_name": match.left_team.name,
+            "left_team_version": match.left_team.version,
+            "right_team_name": match.right_team.name,
+            "right_team_version": match.right_team.version,
+            "log_file_name": match.log_file_name,
             "token": match.token,
             "synch_mode": synch_mode,
         }
@@ -185,9 +176,10 @@ def submit_result():
 
     host = Host.query.filter_by(name=match.host_name).first()
     if host is None:
-        host = Host(name=match.host_name)
-        # print(f"(submit_result) Adding host {host.name} ...")
-        current_app.logger.info(f"Adding host {host.name} ...")
+        current_app.logger.error(f"@{match.host_name} Host not found.")
+        return jsonify({"error": "Host not found."}), 404
+
+    host.last_accessed_at = end_time
 
     # The seconds of the match duration are calculated as the difference between the start and end times.
     duration = (end_time - match.start_time).total_seconds()
@@ -213,13 +205,18 @@ def decline_assignment():
     Decline an assigned match.
     """
     data = request.form.to_dict()
-    
+
     try:
         host_name = data.get("host_name")
         match_id = data.get("match_id")
         token = data.get("token")
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+    host = Host.query.filter_by(name=host_name).first()
+    if host:
+        host.last_accessed_at = datetime.now().replace(microsecond=0)
+        db.session.commit()
 
     match = Match.query.get(match_id)
     if match is None:

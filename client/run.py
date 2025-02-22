@@ -1,20 +1,48 @@
 import os
 import time
 import signal
+import logging
+import json
+from logging.handlers import RotatingFileHandler
 import match_manager
 import team_manager
 from config import config
 
 
+# logging settings
+logger = logging.getLogger("client")
+logger.setLevel(logging.INFO)
+
+log_file = os.path.join(config.LOG_DIR, "client.log")
+handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
+# formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s in %(filename)s:%(lineno)d")
+formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+
 def signal_handler(signal, frame):
     with open(config.STOP_FILE_PATH, "w") as f:
         f.write("Stop signal received.")
-    print(
-        "Signal detected. The process will be finished after the current process is completed."
-    )
+    # logger.info("Signal detected. The process will be finished after the current process is completed.")
+    logger.info("Signal detected. The process will be finished.")
 
 
 signal.signal(signal.SIGINT, signal_handler)
+
+
+def interruptable_sleep(duration):
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        if os.path.exists(config.STOP_FILE_PATH):
+            # logger.info("Stop file exists. The process will be finished.")
+            break
+        remaining_time = end_time - time.time()
+        time.sleep(min(remaining_time, 0.1))
 
 
 def create_temporal_dir():
@@ -36,10 +64,10 @@ def remove_stop_file():
 
 def check_download_teams(match):
     if match.left_team_version == "":
-        print("(check_download_teams) No left team version.")
+        logger.error("(check_download_teams) No left team version.")
         return False
     if match.right_team_version == "":
-        print("(check_download_teams) No right team version.")
+        logger.error("(check_download_teams) No right team version.")
         return False
 
     if not team_manager.exist_team(match.left_team_name, match.left_team_version):
@@ -50,11 +78,11 @@ def check_download_teams(match):
             return False
 
     if not team_manager.exist_team(match.left_team_name, match.left_team_version):
-        print("(check_download_teams) No left team.")
+        logger.error("(check_download_teams) No left team.")
         return False
 
     if not team_manager.exist_team(match.right_team_name, match.right_team_version):
-        print("(check_download_teams) No right team.")
+        logger.error("(check_download_teams) No right team.")
         return False
 
     return True
@@ -70,18 +98,21 @@ def main():
 
     while True:
         if os.path.exists(config.STOP_FILE_PATH):
-            print("Stop file exists. The process will be finished.")
+            logger.info("Stop file exists. The process finished.")
             break
 
         remove_temporal_files()
         match = match_manager.request_match()
 
         if match:
-            print("RECV:", match)
+            # compact_text = json.dumps(match.to_json(), separators=(",", ":"))
+            # logger.info(f"RECV: {compact_text}")
+            logger.info(f"Received {match.group_name}/{match.index}")
+
             while not check_download_teams(match):
-                print("Failed to download teams.")
+                logger.warning("Failed to download teams.")
                 match_manager.decline_match(match)
-                print("Sleep for", initial_sleep, "seconds.")
+                logger.info(f"Sleep for {initial_sleep} seconds before retrying to download teams.")
                 time.sleep(initial_sleep)
                 continue
 
@@ -94,8 +125,9 @@ def main():
         else:
             current_sleep = min(current_sleep * 2, max_sleep)
 
-        print("Sleep for", current_sleep, "seconds.")
-        time.sleep(current_sleep)
+        logger.info(f"Sleep for {current_sleep} seconds.")
+        # time.sleep(current_sleep)
+        interruptable_sleep(current_sleep)
 
 
 if __name__ == "__main__":

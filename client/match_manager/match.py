@@ -1,10 +1,11 @@
 import os
 import csv
-# import signal
-# import subprocess
+import logging
 from datetime import datetime
 from config import config
 from team_manager import get_team_path
+
+logger = logging.getLogger("client")
 
 
 class Match:
@@ -12,13 +13,14 @@ class Match:
     The Match object represents a match between two teams.
     """
 
-    def __init__(self, match_id, group_name, left_team_name, right_team_name, log_file_name):
+    def __init__(self, match_id, group_name, index, left_team_name, right_team_name, log_file_name):
         """
         Initialize the Match object.
         """
         self.match_id = match_id
         self.token = None
         self.group_name = group_name
+        self.index = index
         self.left_team_name = left_team_name
         self.right_team_name = right_team_name
         self.left_team_version = None
@@ -30,7 +32,7 @@ class Match:
 
 
     def __str__(self):
-        return f"Match ID: {self.match_id}, Left team: {self.left_team_name}, Right team: {self.right_team_name}"
+        return f"{self.group_name}/{self.index}, {self.left_team_name} vs {self.right_team_name}, {self.left_score}-{self.right_score}"
 
     @staticmethod
     def from_json(json_data):
@@ -41,6 +43,7 @@ class Match:
             match_id = json_data["match_id"]
             token = json_data.get("token", "")
             group_name = json_data["group_name"]
+            index = json_data["index"]
             left_team_name = json_data["left_team_name"]
             right_team_name = json_data["right_team_name"]
             left_team_version = json_data["left_team_version"]
@@ -52,7 +55,7 @@ class Match:
         except KeyError:
             return None
 
-        match = Match(match_id, group_name, left_team_name, right_team_name, log_file_name)
+        match = Match(match_id, group_name, index, left_team_name, right_team_name, log_file_name)
         match.token = token
         match.left_team_version = left_team_version
         match.right_team_version = right_team_version
@@ -84,7 +87,7 @@ class Match:
         Set the score information from the result file.
         """
         if not os.path.exists(result_csv):
-            print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (Match::set_result) The result csv file does not exist.")
+            logger.error(f"The result csv file does not exist.")
             return
 
         left_score = -1
@@ -102,8 +105,7 @@ class Match:
 
                 if left_score != -1 and right_score != -1:
                     break
-        
-        print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (Match::set_result) left_score:", left_score, "right_score:", right_score)
+
         self.left_score = left_score
         self.right_score = right_score
 
@@ -133,7 +135,7 @@ class Match:
         exit_code = os.system(command)
 
         if exit_code != 0:
-            print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (Match::run) Error running the match.")
+            logger.error(f"Error running the match.")
             return False
 
         result_csv = os.path.join(log_dir, f"{self.log_file_name}.result.csv")

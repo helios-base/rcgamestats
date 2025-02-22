@@ -1,5 +1,8 @@
 import os
+import logging
 from config import config    
+
+logger = logging.getLogger("client")
 
 
 def get_team_path(team_name, version):
@@ -16,7 +19,7 @@ def get_team_path(team_name, version):
 
     # Check if the team directory exists
     if not os.path.exists(team_dir) or not os.path.isdir(team_dir):
-        print(f"(get_team_path) Team directory not found: {team_dir}")
+        logger.error(f"Team directory not found: {team_dir}")
         return None
 
     # Check if the team directory contains a directory
@@ -26,7 +29,6 @@ def get_team_path(team_name, version):
         if os.path.isdir(entry_path):
             # Check if the directory contains 'start.sh'
             start_script = os.path.join(entry_path, "start.sh")
-            #print(f"(get_team_path) Checking start script: {start_script}")
             if (
                 os.path.exists(start_script)
                 and os.path.isfile(start_script)

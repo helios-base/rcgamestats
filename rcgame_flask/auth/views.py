@@ -1,5 +1,10 @@
+
+import os
+import time
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
+from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import jsonify, request
+from flask import Response
 from flask import current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import generate_csrf
@@ -341,6 +346,54 @@ def bulk_delete_allowed_emails():
     db.session.commit()
     flash(f"Deleted {count} emails")
     return redirect(url_for("auth.show_allowed_emails"))
+
+
+@auth.route("/admin/logs", methods=["GET"])
+@login_required
+@admin_required
+def show_server_logs():
+    """
+    Show server logs
+    """
+    return render_template("auth/server_logs.html")
+
+
+@auth.route("/admin/logs/stream", methods=["GET"])
+@login_required
+@admin_required
+def stream_server_logs():
+    """
+    Streaming endpoint that yields new log lines similar to 'tail -f'
+    """
+    log_file = os.path.join(current_app.static_folder, "logs", "server.log")
+
+    def generate():
+        try:
+            with open(log_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                tail_lines = lines[-5:]
+                for line in tail_lines:
+                    yield f"data: {line}\n\n"
+        except Exception as e:
+            yield f"data: Error reading log: {e}\n\n"
+
+        # Open the log file in read mode and seek to its end
+        with open(log_file, "r", encoding="utf-8") as f:
+            f.seek(0, os.SEEK_END)
+            while True:
+                line = f.readline()
+                if not line:
+                    # No new data, wait a bit and retry
+                    yield ": heartbeat\n\n"
+                    time.sleep(1)
+                    continue
+                # send as Server-Sent Events format (data: <message>\n\n)
+                # (see https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
+                yield f"data: {line}\n\n"
+
+    response = Response(generate(), mimetype="text/event-stream")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 #

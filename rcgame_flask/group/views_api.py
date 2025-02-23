@@ -138,7 +138,7 @@ def submit_result():
         return jsonify({"error": "Right team name do not match."}), 400
 
     # print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.index)
-    print(f"received host_id = {host_id} and match.host_id = {match.host_id}")
+    # print(f"received host_id = {host_id} and match.host_id = {match.host_id}")
 
     if match.host_id != host_id:
         current_app.logger.error(f"@{match.host_name} Host ID does not match for {match.group.name}/{match.index}.")
@@ -184,7 +184,7 @@ def submit_result():
     match.left_score = left_score
     match.right_score = right_score
     match.processed = MatchStatus.COMPLETED
-    print(f"Match {match.id} completed with {left_score} - {right_score}.")
+    # print(f"Match {match.id} completed with {left_score} - {right_score}.")
 
     group.updated_at = end_time
 

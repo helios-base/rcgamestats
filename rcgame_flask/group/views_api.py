@@ -233,6 +233,7 @@ def decline_assignment():
     host = Host.query.filter_by(name=host_name).first()
     if host:
         host.last_accessed_at = datetime.now().replace(microsecond=0)
+        host.decline_count += 1
         db.session.commit()
 
     match = Match.query.get(match_id)

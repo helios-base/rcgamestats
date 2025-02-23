@@ -16,6 +16,7 @@
             <th id="lborder">normal_mode Matches</th>
             <th>Total Runtime</th>
             <th>Average Runtime</th>
+            <th>Declines</th>
         </tr>
     </thead>
     <tbody>
@@ -34,6 +35,7 @@
             <td id="lborder">{{ host.total_matches_normal }}</td>
             <td>{{ "%02d" % (total_n // 3600) }}:{{ "%02d" % ((total_n % 3600) // 60) }}:{{ "%02d" % (total_n % 60) }} </td>
             <td>{{ "%02d" % (average_n // 3600) }}:{{ "%02d" % ((average_n % 3600) // 60) }}:{{ "%02d" % (average_n % 60) }}</td>
+            <td>{{ host.decline_count }}</td>
         </tr>
         {% endfor %}
     </tbody>

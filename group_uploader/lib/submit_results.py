@@ -73,13 +73,20 @@ def __submit_result(group_id, result):
     print(f"Submitting result at {url}")
     print(f"Result data: {data}")
 
-    response = requests.post(url, headers=headers, data=data, files=files)
     try:
+        response = requests.post(url, headers=headers, data=data, files=files)
         response.raise_for_status()
+        print(f"Response content: {response.text}")
+        return True
     except requests.exceptions.HTTPError as e:
         print(f"HTTPError: {e}")
         print(f"Response content: {response.text}")
         return False
-
-    print(f"Response content: {response.text}")
-    return True
+    except requests.exceptions.RequestException as e:
+        print(f"RequestException: {e}")
+        print(f"Response content: {response.text}")
+        return False
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        print(f"Response content: {response.text}")
+        return False

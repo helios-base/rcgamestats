@@ -53,10 +53,14 @@ def request_match():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+    if host.assigned_match_id is not None:
+        current_app.logger.warning(f"@{host_name} Already assigned a match.")
+        return jsonify({"error": "Already assigned a match."}), 200
+
     # Find an unexecuted match
     match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
     if match is None:
-        return jsonify({"message": "No unexecuted matches found."}), 200
+        return jsonify({"message": "No scheduled matches."}), 200
 
     if match.group is None:
         return jsonify({"error": "Group found."}), 404

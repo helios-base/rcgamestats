@@ -1,7 +1,6 @@
 import requests
+import time
 import logging
-import json
-from datetime import datetime
 from config import config
 
 logger = logging.getLogger("client")
@@ -25,9 +24,24 @@ def decline_match(match):
         "token": match.token,
     }
 
-    response = requests.post(url, headers=headers, data=data)
-    response.raise_for_status()
+    max_retries = 3
+    retry_delay = 5  # seconds
+    for i in range(max_retries):
+        try:
+            response = requests.post(url, headers=headers, data=data)
+            response.raise_for_status()
+            # compact_text = json.dumps(response.json(), separators=(",", ":"))
+            # logger.info(f"Decline match response content: {compact_text}")
+            logger.info(f"Decline match response content: {response.json()}")
+            return
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"decline_match: HTTP error occurred: {e}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"decline_match: Request error occurred: {e}")
+        except Exception as e:
+            logger.error(f"decline_match: An error occurred: {e}")
 
-    # compact_text = json.dumps(response.json(), separators=(",", ":"))
-    # logger.info(f"Decline match response content: {compact_text}")
-    logger.info(f"Decline match response content: {response.json()}")
+        logger.info(f"decline_match: Retry {i+1}/{max_retries} after {retry_delay} seconds.")
+        time.sleep(retry_delay)
+
+    logger.error(f"Fdecline_match: Failed after {max_retries} retries.")

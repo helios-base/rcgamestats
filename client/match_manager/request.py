@@ -24,24 +24,26 @@ def request_match():
         "host_name": config.HOST_NAME
     }
 
-    response = requests.post(url, headers=headers, json=data)
     try:
+        response = requests.post(url, headers=headers, json=data, timeout=10)
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         logger.error(f"HTTP error occurred: {e}")
         return None
-
-    # レスポンスに含まれるjsonデータに "message" が含まれている場合はエラーとして処理する
-    if "message" in response.json():
-        logger.info(f"RequestResponse {response.json()['message']}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error occurred: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
         return None
 
-    # response_text = response.txt.replace("\n", "")
-    # logger.info(f"Response content: {response_text}")
-    # compact_text = json.dumps(response.json(), separators=(",", ":"))
-    # logger.info(f"Response content: {compact_text}")
+    json_message = response.json()
+    if "message" in json_message:
+        logger.info(f"request_match: (message) {json_message['message']}")
+        return None
+    if "error" in json_message:
+        logger.error(f"request_match: (error) {json_message['error']}")
+        return None
 
-    # logger.info(f"RequestResponse {response.json()}")
-
-    match = Match.from_json(response.json())
+    match = Match.from_json(json_message)
     return match

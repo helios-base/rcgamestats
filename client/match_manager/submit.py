@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import glob
 import logging
@@ -53,21 +54,23 @@ def submit_result(match):
     # logger.info(f"Submit result: {match_data}")
     logger.info(f"Submitting result {match.group_name}/{match.index}, {match.left_score} - {match.right_score}")
 
-    response = requests.post(url, headers=headers, data=match_data, files=files)
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) HTTPError:", e)
-        # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Response content:", response.text)
-        logger.error(f"HTTP error occurred: {e}")
-        # logger.error(f"SubmitResponse: {response.text}")
-        logger.error(f"SubmitResponse: {response.json()}")
-        return None
+    max_retries = 3
+    retry_delay = 5  # seconds
 
-    # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Response content:", response.text)
-    # compact_text = json.dumps(response.json(), separators=(",", ":"))
-    # logger.info(f"Response content: {compact_text}")
-    # logger.info(f"SubmitResponse {response.json()}")
+    for i in range(max_retries):
+        try:
+            response = requests.post(url, headers=headers, data=match_data, files=files)
+            response.raise_for_status()
+            logger.error(f"SubmitResponse: {response.json()}")
+            break
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"submit_result: HTTP error occurred: {e}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"submit_result: Request error occurred: {e}")
+        except Exception as e:
+            logger.error(f"submit_result: An error occurred: {e}")
+
+        logger.info(f"submit_result: Retry {i+1}/{max_retries} after {retry_delay} seconds.")
+        time.sleep(retry_delay)
 
     __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
-    return response.json()

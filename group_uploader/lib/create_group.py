@@ -38,14 +38,20 @@ def create_group(results):
     print(f"Creating group at {url}")
     print(f"Group data: {data}")
 
-    response = requests.post(url, headers=headers, json=data)
     try:
+        response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
+        print(f"Response content: {response.text}")
+        return response.json()
     except requests.exceptions.HTTPError as e:
         print(f"HTTPError: {e}")
         print(f"Response content: {response.text}")
         return None
-
-    print(f"Response content: {response.text}")
-    data = response.json()
-    return data
+    except requests.exceptions.RequestException as e:
+        print(f"RequestException: {e}")
+        print(f"Response content: {response.text}")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        print(f"Response content: {response.text}")
+        return None

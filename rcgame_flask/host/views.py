@@ -16,6 +16,9 @@ def index():
     Show all hosts.
     """
     hosts = Host.query.all()
+    for host in hosts:
+        if host.assigned_match:
+            print(f"Host: {host.name}, {host.assigned_match.processed}")
     return render_template("host/index.html", hosts=hosts)
 
 

@@ -72,6 +72,7 @@ def request_match():
     match.processed = MatchStatus.IN_PROGRESS
     match.log_file_name = f"{str(match.index).zfill(5)}-{match.left_team.name}-{match.right_team.name}-{host_name}"
     match.token = secrets.token_hex(16)
+    host.assigned_match_id = match.id
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -200,6 +201,7 @@ def submit_result():
         return jsonify({"error": "Host not found."}), 404
 
     host.last_accessed_at = end_time
+    host.assigned_host_id = None
 
     # The seconds of the match duration are calculated as the difference between the start and end times.
     duration = (end_time - match.start_time).total_seconds()
@@ -236,6 +238,7 @@ def decline_assignment():
     host = Host.query.filter_by(name=host_name).first()
     if host:
         host.last_accessed_at = datetime.now().replace(microsecond=0)
+        host.assigned_match_id = None
         host.decline_count += 1
         db.session.commit()
 

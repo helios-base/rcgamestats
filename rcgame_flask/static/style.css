@@ -68,6 +68,13 @@ tr.under_review:hover { background-color: #eeff7c; }
 tr.rejected { background-color: #c00000; }
 tr.rejected:hover { background-color: #ff0000; }
 
+td.host-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 20ch;
+}
 td.online { background-color:palegreen; }
 td.busy { background-color:#eeff7c }
 td.offline { background-color:#bbb; }

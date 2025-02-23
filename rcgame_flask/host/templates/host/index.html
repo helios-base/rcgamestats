@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
+{% extends 'table-base.html' %}
 {% block header %}
   <h1>{% block title %}Hosts{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-<table>
+<table id="host-table" class="tablesorter">
     <thead>
         <tr>
             <th>Host Name</th>
@@ -28,9 +28,9 @@
         {% set total_n = host.total_runtime_normal %}
         {% set average_n = 0 if host.total_matches_normal == 0 else host.total_runtime_normal / host.total_matches_normal %}
         <tr>
-            <td><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
+            <td class="host-name"><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
             <td>{{ host.ip_v4_address }}</td>
-            <td>{{ host.last_accessed_at }}</td>
+            <td class="time">{{ host.last_accessed_at }}</td>
             <td class="{{ status }}">{{ status }}</td>
             <td id="lborder">{{ host.total_matches_synch_mode }}</td>
             <td>{{ "%02d" % (total_s // 3600) }}:{{ "%02d" % ((total_s % 3600) // 60) }}:{{ "%02d" % (total_s % 60) }} </td>
@@ -43,4 +43,20 @@
         {% endfor %}
     </tbody>
 </table>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $("#host-table").tablesorter({
+            headers: { },
+            sortList: [[0, 0]],
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                filter_cssFilter: 'tablesorter-filter',
+                filter_ignoreCase: true,
+            }
+        });
+    });
+</script>
 {% endblock %}

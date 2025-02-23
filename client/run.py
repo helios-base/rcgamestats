@@ -122,7 +122,7 @@ def main():
         if match:
             # compact_text = json.dumps(match.to_json(), separators=(",", ":"))
             # logger.info(f"RECV: {compact_text}")
-            logger.info(f"Received {match.group_name}/{match.index}")
+            logger.info(f">>>> Received {match.group_name}/{match.index}")
 
             while not check_download_teams(match):
                 logger.warning("Failed to download teams.")
@@ -136,6 +136,7 @@ def main():
             else:
                 match_manager.decline_match(match)
 
+            logger.info(f"<<<< Finised {match.group_name}/{match.index}")
             current_sleep = initial_sleep
         else:
             current_sleep = min(current_sleep * 1.5, max_sleep)

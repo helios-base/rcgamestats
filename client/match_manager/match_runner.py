@@ -33,8 +33,6 @@ class MatchRunner:
         self.team_l_start = os.path.join(self.left_path, "start.sh")
         self.team_r_start = os.path.join(self.right_path, "start.sh")
 
-        logger.info(f"run match: {self.left_name} vs {self.right_name}")
-
     def build_options(self):
         """
         Build the options for rcssserver.
@@ -107,12 +105,13 @@ class MatchRunner:
         """
         Run the rcssserver.
         """
-        logger.info(f"Running command: rcssserver {opt}")
+        # logger.info(f"Running command: rcssserver {opt}")
+        logger.info(f"start rcssserver: {self.log_name}")
         with open("stdout.log", "w") as stdout_file, open("stderr.log", "w") as stderr_file:
             # result = subprocess.run(server_cmd, stdout=stdout_file, stderr=stderr_file)
             result = subprocess.run(["rcssserver"] + opt, stdout=stdout_file, stderr=stderr_file)
         if result.returncode != 0:
-            logger.error("rcssserver failed")
+            logger.error("rcssserver failed.")
             return False
         return True
 
@@ -123,7 +122,7 @@ class MatchRunner:
         for kill_script in [os.path.join(self.left_path, "kill"), os.path.join(self.right_path, "kill")]:
             if os.access(kill_script, os.X_OK):
                 subprocess.run([kill_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                logger.info(f"Executed kill script: {kill_script}")
+                logger.info(f"Executed kill: {kill_script}")
 
     def validate_game_log(self):
         logger.info("Validating game log...")
@@ -136,18 +135,18 @@ class MatchRunner:
             selected_file = max(matching_files, key=os.path.getctime)
             # logger.info(f"Selected rcg file: {selected_file}")
             cmd = ["rcgvalidator", selected_file]
-            result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if result.returncode != 0:
-                logger.error("rcgvalidator failed")
+            try:
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                logger.info("rcgvalidator passed.")
+            except subprocess.CalledProcessError:
+                logger.error("rcgvalidator failed.")
                 return False
-            else:
-                logger.info("rcgvalidator passed")
         else:
-            logger.warning("rcgvalidator not found")
+            logger.warning("rcgvalidator not found.")
         return True
 
     def analyze_game_log(self):
-        logger.info("Analyzing game log...")
+        # logger.info("Analyzing game log...")
         log_file_pattern = os.path.join(self.log_dir, f"{self.log_name}.rcg*")
         matching_files = glob.glob(log_file_pattern)
         if not matching_files:
@@ -157,25 +156,30 @@ class MatchRunner:
         # logger.info(f"Selected rcg file: {selected_file}")
 
         if shutil.which("rcg2csv"):
-            result = subprocess.run(["rcg2csv", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            # result = subprocess.run(["rcg2csv", selected_file])
-            if result.returncode != 0:
-                logger.error("rcg2csv failed")
-            else:
+            try:
+                subprocess.run(["rcg2csv", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                # result = subprocess.run(["rcg2csv", selected_file])
                 tracking_csv = os.path.join(self.log_dir, f"{self.log_name}.tracking.csv")
                 if os.path.exists(tracking_csv):
                     subprocess.run(["gzip", "-f", tracking_csv])
                 logger.info(f"rcg2csv completed. {self.log_name}")
+            except subprocess.CalledProcessError:
+                logger.error("rcg2csv failed.")
+        else:
+            logger.warning("rcg2csv not found.")
+
         if shutil.which("rcg2data"):
-            result = subprocess.run(["rcg2data", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            # result = subprocess.run(["rcg2data", selected_file])
-            if result.returncode != 0:
-                logger.error("rcg2data failed")
-            else:
+            try:
+                subprocess.run(["rcg2data", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                # result = subprocess.run(["rcg2data", selected_file])
                 event_csv = os.path.join(self.log_dir, f"{self.log_name}.event.csv")
                 if os.path.exists(event_csv):
                     subprocess.run(["gzip", "-f", event_csv])
                 logger.info(f"rcg2data completed. {self.log_name}")
+            except subprocess.CalledProcessError:
+                logger.error("rcg2data failed.")
+        else:
+            logger.warning("rcg2data not found.")
 
     def move_csv_files(self):
         """
@@ -206,7 +210,7 @@ class MatchRunner:
                 if os.path.exists(dst):
                     os.remove(dst)
                 shutil.move(log_path, dst)
-        logger.info(f"Moved stdout and stderr logs to {debug_log_dir}")
+        logger.info(f"Moved console logs to {debug_log_dir}")
 
         # move ocl files
         ocl_files = glob.glob("/tmp/HELIOS*.ocl")
@@ -216,30 +220,33 @@ class MatchRunner:
                 if os.path.exists(dst):
                     os.remove(dst)
                 shutil.move(f, dst)
-            logger.info(f"Moved ocl files to {debug_log_dir}")
+            logger.info(f"Moved ocl to {debug_log_dir}")
         else:
-            logger.info("ocl not found")
+            logger.info("ocl not found.")
 
         # compress the debug log directory
         archive_name = f"{debug_log_dir}.tar.gz"
         with tarfile.open(archive_name, "w:gz") as tar:
             tar.add(debug_log_dir, arcname=os.path.basename(debug_log_dir))
         shutil.rmtree(debug_log_dir)
-        logger.info(f"Compressed debug logs to {archive_name}")
+        logger.info(f"Compressed to {archive_name}")
 
         # move the archive to the log directory
         dst = os.path.join(self.log_dir, archive_name)
         if os.path.exists(dst):
             os.remove(dst)
-        shutil.move(archive_name, dst)
-        logger.info(f"Moved {archive_name} to {self.log_dir}")
+        try:
+            shutil.move(archive_name, dst)
+            logger.info(f"Moved {archive_name}")
+        except Exception as e:
+            logger.error(f"Failed to move {archive_name}: {e}")
 
     def check_cpufreq_info_available(self):
         """
         Check if the cpufreq-info command is available.
         """
         if not shutil.which("cpufreq-info"):
-            logger.warning("cpufreq-info not found")
+            logger.warning("cpufreq-info not found.")
             return False
 
         try:
@@ -250,7 +257,7 @@ class MatchRunner:
                 check=True
             )
         except subprocess.CalledProcessError:
-            logger.warning("cpufreq-set cannot be executed without password")
+            logger.warning("cpufreq-set cannot be executed without password.")
             return False
 
         return True
@@ -276,16 +283,18 @@ class MatchRunner:
                     check=True
                 )
                 if result.returncode != 0:
-                    logger.error("cpufreq-set execution failed")
+                    logger.error("cpufreq-set execution failed.")
                     return
             except subprocess.CalledProcessError:
-                logger.error("cpufreq-set failed")
+                logger.error("cpufreq-set failed.")
                 return
 
     def run(self):
         """
         Run the match.
         """
+        logger.info(f"Run match: {self.left_name} vs {self.right_name} / {self.log_name.split('-')[0]}")
+
         if not self.validate_environment():
             return False
         self.remove_old_files()
@@ -302,7 +311,8 @@ class MatchRunner:
         self.move_csv_files()
         self.compress_debug_logs()
         self.change_cpufreq("powersave")
-        logger.info("Match completed")
+
+        logger.info("Completed the match.")
 
         return True
 

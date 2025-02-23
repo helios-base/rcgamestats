@@ -45,12 +45,16 @@ def interruptable_sleep(duration):
             # logger.info("Stop file exists. The process will be finished.")
             break
         remaining_time = end_time - time.time()
-        time.sleep(min(remaining_time, 0.1))
+        time.sleep(min(remaining_time, 2))
 
 
-def create_temporal_dir():
+def create_directories():
+    if not os.path.exists(config.TEAM_DIR):
+        os.makedirs(config.TEAM_DIR)
     if not os.path.exists(config.TEMPORAL_DIR):
         os.makedirs(config.TEMPORAL_DIR)
+    if not os.path.exists(config.LOG_DIR):
+        os.makedirs(config.LOG_DIR)
 
 
 def remove_temporal_files():
@@ -92,8 +96,16 @@ def check_download_teams(match):
 
 
 def main():
+    if not config.API_KEY:
+        print("no API_KEY")
+        return
+
     remove_stop_file()
-    create_temporal_dir()
+    try:
+        create_directories()
+    except Exception as e:
+        logger.error(f"Failed to create directories. {e}")
+        return
 
     initial_sleep = config.SLEEP_TIME
     max_sleep = config.MAX_SLEEP_TIME
@@ -110,7 +122,7 @@ def main():
         if match:
             # compact_text = json.dumps(match.to_json(), separators=(",", ":"))
             # logger.info(f"RECV: {compact_text}")
-            logger.info(f"Received {match.group_name}/{match.index}")
+            logger.info(f">>>> Received {match.group_name}/{match.index}")
 
             while not check_download_teams(match):
                 logger.warning("Failed to download teams.")
@@ -124,11 +136,12 @@ def main():
             else:
                 match_manager.decline_match(match)
 
+            logger.info(f"<<<< Finised {match.group_name}/{match.index}")
             current_sleep = initial_sleep
         else:
-            current_sleep = min(current_sleep * 2, max_sleep)
+            current_sleep = min(current_sleep * 1.5, max_sleep)
 
-        logger.info(f"Sleep for {current_sleep} seconds.")
+        logger.info(f"Sleep for {round(current_sleep, 1)} seconds.")
         # time.sleep(current_sleep)
         interruptable_sleep(current_sleep)
 

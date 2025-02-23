@@ -68,6 +68,18 @@ tr.under_review:hover { background-color: #eeff7c; }
 tr.rejected { background-color: #c00000; }
 tr.rejected:hover { background-color: #ff0000; }
 
+td.host-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 20ch;
+}
+td.online { background-color:palegreen; }
+td.busy { background-color:#eeff7c }
+td.offline { background-color:#bbb; }
+td.stalled { background-color:indianred; }
+
 /* thやtd内の特定の要素の余白を調整する場合 */
 td *:first-child {
     margin-top: 0; /* 最初の子要素の上の余白を0に設定 */

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, request
 from flask_login import login_required
 from rcgame_flask.app import db
@@ -28,3 +28,28 @@ def show_detail(host_id):
     host = Host.query.get_or_404(host_id)
 
     return render_template("host/detail.html", host=host)
+
+
+def get_host_status(host):
+    """
+    Return the status of the host.
+    """
+    if host.assigned_match and host.assigned_match.processed == MatchStatus.IN_PROGRESS:
+        threshold = timedelta(minutes=15)
+        if host.assigned_match.left_team.synch_mode and host.assigned_match.right_team.synch_mode:
+            threshold = timedelta(minutes=5)
+
+        if (datetime.now() - host.assigned_match.start_time) < threshold:
+            return "busy"
+        else:
+            return "stalled"
+
+    if host.last_accessed_at and (datetime.now() - host.last_accessed_at) < timedelta(minutes=5):
+        return "online"
+
+    return "offline"
+
+
+@host.app_context_processor
+def inject_status_function():
+    return dict(get_host_status=get_host_status)

@@ -20,6 +20,10 @@
       <li><a href="{{ url_for('group.index') }}">Groups</a></li>
       <li><a href="{{ url_for('group.show_stats') }}">Stats</a></li>
       <li><a href="{{ url_for('team.index') }}">Teams</a></li>
+      <li><a href="{{ url_for('host.index') }}">Hosts</a></li>
+      {% if current_user.is_admin %}
+        <li><a href="{{ url_for('auth.show_server_logs') }}">ServerLog</a></li>
+      {% endif %}
       <li><span> | </span></li>
       <li><a href="{{ url_for('auth.dashboard') }}">{{ current_user['username'] }}</a></li>
       <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>

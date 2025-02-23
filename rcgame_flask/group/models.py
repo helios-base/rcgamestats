@@ -30,7 +30,7 @@ class Group(db.Model):
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    status = db.Column(db.Enum(GroupStatus), default=GroupStatus.NORMAL)
+    status = db.Column(db.Enum(GroupStatus), name="group_status_enum", default=GroupStatus.NORMAL)
 
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
@@ -41,6 +41,7 @@ class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     index = db.Column(db.Integer)
+    host_id = db.Column(db.Integer, db.ForeignKey('host.id'))
     host_name = db.Column(db.String(30))
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
@@ -48,13 +49,25 @@ class Match(db.Model):
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     left_score = db.Column(db.Integer)
     right_score = db.Column(db.Integer)
-    processed = db.Column(db.Enum(MatchStatus), default=MatchStatus.UNEXECUTED)
+    processed = db.Column(db.Enum(MatchStatus), name="match_status_enum", default=MatchStatus.UNEXECUTED)
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(16))
 
     group = db.relationship('Group', backref=db.backref('matches', cascade='all, delete-orphan', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
+    host = db.relationship('Host', foreign_keys=[host_id])
+
+    def reset_assignment(self):
+        self.host_id = None
+        self.host_name = None
+        self.start_time = None
+        self.end_time = None
+        self.left_score = None
+        self.right_score = None
+        self.processed = MatchStatus.UNEXECUTED
+        self.log_file_name = None
+        self.token = None
 
 
 class GroupStats(db.Model):

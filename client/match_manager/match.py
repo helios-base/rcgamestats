@@ -14,11 +14,12 @@ class Match:
     The Match object represents a match between two teams.
     """
 
-    def __init__(self, match_id, group_name, index, left_team_name, right_team_name, log_file_name):
+    def __init__(self, match_id, host_id, group_name, index, left_team_name, right_team_name, log_file_name):
         """
         Initialize the Match object.
         """
         self.match_id = match_id
+        self.host_id = host_id
         self.token = None
         self.group_name = group_name
         self.index = index
@@ -42,7 +43,8 @@ class Match:
         """
         try:
             match_id = json_data["match_id"]
-            token = json_data.get("token", "")
+            host_id = json_data.get("host_id")
+            token = json_data.get("token")
             group_name = json_data["group_name"]
             index = json_data["index"]
             left_team_name = json_data["left_team_name"]
@@ -56,7 +58,7 @@ class Match:
         except KeyError:
             return None
 
-        match = Match(match_id, group_name, index, left_team_name, right_team_name, log_file_name)
+        match = Match(match_id, host_id, group_name, index, left_team_name, right_team_name, log_file_name)
         match.token = token
         match.left_team_version = left_team_version
         match.right_team_version = right_team_version

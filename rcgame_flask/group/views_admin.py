@@ -490,6 +490,7 @@ def reset_match(group_id):
             current_app.logger.info(f"Removing log file {log_file_path} ...")
             os.remove(log_file_path)
 
+        match.host_id = None
         match.host_name = None
         match.start_time = None
         match.end_time = None
@@ -500,6 +501,7 @@ def reset_match(group_id):
         flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")
     elif match.processed == MatchStatus.IN_PROGRESS:
+        match.host_id = None
         match.host_name = None
         match.start_time = None
         match.processed = MatchStatus.UNEXECUTED

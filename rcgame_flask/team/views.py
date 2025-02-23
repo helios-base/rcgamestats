@@ -47,10 +47,10 @@ def toggle_active(team_id):
     """
     team = Team.query.get(team_id)
     if team is None:
-        flash(f"Team {team_id} not found.")
+        flash(f"Team {team_id} not found.", "error")
         return redirect(url_for("team.index"))
     if not team.is_active and team.version == "":
-        flash(f"Team {team.name} has no version.")
+        flash(f"Team {team.name} has no version.", "error")
         current_app.logger.error(f"toggle_active: Team {team.name} has no version.")
         return redirect(url_for("team.index"))
 
@@ -72,12 +72,12 @@ def delete_team(team_id):
     team = Team.query.get(team_id)
     if team:
         if team.is_active:
-            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
+            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.", "error")
             current_app.logger.error(f"delete_team: Team {team.name} ({team.version}) is active.")
             return redirect(url_for("team.index"))
 
         if Group.query.filter((Group.left_team_id == team_id) | (Group.right_team_id == team_id)).count() > 0:
-            flash(f"Team {team.name} ({team.version}) is used in a group. Delete the group first.")
+            flash(f"Team {team.name} ({team.version}) is used in a group. Delete the group first.", "error")
             current_app.logger.error(f"delete_team: Team {team.name} ({team.version}) is used in a group.")
             return redirect(url_for("team.index"))
 
@@ -108,13 +108,13 @@ def archive_teams():
     for team_id in team_ids:
         team = Team.query.get(team_id)
         if team is None:
-            flash(f"Team {team_id} not found.")
+            flash(f"Team {team_id} not found.", "error")
             current_app.logger.error(f"archive_teams: Team {team_id} not found.")
             continue
 
         team.is_active = False
         db.session.commit()
-        flash(f"Team {team.name} ({team.version}) archived.")
+        flash(f"Team {team.name} ({team.version}) archived.", "success")
         current_app.logger.info(f"Archived {team.name} ({team.version})")
 
     return redirect(url_for("team.index"))
@@ -131,23 +131,23 @@ def activate_teams():
     for team_id in team_ids:
         team = Team.query.get(team_id)
         if team is None:
-            flash(f"Team {team_id} not found.")
+            flash(f"Team {team_id} not found.", "error")
             current_app.logger.error(f"activate_teams: Team {team_id} not found.")
             continue
 
         if team.version == "":
-            flash(f"Team {team.name} has no version. Activation is not allowed.")
+            flash(f"Team {team.name} has no version. Activation is not allowed.", "error")
             current_app.logger.error(f"activate_teams: Team {team.name} has no version.")
             continue
 
         if team.is_active:
-            flash(f"Team {team.name} ({team.version}) is already active.")
+            flash(f"Team {team.name} ({team.version}) is already active.", "error")
             current_app.logger.error(f"activate_teams: Team {team.name} ({team.version}) is already active.")
             continue
 
         team.is_active = True
         db.session.commit()
-        flash(f"Team {team.name} ({team.version}) activated.")
+        flash(f"Team {team.name} ({team.version}) activated.", "success")
         current_app.logger.info(f"Activated {team.name} ({team.version})")
 
     return redirect(url_for("team.show_archived"))
@@ -164,17 +164,17 @@ def delete_teams():
     for team_id in team_ids:
         team = Team.query.get(team_id)
         if team is None:
-            flash(f"Team {team_id} not found.")
+            flash(f"Team {team_id} not found.", "error")
             current_app.logger.error(f"delete_teams: Team {team_id} not found.")
             continue
 
         if team.is_active:
-            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.")
+            flash(f"Team {team.name} ({team.version}) is active. Deactivate it first.", "error")
             current_app.logger.error(f"delete_teams: Team {team.name} ({team.version}) is active.")
             continue
 
         if Group.query.filter((Group.left_team_id == team_id) | (Group.right_team_id == team_id)).count() > 0:
-            flash(f"Team {team.name} ({team.version}) is used in a group. Delete the group first.")
+            flash(f"Team {team.name} ({team.version}) is used in a group. Delete the group first.", "error")
             current_app.logger.error(f"delete_teams: Team {team.name} ({team.version}) is used in a group.")
             return redirect(url_for("team.show_archived"))
 
@@ -187,7 +187,7 @@ def delete_teams():
 
         db.session.delete(team)
         db.session.commit()
-        flash(f"Deleted {team.name} ({team.version}).")
+        flash(f"Deleted {team.name} ({team.version}).", "success")
         current_app.logger.info(f"Deleted {team.name} ({team.version})")
 
     return redirect(url_for("team.show_archived"))
@@ -213,7 +213,7 @@ def upload():
         name = form.new_team_name.data if form.new_team_name.data else form.existing_team_name.data
         if name == "":
             form.new_team_name.errors.append("team name is required")
-            flash("team name is required")
+            flash("team name is required", "error")
             current_app.logger.error("team/upload: team name is required")
             return render_template("team/upload.html", form=form), 400
 
@@ -226,7 +226,7 @@ def upload():
         team = Team.query.filter_by(name=name, version=version).first()
         if team is not None:
             form.team_name.errors.append("team name and version already exist")
-            flash("team name and version already exist")
+            flash("team name and version already exist", "error")
             current_app.logger.error("team/upload: team name and version already exist")
             return render_template("team/upload.html", form=form), 409
 
@@ -255,7 +255,7 @@ def upload():
             db.session.rollback()
             form.team_name.errors.append("team name and version already exist")
             message = f"team name {name} and version {version} already exist"
-            flash(message)
+            flash(message, "error")
             current_app.logger.error(f"team/upload: {message}")
             return render_template("team/upload.html", form=form)
 

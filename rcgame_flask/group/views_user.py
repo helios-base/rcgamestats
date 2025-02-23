@@ -82,7 +82,7 @@ def show_group_matches(group_name):
     """
     group = Group.query.filter_by(name=group_name).first()
     if group is None:
-        flash(f"Group {group_name} not found.")
+        flash(f"Group {group_name} not found.", "error")
         return redirect(url_for("group.index"))
 
     matches = Match.query.filter_by(group_id=group.id).all()
@@ -139,13 +139,13 @@ def show_group_logs_by_id(group_id):
     """
     group = Group.query.get(group_id)
     if group is None:
-        flash(f"Group ID {group_id} not found.")
+        flash(f"Group ID {group_id} not found.", "error")
         return redirect(url_for("group.index"))
 
     dir_name = group.name
     log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
     if not os.path.exists(log_dir):
-        flash(f"Log directory for group [{group.name}] not found.")
+        flash(f"Log directory for group [{group.name}] not found.", "error")
         return redirect(url_for("group.index"))
 
     matches_in_group = Match.query.filter_by(group_id=group_id).all()
@@ -170,13 +170,13 @@ def show_group_logs(group_name):
     """
     group = Group.query.filter_by(name=group_name).first()
     if group is None:
-        flash(f"Group {group_name} not found.")
+        flash(f"Group {group_name} not found.", "error")
         return redirect(url_for("group.index"))
 
     dir_name = group_name
     log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
     # if not os.path.exists(log_dir):
-    #     flash(f"Log directory for group [{group_name}] not found.")
+    #     flash(f"Log directory for group [{group_name}] not found.", "error")
     #     #return redirect(url_for("group.index"))
     #     return redirect(url_for("group.show_group_matches", group_name=group_name))
 

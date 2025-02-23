@@ -50,7 +50,7 @@ def login():
             current_app.logger.info(f"User [{user.username}] logged in")
             return redirect(url_for("index"))
 
-        flash("authentication failed")
+        flash("authentication failed", "error")
         current_app.logger.info(f"User [{user.username}] login failed")
 
     use_google_login = current_app.config.get("GOOGLE_OAUTH_CLIENT_ID") and current_app.config.get("GOOGLE_OAUTH_CLIENT_SECRET")
@@ -66,7 +66,7 @@ def logout():
     """
     current_app.logger.info(f"User [{current_user.username}] logged out")
     logout_user()
-    flash("logout done")   
+    flash("logout done", "success")
 
     return redirect(url_for("auth.login"))
 
@@ -88,7 +88,7 @@ def change_password():
 
         current_user.set_password(form.new_password.data)
         db.session.commit()
-        flash("password changed")
+        flash("password changed", "success")
         current_app.logger.info(f"User [{current_user.username}] password changed")
         return redirect(url_for("index"))
 
@@ -108,7 +108,7 @@ def login_google():
 
     use_google_login = current_app.config.get("GOOGLE_OAUTH_CLIENT_ID") and current_app.config.get("GOOGLE_OAUTH_CLIENT_SECRET")
     if not use_google_login:
-        flash("Google login is not enabled")
+        flash("Google login is not enabled", "error")
         current_app.logger.info("Google login is not enabled")
         return redirect(url_for("auth.login"))
 
@@ -128,13 +128,13 @@ def login_google_callback():
         email = user_info['email']
 
         if not email:
-            flash(f"GoogleLogin: No email")
+            flash(f"GoogleLogin: No email", "error")
             current_app.logger.error(f"GoogleLogin: No email")
             return redirect(url_for("auth.login"))
 
         allowed_email = AllowedEmail.query.filter_by(email=email).first()
         if not allowed_email:
-            flash(f"[{email}] is not allowed to login.")
+            flash(f"[{email}] is not allowed to login.", "error")
             current_app.logger.warning(f"GoogleLogin: [{email}] is not allowed to login.")
             return redirect(url_for("auth.login"))
 
@@ -163,9 +163,9 @@ def login_google_callback():
         current_app.logger.info(f"GoogleLogin: LoggedIn [{user.username}]")
         return redirect(url_for("index"))
     except OAuthError:
-        flash(f"Exception: {OAuthError}")
+        flash(f"Exception: {OAuthError}", "error")
 
-    flash(f"GoogleLogin: Google account {email} cannot be verified")
+    flash(f"GoogleLogin: Google account {email} cannot be verified", "error")
     current_app.logger.warning(f"GoogleLogin: Google account {email} cannot be verified")
     return redirect(url_for("auth.login"))
 
@@ -201,7 +201,7 @@ def show_users():
             db.session.add(new_user)
             db.session.commit()
         except Exception as e:
-            flash(f"Error: {e}")
+            flash(f"Error: {e}", "error")
             return redirect(url_for("auth.register"))
 
         if not AllowedEmail.query.filter_by(email=email).first():
@@ -211,7 +211,7 @@ def show_users():
                 db.session.commit()
                 current_app.logger.info(f"Registered email [{email}] as [{type.value}]")
             except Exception as e:
-                flash(f"Error: {e}")
+                flash(f"Error: {e}", "error")
 
         api_key = APIKey(
             key=APIKey.generate_api_key(),
@@ -221,7 +221,7 @@ def show_users():
         db.session.add(api_key)
         db.session.commit()
 
-        flash(f"New user [{username}] registered")
+        flash(f"New user [{username}] registered", "success")
         current_app.logger.info(f"Registered user [{username}] as [{type.value}]")
 
     users = User.query.all()
@@ -245,19 +245,19 @@ def change_user_type():
     user = User.query.get(user_id)
     if user:
         if user.email == current_user.email:
-            flash(f"Cannot change own user type. mail={user.email}")
+            flash(f"Cannot change own user type. mail={user.email}", "error")
             current_app.logger.warning(f"Cannot change own user type. mail={user.email}")
         elif user.type == UserType.MASTER:
-            flash("Cannot change the master user type")
+            flash("Cannot change the master user type", "error")
             current_app.logger.warning("Cannot change the default admin user type")
         elif user.type == UserType.ADMIN and current_user.type != UserType.MASTER:
-            flash("Cannot change the admin user type")
+            flash("Cannot change the admin user type", "error")
             current_app.logger.warning("Cannot change the admin user type")
         else:
             try:
                 old_type = user.type
                 if old_type == UserType.MASTER:
-                    flash("Cannot change the master user type")
+                    flash("Cannot change the master user type", "error")
                     current_app.logger.warning("Cannot change the master user type")
                     return redirect(url_for("auth.show_users"))
 
@@ -268,10 +268,10 @@ def change_user_type():
 
                 user.type = new_type
                 db.session.commit()
-                flash(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]")
+                flash(f"User [{user.username}] type changed from [{old_type.value}] to [{new_type.value}]", "success")
                 current_app.logger.info(f"Changed [{user.username}], from [{old_type.value}] to [{new_type.value}]")
             except ValueError:
-                flash("Invalid user type")
+                flash("Invalid user type", "error")
 
     return redirect(url_for("auth.show_users"))
 
@@ -289,20 +289,20 @@ def bulk_delete_users():
         record = User.query.filter_by(id=user_id).first()
         if record:
             if record.email == current_user.email:
-                flash("Cannot delete yourself")
+                flash("Cannot delete yourself", "error")
                 continue
             if record.type == UserType.MASTER:
-                flash("Cannot delete master user")
+                flash("Cannot delete master user", "error")
                 continue
             if record.type == UserType.ADMIN:
                 if current_user.type != UserType.MASTER:
-                    flash("Cannot delete admin user")
+                    flash("Cannot delete admin user", "error")
                     continue
             count += 1
             db.session.delete(record)
             current_app.logger.info(f"Deleting user [{record.username}]")
     db.session.commit()
-    flash(f"Deleted {count} users")
+    flash(f"Deleted {count} users", "success")
     return redirect(url_for("auth.show_users"))
 
 
@@ -325,12 +325,12 @@ def show_allowed_emails():
             try:
                 db.session.add(allowed_email)
                 db.session.commit()
-                flash(f"New email [{email}] registered as [{type.value}]")
+                flash(f"New email [{email}] registered as [{type.value}]", "success")
                 current_app.logger.info(f"Registered email [{email}] as [{type.value}]")
             except Exception as e:
-                flash(f"Error: {e}")
+                flash(f"Error: {e}", "error")
         else:
-            flash(f"Email [{email}] already exists")
+            flash(f"Email [{email}] already exists", "error")
             current_app.logger.warning(f"show_allowed_email: Email [{email}] already exists")
 
     emails = AllowedEmail.query.all()
@@ -350,13 +350,13 @@ def bulk_delete_allowed_emails():
         record = AllowedEmail.query.filter_by(id=email_id).first()
         if record:
             if record.email == current_user.email:
-                flash("Cannot delete own email")
+                flash("Cannot delete own email", "error")
                 continue
             count += 1
             db.session.delete(record)
             current_app.logger.info(f"Delete email [{record.email}]")
     db.session.commit()
-    flash(f"Deleted {count} emails")
+    flash(f"Deleted {count} emails", "success")
     return redirect(url_for("auth.show_allowed_emails"))
 
 
@@ -455,7 +455,7 @@ def create_api_key():
     )
     db.session.add(api_key)
     db.session.commit()
-    flash("API key created")
+    flash("API key created", "success")
     current_app.logger.info(f"Created API key for user [{current_user.username}]")
 
     return redirect(url_for('auth.api_keys'))
@@ -469,17 +469,17 @@ def delete_api_key(key_id):
     """
     user_api_keys = current_user.api_keys.all()
     if len(user_api_keys) == 1:
-        flash("At least one API key is required")
+        flash("At least one API key is required", "error")
         return redirect(url_for("auth.api_keys"))
 
     api_key = APIKey.query.get(key_id)
     if api_key is None:
-        flash("API key not found")
+        flash("API key not found", "error")
         return redirect(url_for("auth.api_keys"))
 
     db.session.delete(api_key)
     db.session.commit()
-    flash("API key deleted")
+    flash("API key deleted", "success")
     current_app.logger.info(f"Deleted API key for user [{current_user.username}]")
     return redirect(url_for("auth.api_keys"))
 
@@ -504,26 +504,26 @@ def admin_delete_api_key(key_id):
     """
     api_key = APIKey.query.get(key_id)
     if api_key is None:
-        flash("API key not found")
+        flash("API key not found", "error")
         return redirect(url_for("auth.api_keys"))
 
     user = User.query.get(api_key.user_id)
     if user is None:
-        flash("User not found")
+        flash("User not found", "error")
         current_app.logger.warning(f"User not found for API key [{api_key.key}]")
 
     if user and user.is_admin:
         if user.id != current_user.id:
-            flash("Cannot delete other admin user's API key")
+            flash("Cannot delete other admin user's API key", "error")
             current_app.logger.warning(f"Cannot delete the API key of other admin user [{user.username}]")
             return redirect(url_for("auth.admin_api_keys"))
         elif len(user.api_keys.all()) == 1:
-            flash("Cannot delete the only API key of the admin user")
+            flash("Cannot delete the only API key of the admin user", "error")
             current_app.logger.warning(f"Cannot delete the only API key of the admin user [{user.username}]")
             return redirect(url_for("auth.admin_api_keys"))
 
     db.session.delete(api_key)
     db.session.commit()
-    flash("API key deleted")
+    flash("API key deleted", "success")
     current_app.logger.info(f"Deleted API key for user [{user.username}]")
     return redirect(url_for("auth.admin_api_keys"))

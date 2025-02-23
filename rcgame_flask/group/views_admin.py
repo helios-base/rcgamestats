@@ -36,18 +36,18 @@ def create():
         team_left_id = form.team_left.data
         team_right_id = form.team_right.data
         if form.team_left.data == form.team_right.data:
-            flash("The same team cannot be selected for both sides.")
+            flash("The same team cannot be selected for both sides.", "error")
             current_app.logger.error("The same team cannot be selected for both sides.")
             return redirect(url_for("group.create"))
 
         team_left = Team.query.get(team_left_id)
         team_right = Team.query.get(team_right_id)
         if team_left is None:
-            flash(f"Team ID {team_left_id} not found.")
+            flash(f"Team ID {team_left_id} not found.", "error")
             current_app.logger.error(f"Team ID {team_left_id} not found.")
             return redirect(url_for("group.create"))
         if team_right is None:
-            flash(f"Team ID {team_right_id} not found.")
+            flash(f"Team ID {team_right_id} not found.", "error")
             current_app.logger.error(f"Team ID {team_right_id} not found.")
             return redirect(url_for("group.create"))
 
@@ -66,7 +66,7 @@ def create():
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-            flash(f"Group [{group_name}] cannot be created.")
+            flash(f"Group [{group_name}] cannot be created.", "error")
             current_app.logger.error(f"Group [{group_name}] cannot be created.")
             return redirect(url_for("group.create"))
 
@@ -87,7 +87,7 @@ def create():
         save_group_metadata(group)
 
         message = f"Created {group_name}, matches={form.number_of_matches.data}"
-        flash(message)
+        flash(message, "success")
         current_app.logger.info(message)
         return redirect(url_for("group.index"))
 
@@ -119,11 +119,11 @@ def create_roundrobin():
                 team_left = Team.query.get(left_id)
                 team_right = Team.query.get(right_id)
                 if team_left is None:
-                    flash(f"Team ID {left_id} not found.")
+                    flash(f"Team ID {left_id} not found.", "error")
                     current_app.logger.error(f"Team ID {left_id} not found.")
                     return redirect(url_for("group.create_roundrobin"))
                 if team_right is None:
-                    flash(f"Team ID {right_id} not found.")
+                    flash(f"Team ID {right_id} not found.", "error")
                     current_app.logger.error(f"Team ID {right_id} not found.")
                     return redirect(url_for("group.create_roundrobin"))
 
@@ -149,7 +149,7 @@ def create_roundrobin():
                     db.session.commit()
                 except IntegrityError:
                     db.session.rollback()
-                    flash(f"Group name [{group_name}] already exists.")
+                    flash(f"Group name [{group_name}] already exists.", "error")
                     current_app.logger.error(f"Group name [{group_name}] already exists.")
                     continue
 
@@ -172,7 +172,7 @@ def create_roundrobin():
                 current_app.logger.info(f"Created {group_name}, matches={form.number_of_matches.data}")
 
         message = f"Created {created_count} round-robin groups with {form.number_of_matches.data} matches each."
-        flash(message)
+        flash(message, "success")
         current_app.logger.info(message)
         return redirect(url_for("group.index"))
 
@@ -212,7 +212,7 @@ def edit_group(group_id):
         save_group_metadata(group)
 
         message = f"Updated {group.name}, +{form.additional_matches.data}"
-        flash(message)
+        flash(message, "success")
         current_app.logger.info(message)
 
         if group.description != form.description.data:
@@ -234,7 +234,7 @@ def archive_group(group_id):
     """
     group = Group.query.get(group_id)
     if group is None:
-        flash(f"Group ID {group_id} not found.")
+        flash(f"Group ID {group_id} not found.", "error")
         current_app.logger.error(f"archive_group: Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
@@ -247,7 +247,7 @@ def archive_group(group_id):
 
     db.session.commit()
 
-    flash(f"Group [{group.name}] has been archived.")
+    flash(f"Group [{group.name}] has been archived.", "success")
     current_app.logger.info(f"Archived [{group.name}]")
     return redirect(url_for("group.index"))
 
@@ -332,7 +332,7 @@ def unarchive_groups():
     """
     group_ids = request.form.getlist('group_ids')
     if not group_ids:
-        flash("No groups selected for unarchiving.")
+        flash("No groups selected for unarchiving.", "error")
         current_app.logger.error("No groups selected for unarchiving.")
         return redirect(url_for("group.show_archived_groups"))
 
@@ -347,7 +347,7 @@ def unarchive_groups():
             current_app.logger.info(f"Unarchived {group.name}")
 
     db.session.commit()
-    flash(f"Unarchived {len(group_ids)} groups.")
+    flash(f"Unarchived {len(group_ids)} groups.", "success")
     current_app.logger.info(f"Unarchived {len(group_ids)} groups")
     return redirect(url_for("group.show_archived_groups"))
 
@@ -361,7 +361,7 @@ def delete_groups():
     """
     group_ids = request.form.getlist('group_ids')
     if not group_ids:
-        flash("No groups selected for deletion.")
+        flash("No groups selected for deletion.", "error")
         current_app.logger.error("No groups selected for deletion.")
         return redirect(url_for("group.show_archived_groups"))
 
@@ -381,7 +381,7 @@ def delete_groups():
                 db.session.commit()
             except IntegrityError:
                 db.session.rollback()
-                flash(f"Group [{group.name}] cannot be deleted.")
+                flash(f"Group [{group.name}] cannot be deleted.", "error")
                 continue
 
             log_dir = os.path.join(current_app.static_folder, "logs", group.name)
@@ -392,7 +392,7 @@ def delete_groups():
 
             current_app.logger.info(f"Deleted {group.name}")
 
-    flash(f"Deleted {len(group_ids)} groups.")
+    flash(f"Deleted {len(group_ids)} groups.", "success")
     current_app.logger.info(f"Deleted {len(group_ids)} groups")
     return redirect(url_for("group.show_archived_groups"))
 
@@ -406,19 +406,19 @@ def upload_group_results_to_google_sheet(group_id):
     """
     group = Group.query.get(group_id)
     if group is None:
-        flash(f"Group ID {group_id} not found.")
+        flash(f"Group ID {group_id} not found.", "error")
         return redirect(url_for("group.index"))
 
     group_name = group.name
     if group_name is None:
-        flash(f"Group ID {group_id} has no name.")
+        flash(f"Group ID {group_id} has no name.", "error")
         return redirect(url_for("group.index"))
 
     if group.left_team is None:
-        flash(f"Group ID {group_id} has no left team.")
+        flash(f"Group ID {group_id} has no left team.", "error")
         return redirect(url_for("group.index"))
     if group.right_team is None:
-        flash(f"Group ID {group_id} has no right team.")
+        flash(f"Group ID {group_id} has no right team.", "error")
         return redirect(url_for("group.index"))
 
     group_time = group.created_at
@@ -426,7 +426,7 @@ def upload_group_results_to_google_sheet(group_id):
     right_team_name = group.right_team.name
     description = group.description
 
-    flash(f"Uploading group results to Google Spreadsheet: group_name={group_name}")
+    flash(f"Uploading group results to Google Spreadsheet: group_name={group_name}", "success")
     current_app.logger.info(f"Uploading {group.name} to Google Spreadsheet.")
 
     # Get match records for the group
@@ -436,10 +436,10 @@ def upload_group_results_to_google_sheet(group_id):
     if googlesheet.upload_group_results(
         group_name, group_time, left_team_name, right_team_name, description, match_records
     ):
-        flash("Succeeded to upload the group results to the Google Spreadsheet.")
+        flash("Succeeded to upload the group results to the Google Spreadsheet.", "success")
         current_app.logger.info("Succeeded to upload the group results to the Google Spreadsheet.")
     else:
-        flash("Failed to upload the group results to the Google Spreadsheet.")
+        flash("Failed to upload the group results to the Google Spreadsheet.", "error")
         current_app.logger.error("Failed to upload the group results to the Google Spreadsheet.")
 
     return redirect(url_for("group.show_group_matches", group_name=group.name))
@@ -460,19 +460,19 @@ def reset_match(group_id):
     match_id = request.form.get("match_id")
     if not match_id:
         flash("Match ID is missing.", "error")
-        current_app.logger.error("reset_match: Match ID is missing.")
+        current_app.logger.error("reset_match: Match ID is missing.", "error")
         # return redirect(url_for("group.detail", group_id=request.args.get("group_id")))
         return redirect(url_for("group.detail", group_id=group_id))
 
     group = Group.query.get(group_id)
     if group is None:
-        flash(f"Group ID {group_id} not found.")
+        flash(f"Group ID {group_id} not found.", "error")
         current_app.logger.error(f"reset_match: Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
     match = Match.query.get(match_id)
     if match is None:
-        flash(f"Match ID {match_id} not found.")
+        flash(f"Match ID {match_id} not found.", "error")
         current_app.logger.error(f"reset_match: Match ID {match_id} not found.")
         return redirect(url_for("group.show_group_matches", group_name=group.name))
 
@@ -497,7 +497,7 @@ def reset_match(group_id):
         match.log_file_name = None
         match.token = None
         db.session.commit()
-        flash(f"Match {group_name}/{match.index} has been reset.")
+        flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")
     elif match.processed == MatchStatus.IN_PROGRESS:
         match.host_name = None
@@ -506,10 +506,10 @@ def reset_match(group_id):
         match.log_file_name = None
         match.token = None
         db.session.commit()
-        flash(f"Match {group_name}/{match.index} has been reset.")
+        flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")
     else:
-        flash("Match not found or not in progress or completed.")
-        current_app.logger.error("reset_match: Match not found or not in progress or completed.")
+        flash("Match not found or not in progress or completed.", "error")
+        current_app.logger.error("reset_match: Match not found or not in progress or completed.", "error")
 
     return redirect(url_for("group.show_group_matches", group_name=group_name))

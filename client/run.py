@@ -45,7 +45,7 @@ def interruptable_sleep(duration):
             # logger.info("Stop file exists. The process will be finished.")
             break
         remaining_time = end_time - time.time()
-        time.sleep(min(remaining_time, 0.1))
+        time.sleep(min(remaining_time, 2))
 
 
 def create_temporal_dir():
@@ -126,9 +126,9 @@ def main():
 
             current_sleep = initial_sleep
         else:
-            current_sleep = min(current_sleep * 2, max_sleep)
+            current_sleep = min(current_sleep * 1.5, max_sleep)
 
-        logger.info(f"Sleep for {current_sleep} seconds.")
+        logger.info(f"Sleep for {round(current_sleep, 1)} seconds.")
         # time.sleep(current_sleep)
         interruptable_sleep(current_sleep)
 

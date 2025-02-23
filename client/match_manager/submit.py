@@ -3,6 +3,7 @@ import time
 import requests
 import glob
 import logging
+from urllib.parse import urljoin
 from config import config
 
 logger = logging.getLogger("client")
@@ -26,7 +27,8 @@ def submit_result(match):
     """
     Submit the result to the server.
     """
-    url = f"http://{config.SERVER_URL}/group/submit_result"
+    endpoint = "group/submit_result"
+    url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {
         "Accept": "application/json",

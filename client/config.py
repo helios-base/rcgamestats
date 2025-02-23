@@ -1,5 +1,4 @@
 import os
-import subprocess
 import socket
 from pathlib import Path
 from dotenv import load_dotenv
@@ -27,7 +26,7 @@ class Config:
     API_KEY = os.getenv("API_KEY", "")
     # HOST_NAME = os.getenv("HOST_NAME") or get_hostname()
     HOST_NAME = os.getenv("HOST_NAME") or socket.gethostname()
-    SERVER_URL = os.getenv("SERVER_URL", "127.0.0.1:5000")
+    SERVER_URL = os.getenv("SERVER_URL", "http://127.0.0.1:5000")
     # RUN_SCRIPT =  os.path.join(os.path.dirname(__file__), 'match_manager', 'run_match.sh')
     TEAM_DIR = os.path.expanduser(os.getenv("TEAM_DIR", "~/rcgamestats/teams"))
     STOP_FILE_PATH = os.path.expanduser(os.getenv("STOP_FILE_PATH", "~/rcgamestats/stop.txt"))

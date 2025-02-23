@@ -1,6 +1,7 @@
 import requests
 import time
 import logging
+from urllib.parse import urljoin
 from config import config
 
 logger = logging.getLogger("client")
@@ -10,7 +11,8 @@ def decline_match(match):
     """
     Decline the match.
     """
-    url = f"http://{config.SERVER_URL}/group/decline_assignment"
+    endpoint = "group/decline_assignment"
+    url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {
         "Accept": "application/json",

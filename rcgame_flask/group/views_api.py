@@ -115,8 +115,8 @@ def submit_result():
         match_id = data.get("match_id")
         left_team_name = data.get("left_team_name")
         right_team_name = data.get("right_team_name")
-        left_score = data.get("left_score")
-        right_score = data.get("right_score")
+        left_score = int(data.get("left_score"))
+        right_score = int(data.get("right_score"))
         token = data.get("token")
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -137,7 +137,23 @@ def submit_result():
 
     if match.token != token:
         current_app.logger.error(f"@{match.host_name} Token does not match for {match.grroup.name}/{match.index}.")
+        match.host_name = None
+        match.start_time = None
+        match.processed = MatchStatus.UNEXECUTED
+        match.log_file_name = None
+        match.token = None
+        db.session.commit()
         return jsonify({"error": "Token does not match."}), 401
+
+    if left_score < 0 or right_score < 0:
+        current_app.logger.error(f"@{match.host_name} Invalid score for {match.group.name}/{match.index}.")
+        match.host_name = None
+        match.start_time = None
+        match.processed = MatchStatus.UNEXECUTED
+        match.log_file_name = None
+        match.token = None
+        db.session.commit()
+        return jsonify({"error": "Invalid score."}), 400
 
     group = Group.query.get(match.group_id)
     if group is None:
@@ -165,6 +181,7 @@ def submit_result():
     match.left_score = left_score
     match.right_score = right_score
     match.processed = MatchStatus.COMPLETED
+    print(f"Match {match.id} completed with {left_score} - {right_score}.")
 
     group.updated_at = end_time
 

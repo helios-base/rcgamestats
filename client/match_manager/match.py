@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from config import config
 from team_manager import get_team_path
+from .match_runner import MatchRunner
 
 logger = logging.getLogger("client")
 
@@ -129,13 +130,17 @@ class Match:
         # command = f"{config.RUN_SCRIPT} {self.left_team_name} {self.right_team_name} {log_dir} {self.log_file_name}"
         left_path = get_team_path(self.left_team_name, self.left_team_version)
         right_path = get_team_path(self.right_team_name, self.right_team_version)
-        synch_mode_str = "1" if self.synch_mode else "0"
+        # synch_mode_str = "1" if self.synch_mode else "0"
 
-        command = f"{config.RUN_SCRIPT} {left_path} {right_path} {synch_mode_str} {log_dir} {self.log_file_name}"
-        exit_code = os.system(command)
+        # command = f"{config.RUN_SCRIPT} {left_path} {right_path} {synch_mode_str} {log_dir} {self.log_file_name}"
+        # exit_code = os.system(command)
 
-        if exit_code != 0:
-            logger.error(f"Error running the match.")
+        # if exit_code != 0:
+        #     logger.error(f"Error running the match.")
+        #     return False
+
+        runner = MatchRunner(left_path, right_path, self.synch_mode, log_dir, self.log_file_name)
+        if not runner.run():
             return False
 
         result_csv = os.path.join(log_dir, f"{self.log_file_name}.result.csv")

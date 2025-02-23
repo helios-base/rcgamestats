@@ -201,7 +201,7 @@ def submit_result():
         return jsonify({"error": "Host not found."}), 404
 
     host.last_accessed_at = end_time
-    host.assigned_host_id = None
+    host.assigned_match_id = None
 
     # The seconds of the match duration are calculated as the difference between the start and end times.
     duration = (end_time - match.start_time).total_seconds()

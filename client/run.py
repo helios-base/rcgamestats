@@ -11,18 +11,21 @@ from config import config
 
 # logging settings
 logger = logging.getLogger("client")
-logger.setLevel(logging.INFO)
 
-log_file = os.path.join(config.LOG_DIR, "client.log")
-handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
-# formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s in %(filename)s:%(lineno)d")
-formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
+def init_logging():
+    logger.setLevel(logging.INFO)
+
+    log_file = os.path.join(config.LOG_DIR, "client.log")
+    handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
+    # formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s in %(filename)s:%(lineno)d")
+    formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
 
 def signal_handler(signal, frame):
@@ -131,4 +134,5 @@ def main():
 
 
 if __name__ == "__main__":
+    init_logging()
     main()

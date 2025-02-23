@@ -50,7 +50,7 @@ def submit_result(match):
     # files = [(os.path.basename(file_path), open(file_path, 'rb')) for file_path in file_paths]
 
     # logger.info(f"Submit result: {match_data}")
-    logger.info(f"Submit result {match.group_name}/{match.index}, {match.left_score} - {match.right_score}")
+    logger.info(f"Submitting result {match.group_name}/{match.index}, {match.left_score} - {match.right_score}")
 
     response = requests.post(url, headers=headers, data=match_data, files=files)
     try:
@@ -59,7 +59,8 @@ def submit_result(match):
         # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) HTTPError:", e)
         # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Response content:", response.text)
         logger.error(f"HTTP error occurred: {e}")
-        logger.error(f"SubmitResponse: {response.text}")
+        # logger.error(f"SubmitResponse: {response.text}")
+        logger.error(f"SubmitResponse: {response.json()}")
         return None
 
     # print(f"[{datetime.now().strftime('%Y%m%d-%H%M%S')}] (submit_result) Response content:", response.text)

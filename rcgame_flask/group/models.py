@@ -136,8 +136,8 @@ class GroupStats(db.Model):
         if self.completed_count == 0:
             return
 
-        left_scores = np.array([match.left_score for match in matches if match.left_score >= 0])
-        right_scores = np.array([match.right_score for match in matches if match.right_score >= 0])
+        left_scores = np.array([match.left_score for match in matches if match.left_score is not None and match.left_score >= 0])
+        right_scores = np.array([match.right_score for match in matches if match.right_score is not None and match.right_score >= 0])
 
         self.left_win = int(np.sum(left_scores > right_scores))
         self.right_win = int(np.sum(left_scores < right_scores))

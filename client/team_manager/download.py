@@ -133,7 +133,7 @@ def download_team(team_name, version):
         return False
 
     # Download the team from the server
-    endpoint = "team/api_download/{team_name}/{version}"
+    endpoint = "api/download/{team_name}/{version}"
     url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {

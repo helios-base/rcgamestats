@@ -27,7 +27,7 @@ def submit_result(match):
     """
     Submit the result to the server.
     """
-    endpoint = "group/submit_result"
+    endpoint = "api/submit_result"
     url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {

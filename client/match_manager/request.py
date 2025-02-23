@@ -12,7 +12,7 @@ def request_match():
     """
     Request a match from the server.
     """
-    endpoint = "group/request_match"
+    endpoint = "api/request_match"
     url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {

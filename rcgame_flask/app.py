@@ -100,6 +100,9 @@ def create_app(test_config=None):
     from rcgame_flask.host import views as host_views
     app.register_blueprint(host_views.host, url_prefix='/host')
 
+    from rcgame_flask.api import views as api_views
+    app.register_blueprint(api_views.api, url_prefix='/api')
+
     # set Enums as global variables for Jinja templates
     from rcgame_flask.auth.models import UserType
     from rcgame_flask.group.models import GroupStatus

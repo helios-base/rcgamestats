@@ -11,7 +11,7 @@ def decline_match(match):
     """
     Decline the match.
     """
-    endpoint = "group/decline_assignment"
+    endpoint = "api/decline_match"
     url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {

@@ -34,6 +34,7 @@ def submit_result(match):
 
     match_data = {
         "type": "submit_result",
+        "host_id": match.host_id,
         "host_name": config.HOST_NAME,
         "match_id": match.match_id,
         "token": match.token,

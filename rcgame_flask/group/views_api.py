@@ -66,6 +66,7 @@ def request_match():
         return jsonify({"error": "Right team not found."}), 404
 
     # Assign the match to the host
+    match.host_id = host.id
     match.host_name = host_name
     match.start_time = start_time
     match.processed = MatchStatus.IN_PROGRESS
@@ -86,6 +87,7 @@ def request_match():
             "group_id": match.group_id,
             "group_name": match.group.name,
             "index": match.index,
+            "host_id": match.host_id,
             "host_name": match.host_name,
             "start_time": start_time,
             "left_team_name": match.left_team.name,
@@ -112,7 +114,8 @@ def submit_result():
     # print("(submit_result) files:", request.files)
 
     try:
-        match_id = data.get("match_id")
+        match_id = int(data.get("match_id"))
+        host_id = int(data.get("host_id"))
         left_team_name = data.get("left_team_name")
         right_team_name = data.get("right_team_name")
         left_score = int(data.get("left_score"))
@@ -134,24 +137,23 @@ def submit_result():
         return jsonify({"error": "Right team name do not match."}), 400
 
     # print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.index)
+    print(f"received host_id = {host_id} and match.host_id = {match.host_id}")
+
+    if match.host_id != host_id:
+        current_app.logger.error(f"@{match.host_name} Host ID does not match for {match.group.name}/{match.index}.")
+        match.reset_assignment()
+        db.session.commit()
+        return jsonify({"error": "Host ID does not match."}), 401
 
     if match.token != token:
         current_app.logger.error(f"@{match.host_name} Token does not match for {match.grroup.name}/{match.index}.")
-        match.host_name = None
-        match.start_time = None
-        match.processed = MatchStatus.UNEXECUTED
-        match.log_file_name = None
-        match.token = None
+        match.reset_assignment()
         db.session.commit()
         return jsonify({"error": "Token does not match."}), 401
 
     if left_score < 0 or right_score < 0:
         current_app.logger.error(f"@{match.host_name} Invalid score for {match.group.name}/{match.index}.")
-        match.host_name = None
-        match.start_time = None
-        match.processed = MatchStatus.UNEXECUTED
-        match.log_file_name = None
-        match.token = None
+        match.reset_assignment()
         db.session.commit()
         return jsonify({"error": "Invalid score."}), 400
 
@@ -191,7 +193,8 @@ def submit_result():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-    host = Host.query.filter_by(name=match.host_name).first()
+    # host = Host.query.filter_by(name=match.host_name).first()
+    host = Host.query.get(match.host_id)
     if host is None:
         current_app.logger.error(f"@{match.host_name} Host not found.")
         return jsonify({"error": "Host not found."}), 404
@@ -245,14 +248,9 @@ def decline_assignment():
         current_app.logger.error(f"@{host_name} deline_assignment: Token does not match {match.group.name}/{match.index} @{match.host_name}")
         return jsonify({"error": "Token does not match."}), 401
 
-    match.host_name = None
-    match.start_time = None
-    match.processed = MatchStatus.UNEXECUTED
-    match.log_file_name = None
-    match.token = None
-    db.session.commit()
-
     current_app.logger.info(f"@{match.host_name} Declined {match.group.name}/{match.index}")
+    match.reset_assignment()
+    db.session.commit()
     return jsonify({"message": "Match declined."})
 
 #

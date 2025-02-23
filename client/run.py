@@ -92,6 +92,10 @@ def check_download_teams(match):
 
 
 def main():
+    if not config.API_KEY:
+        print("no API_KEY")
+        return
+
     remove_stop_file()
     create_temporal_dir()
 

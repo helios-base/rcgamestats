@@ -24,7 +24,7 @@ load_dotenv(root_dir / ".env")
 
 
 class Config:
-    API_KEY = os.getenv("API_KEY", "unknown")
+    API_KEY = os.getenv("API_KEY", "")
     # HOST_NAME = os.getenv("HOST_NAME") or get_hostname()
     HOST_NAME = os.getenv("HOST_NAME") or socket.gethostname()
     SERVER_URL = os.getenv("SERVER_URL", "127.0.0.1:5000")

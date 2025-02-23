@@ -28,10 +28,10 @@ def submit_results(group_data, results):
     return True
 
 
-def __get_submit_results_endpoint():
-    submit_results_endpoint = "group/admin/submit_result"
-    submit_results_url = urljoin(config.SERVER_URL, submit_results_endpoint)
-    return submit_results_url
+def __get_submit_results_url():
+    endpoint = "api/admin/submit_result"
+    url = urljoin(config.SERVER_URL, endpoint)
+    return url
 
 
 def __submit_result(group_id, result):
@@ -47,7 +47,7 @@ def __submit_result(group_id, result):
     if filename is None or left_score is None or right_score is None:
         return False
 
-    url = __get_submit_results_endpoint()
+    url = __get_submit_results_url()
 
     headers = {
         "Accept": "application/json",

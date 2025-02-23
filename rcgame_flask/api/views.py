@@ -2,22 +2,23 @@ import os
 import re
 import secrets
 from datetime import datetime
-from flask import jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.app import db, csrf
-from rcgame_flask.group import group as group_bp
-from rcgame_flask.group.models import Group, GroupStats, Match, MatchStatus
-from rcgame_flask.group.utils import create_group_name, save_group_metadata
 from rcgame_flask.auth.decorators import api_key_required, admin_api_key_required
+from rcgame_flask.group.models import Group, GroupStats, Match, MatchStatus
+from rcgame_flask.group.utils import save_group_metadata
 from rcgame_flask.host.models import Host
 from rcgame_flask.team.models import Team
+
+api = Blueprint("api", __name__, url_prefix="/api")
 
 #
 # Client API
 #
 
 
-@group_bp.route("/request_match", methods=["POST"])
+@api.route("/request_match", methods=["POST"])
 @csrf.exempt
 @api_key_required
 def request_match():
@@ -106,7 +107,7 @@ def request_match():
     )
 
 
-@group_bp.route("/submit_result", methods=["POST"])
+@api.route("/submit_result", methods=["POST"])
 @csrf.exempt
 @api_key_required
 def submit_result():
@@ -223,10 +224,10 @@ def submit_result():
     return jsonify({"message": message})
 
 
-@group_bp.route("/decline_assignment", methods=["POST"])
+@api.route("/decline_match", methods=["POST"])
 @csrf.exempt
 @api_key_required
-def decline_assignment():
+def decline_match():
     """
     Decline an assigned match.
     """
@@ -260,12 +261,40 @@ def decline_assignment():
     db.session.commit()
     return jsonify({"message": "Match declined."})
 
+
+@api.route("/download/<string:name>/<string:version>", methods=["GET"])
+@api_key_required
+def download(name, version):
+    """
+    Download the team archive.
+    """
+    client_ip = request.remote_addr
+    # In case of reverse proxy
+    x_forwarded_for = request.headers.get('X-Forwarded-For')
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(',')[0].strip()
+
+    team = Team.query.filter_by(name=name, version=version).first()
+    if team:
+        print(team.archive_path)
+        abs_path = os.path.join(current_app.static_folder, team.archive_path)
+        try:
+            current_app.logger.info(f"Send team {name} ({version}) to {client_ip}")
+            return send_file(abs_path, as_attachment=True)
+        except FileNotFoundError:
+            abort(404)
+        # The folloing code causes a problem for transferring a gzipped file.
+        # return redirect(url_for("static", filename=team.archive_path))
+
+    return jsonify({"error": "Team not found."}), 404
+
+
 #
 # Admin API
 #
 
 
-@group_bp.route("/admin/create_group", methods=["POST"])
+@api.route("/admin/create_group", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
 def admin_api_create_group():
@@ -360,7 +389,7 @@ def admin_api_create_group():
                     "number_of_matches": number_of_matches})
 
 
-@group_bp.route("/admin/submit_result", methods=["POST"])
+@api.route("/admin/submit_result", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
 def admin_api_submit_result():

@@ -1,7 +1,7 @@
 import requests
 import logging
-import json
 # from datetime import datetime
+from urllib.parse import urljoin
 from config import config
 from .match import Match
 
@@ -12,7 +12,8 @@ def request_match():
     """
     Request a match from the server.
     """
-    url = f"http://{config.SERVER_URL}/group/request_match"
+    endpoint = "api/request_match"
+    url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {
         "Content-Type": "application/json",

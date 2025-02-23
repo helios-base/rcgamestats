@@ -3,10 +3,10 @@ from urllib.parse import urljoin
 from .config import config
 
 
-def get_create_group_endpoint():
-    create_group_endpoint = "group/admin/create_group"
-    create_group_url = urljoin(config.SERVER_URL, create_group_endpoint)
-    return create_group_url
+def __get_create_group_url():
+    endpoint = "api/admin/create_group"
+    url = urljoin(config.SERVER_URL, endpoint)
+    return url
 
 
 def create_group(results):
@@ -19,7 +19,7 @@ def create_group(results):
         print(f"No group files found in {config.GROUP_DIR}")
         return None
 
-    url = get_create_group_endpoint()
+    url = __get_create_group_url()
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",

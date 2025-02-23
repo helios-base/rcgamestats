@@ -4,6 +4,7 @@ import tarfile
 import zipfile
 # import shutil
 import logging
+from urllib.parse import urljoin
 from config import config
 
 logger = logging.getLogger("client")
@@ -132,7 +133,8 @@ def download_team(team_name, version):
         return False
 
     # Download the team from the server
-    url = f"http://{config.SERVER_URL}/team/api_download/{team_name}/{version}"
+    endpoint = "api/download/{team_name}/{version}"
+    url = urljoin(config.SERVER_URL, endpoint)
 
     headers = {
         "Accept-Encoding": "identity",

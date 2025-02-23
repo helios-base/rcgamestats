@@ -48,9 +48,13 @@ def interruptable_sleep(duration):
         time.sleep(min(remaining_time, 2))
 
 
-def create_temporal_dir():
+def create_directories():
+    if not os.path.exists(config.TEAM_DIR):
+        os.makedirs(config.TEAM_DIR)
     if not os.path.exists(config.TEMPORAL_DIR):
         os.makedirs(config.TEMPORAL_DIR)
+    if not os.path.exists(config.LOG_DIR):
+        os.makedirs(config.LOG_DIR)
 
 
 def remove_temporal_files():
@@ -97,7 +101,11 @@ def main():
         return
 
     remove_stop_file()
-    create_temporal_dir()
+    try:
+        create_directories()
+    except Exception as e:
+        logger.error(f"Failed to create directories. {e}")
+        return
 
     initial_sleep = config.SLEEP_TIME
     max_sleep = config.MAX_SLEEP_TIME

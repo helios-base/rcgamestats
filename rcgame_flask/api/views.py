@@ -107,104 +107,88 @@ def request_match():
     )
 
 
-@api.route("/submit_result", methods=["POST"])
-@csrf.exempt
-@api_key_required
-def submit_result():
+def extract_result_params(data):
     """
-    Submit a match result.
+    Extract match result parameters.
     """
-    # print("(submit_result) request.form:", request.form)
-    data = request.form.to_dict()
-    # print("(submit_result) match_result:", data)
-    # print("(submit_result) files:", request.files)
-
     try:
-        match_id = int(data.get("match_id"))
-        host_id = int(data.get("host_id"))
-        left_team_name = data.get("left_team_name")
-        right_team_name = data.get("right_team_name")
-        left_score = int(data.get("left_score"))
-        right_score = int(data.get("right_score"))
-        token = data.get("token")
+        return {
+            "match_id": int(data.get("match_id")),
+            "host_id": int(data.get("host_id")),
+            "left_team_name": data.get("left_team_name"),
+            "right_team_name": data.get("right_team_name"),
+            "left_score": int(data.get("left_score")),
+            "right_score": int(data.get("right_score")),
+            "token": data.get("token"),
+        }
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        raise ValueError(f"Invalid parameters: {e}")
 
-    end_time = datetime.now().replace(microsecond=0)
 
-    match = Match.query.get(match_id)
+def validate_match(match, params):
+    """
+    Validate the match and the parameters.
+    """
     if match is None:
-        return jsonify({"error": "Match not found."}), 404
+        return "Match not found.", 404
     if match.left_team is None or match.right_team is None:
-        return jsonify({"error": "Teams not found."}),
-    if match.left_team.name != left_team_name:
-        return jsonify({"error": "Left team name do not match."}), 400
-    if match.right_team.name != right_team_name:
-        return jsonify({"error": "Right team name do not match."}), 400
-
-    # print("(submit_result) found match data:", match.id, match.group_id, match.group.name, match.index)
-    # print(f"received host_id = {host_id} and match.host_id = {match.host_id}")
-
-    if match.host_id != host_id:
+        return "Teams not found.", 404
+    if match.left_team.name != params["left_team_name"]:
+        return "Left team name do not match.", 400
+    if match.right_team.name != params["right_team_name"]:
+        return "Right team name do not match.", 400
+    if match.processed != MatchStatus.IN_PROGRESS:
+        return "Match is not in progress.", 400
+    if match.host_id != params["host_id"]:
         current_app.logger.error(f"@{match.host_name} Host ID does not match for {match.group.name}/{match.index}.")
         match.reset_assignment()
         db.session.commit()
-        return jsonify({"error": "Host ID does not match."}), 401
-
-    if match.token != token:
-        current_app.logger.error(f"@{match.host_name} Token does not match for {match.grroup.name}/{match.index}.")
+        return "Host ID do not match.", 401
+    if match.token != params["token"]:
+        current_app.logger.error(f"@{match.host_name} Token does not match for {match.group.name}/{match.index}.")
         match.reset_assignment()
         db.session.commit()
-        return jsonify({"error": "Token does not match."}), 401
-
-    if left_score < 0 or right_score < 0:
+        return "Token do not match.", 401
+    if params["left_score"] < 0 or params["right_score"] < 0:
         current_app.logger.error(f"@{match.host_name} Invalid score for {match.group.name}/{match.index}.")
         match.reset_assignment()
         db.session.commit()
-        return jsonify({"error": "Invalid score."}), 400
+        return "Invalid score.", 400
+    return None, 200
 
-    group = Group.query.get(match.group_id)
-    if group is None:
-        return jsonify({"error": "Group not found."}), 404
 
-    # Create the log directory
+def save_log_files(match, group):
+    """
+    Save the log files.
+    """
     log_dir = os.path.join(current_app.static_folder, "logs", group.name)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    # Save the log files
     common_name = match.log_file_name
     count = 0
     for file in request.files.getlist("log_file"):
         if file and file.filename:
             new_file_name = re.sub(r'^[^.]+', common_name, file.filename)
-            # print(f"Saving log file as {group.name}/{new_file_name}")
             file.save(os.path.join(log_dir, new_file_name))
             count += 1
     current_app.logger.info(f"@{match.host_name} Saved    {group.name}/{match.index}, files={count}")
-    # print(f"Saved {count} log files for match {group.name}/{match.index}.")
 
-    # Update the match record
+
+def update_match_result(match, params, end_time):
+    """
+    Update the match result.
+    """
     match.end_time = end_time
-    match.left_score = left_score
-    match.right_score = right_score
+    match.left_score = params["left_score"]
+    match.right_score = params["right_score"]
     match.processed = MatchStatus.COMPLETED
-    # print(f"Match {match.id} completed with {left_score} - {right_score}.")
 
-    group.updated_at = end_time
 
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    # host = Host.query.filter_by(name=match.host_name).first()
-    host = Host.query.get(match.host_id)
-    if host is None:
-        current_app.logger.error(f"@{match.host_name} Host not found.")
-        return jsonify({"error": "Host not found."}), 404
-
+def update_host(host, match, end_time):
+    """
+    Update the host record.
+    """
     host.last_accessed_at = end_time
     host.assigned_match_id = None
 
@@ -217,9 +201,54 @@ def submit_result():
         host.total_runtime_normal += duration
         host.total_matches_normal += 1
 
-    db.session.commit()
 
-    message = f"@{match.host_name} Result   {group.name}/{match.index}, {left_score} - {right_score}"
+@api.route("/submit_result", methods=["POST"])
+@csrf.exempt
+@api_key_required
+def submit_result():
+    """
+    Submit a match result.
+    """
+    data = request.form.to_dict()
+    try:
+        params = extract_result_params(data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    match = Match.query.get(params["match_id"])
+    error_msg, status_code = validate_match(match, params)
+    if error_msg:
+        return jsonify({"error": error_msg}), status_code
+
+    group = Group.query.get(match.group_id)
+    if group is None:
+        return jsonify({"error": "Group not found."}), 404
+
+    # Save the log files and commit the result
+    save_log_files(match, group)
+    end_time = datetime.now().replace(microsecond=0)
+    group.updated_at = end_time
+    update_match_result(match, params, end_time)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    # Update the host record
+    host = Host.query.get(match.host_id)
+    if host is None:
+        current_app.logger.error(f"@{match.host_name} Host not found.")
+        return jsonify({"error": "Host not found."}), 404
+
+    update_host(host, match, end_time)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    message = f"@{match.host_name} Result   {group.name}/{match.index}, {params['left_score']} - {params['right_score']}"
     current_app.logger.info(message)
     return jsonify({"message": message})
 

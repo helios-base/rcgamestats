@@ -47,7 +47,7 @@ def submit_result(match):
         "host_name": config.HOST_NAME,
         "host_token": host_token,
         "match_id": match.match_id,
-        "token": match.token,
+        "match_token": match.match_token,
         "left_team_name": match.left_team_name,
         "right_team_name": match.right_team_name,
         "left_score": match.left_score,
@@ -70,7 +70,7 @@ def submit_result(match):
         try:
             response = requests.post(url, headers=headers, data=match_data, files=files)
             response.raise_for_status()
-            logger.error(f"SubmitResponse: {response.json()}")
+            logger.info(f"SubmitResponse: {response.json()}")
             break
         except requests.exceptions.HTTPError as e:
             logger.error(f"submit_result: HTTP error occurred: {e}")

@@ -507,6 +507,9 @@ def reset_match(group_id):
         match.processed = MatchStatus.UNEXECUTED
         match.log_file_name = None
         match.token = None
+
+        match.assigned_host.assigned_match_id = None
+
         db.session.commit()
         flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")

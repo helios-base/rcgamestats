@@ -42,7 +42,7 @@ def register_host():
     json_message = response.json()
     if "message" in json_message:
         if "host_token" in json_message:
-            logger.info(f"Registered token: {json_message.get('host_token')}")
+            logger.info(f"Received host_token: {json_message.get('host_token')}")
             host_token = json_message.get("host_token")
             return save_token(host_token)
         else:

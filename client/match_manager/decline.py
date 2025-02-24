@@ -30,7 +30,7 @@ def decline_match(match):
         "host_name": config.HOST_NAME,
         "host_token": host_token,
         "match_id": match.match_id,
-        "token": match.token,
+        "match_token": match.match_token,
     }
 
     max_retries = 3

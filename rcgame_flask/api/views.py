@@ -106,8 +106,10 @@ def request_match():
         return jsonify({"error": str(e)}), 500
 
     if host.assigned_match_id is not None:
-        current_app.logger.warning(f"@{host_name} Already assigned a match.")
-        return jsonify({"error": "Already assigned a match."}), 200
+        match = Match.query.filter_by(id=host.assigned_match_id).first()
+        if match and match.processed == MatchStatus.IN_PROGRESS:
+            current_app.logger.warning(f"@{host_name} Already assigned a match.")
+            return jsonify({"error": "Already assigned a match."}), 200
 
     # Find an unexecuted match
     match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
@@ -152,7 +154,7 @@ def request_match():
             "right_team_name": match.right_team.name,
             "right_team_version": match.right_team.version,
             "log_file_name": match.log_file_name,
-            "token": match.token,
+            "match_token": match.token,
             "synch_mode": synch_mode,
         }
     )
@@ -172,7 +174,7 @@ def extract_result_params(data):
             "right_team_name": data.get("right_team_name"),
             "left_score": int(data.get("left_score")),
             "right_score": int(data.get("right_score")),
-            "token": data.get("token"),
+            "match_token": data.get("match_token"),
         }
     except Exception as e:
         raise ValueError(f"Invalid parameters: {e}")
@@ -209,7 +211,7 @@ def validate_match(match, params):
         match.reset_assignment()
         db.session.commit()
         return "Host ID do not match.", 401
-    if match.token != params["token"]:
+    if match.token != params["match_token"]:
         current_app.logger.error(f"@{match.host_name} Token does not match for {match.group.name}/{match.index}.")
         match.reset_assignment()
         db.session.commit()
@@ -336,7 +338,7 @@ def decline_match():
         host_name = data.get("host_name")
         host_token = data.get("host_token")
         match_id = data.get("match_id")
-        token = data.get("token")
+        match_token = data.get("match_token")
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
@@ -355,7 +357,7 @@ def decline_match():
         current_app.logger.error(f"@{host_name} deline_assignment: Match {match_id} not found.")
         return jsonify({"error": "Match not found."}), 404
 
-    if match.token != token:
+    if match.token != match_token:
         current_app.logger.error(f"@{host_name} deline_assignment: Token does not match {match.group.name}/{match.index} @{match.host_name}")
         return jsonify({"error": "Token does not match."}), 401
 

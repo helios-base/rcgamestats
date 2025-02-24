@@ -292,7 +292,7 @@ def submit_result():
 
     # Save the log files
     save_log_files(match)
-    end_time = datetime.now()
+    end_time = datetime.now().replace(microsecond=0)
 
     # Update group updated_at
     match.group.updated_at = end_time

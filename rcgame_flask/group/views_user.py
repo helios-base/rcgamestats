@@ -1,5 +1,6 @@
 import os
 import glob
+from datetime import datetime
 from flask import render_template, redirect, url_for, flash, jsonify, request, current_app
 from flask import send_file, send_from_directory
 from flask_login import login_required, current_user
@@ -268,3 +269,25 @@ def plot_groups_confidence_intervals():
         # return redirect(url_for("group.show_stats"))
 
     return send_file(buf, mimetype="image/png")
+
+
+@group_bp.route("/has_updates", methods=["GET"])
+@login_required
+def has_updates():
+    """
+    Check if there are any updates to the groups.
+    """
+    last_updated_at = request.args.get("last_updated_at")
+    # If last_updated_at is None, return True as there are updates.
+    if last_updated_at is None:
+        return jsonify({"update": True})
+
+    try:
+        last_updated_at = datetime.fromisoformat(last_updated_at)
+    except ValueError:
+        return jsonify({"error": "Invalid datetime format"}), 400
+
+    group_list = Group.query.filter(Group.updated_at > last_updated_at).all()
+    has_updates = len(group_list) > 0
+
+    return jsonify({"has_updates": has_updates})

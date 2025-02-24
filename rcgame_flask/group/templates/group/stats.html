@@ -115,6 +115,38 @@
         // フォーム送信
         document.getElementById("filtered-form").submit();
     }
+
+    // ユーザー操作の最終時刻を記録する変数
+    let lastActivityTime = Date.now();
+    // 無操作とみなす閾値
+    const idleThreshold = 10000; // 10,000ミリ秒 = 10秒
+
+    // ユーザー操作時に最終時刻を更新（必要なイベントを追加）
+    function updateActivity() {
+        lastActivityTime = Date.now();
+    }
+    document.addEventListener('mousemove', updateActivity);
+    document.addEventListener('keydown', updateActivity);
+    document.addEventListener('scroll', updateActivity);
+
+    setInterval(function() {
+        // ページが非表示またはウィンドウにフォーカスがない場合
+        // かつ、最終操作から閾値以上経過している場合
+        if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
+            // 更新チェック
+            fetch("{{ url_for('group.has_updates') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.update) {
+                        // 更新があれば全体リロード
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error("Update check failed:", error);
+                });
+        }
+    }, 30000); // 30秒ごとに更新チェック
 </script>
 {% endblock %}
 

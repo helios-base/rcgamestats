@@ -18,6 +18,7 @@
             <th>Total Runtime</th>
             <th>Average Runtime</th>
             <th id="lborder">Declines</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -39,6 +40,18 @@
             <td>{{ "%02d" % (total_n // 3600) }}:{{ "%02d" % ((total_n % 3600) // 60) }}:{{ "%02d" % (total_n % 60) }} </td>
             <td>{{ "%02d" % (average_n // 3600) }}:{{ "%02d" % ((average_n % 3600) // 60) }}:{{ "%02d" % (average_n % 60) }}</td>
             <td id="lborder">{{ host.decline_count }}</td>
+            <td id="lborder">
+                <div style="display:flex; justify-content: center; align-items:center; gap:4px;">
+                <form method="POST" action="{{ url_for('host.reset_host', host_id=host.id) }}" style="display:inline-block; margin:0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" style="font-size:xx-small; padding 2px 2px;" onclick="return confirm('Really reset {{host.name}}?')">Reset</button>
+                </form>
+                <form method="POST" action="{{ url_for('host.delete_host', host_id=host.id) }}" style="display:inline-block; margin:0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" style="font-size:xx-small; padding 2px 2px;" onclick="return confirm('Really delete {{host.name}}?')">Delete</button>
+                </form>
+                </div>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
@@ -48,7 +61,10 @@
 <script>
     $(document).ready(function() {
         $("#host-table").tablesorter({
-            headers: { },
+            headers: {
+                11: { sorter: false, filter: false },
+                12: { sorter: false, filter: false }
+            },
             sortList: [[0, 0]],
             widgets: ['filter'],
             widgetOptions: {

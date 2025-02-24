@@ -1,9 +1,15 @@
+import uuid
 from rcgame_flask.app import db
+
+
+def generate_host_token():
+    return str(uuid.uuid4())
 
 
 class Host(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(30), unique=True, nullable=False, default="unknown")
+    name = db.Column(db.String(30), unique=True, nullable=False)
+    token = db.Column(db.String(36), unique=True, nullable=False, default=generate_host_token)
     ip_v4_address = db.Column(db.String(16), default="")
     last_accessed_at = db.Column(db.DateTime)
     assigned_match_id = db.Column(db.Integer, db.ForeignKey("match.id"))

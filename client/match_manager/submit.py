@@ -5,6 +5,7 @@ import glob
 import logging
 from urllib.parse import urljoin
 from config import config
+from host_manager import load_token
 
 logger = logging.getLogger("client")
 
@@ -30,6 +31,11 @@ def submit_result(match):
     endpoint = "api/submit_result"
     url = urljoin(config.SERVER_URL, endpoint)
 
+    host_token = load_token()
+    if host_token is None:
+        logger.error("submit_result: Host token does not exist.")
+        return None
+
     headers = {
         "Accept": "application/json",
         'x-api-key': config.API_KEY
@@ -39,6 +45,7 @@ def submit_result(match):
         "type": "submit_result",
         "host_id": match.host_id,
         "host_name": config.HOST_NAME,
+        "host_token": host_token,
         "match_id": match.match_id,
         "token": match.token,
         "left_team_name": match.left_team_name,

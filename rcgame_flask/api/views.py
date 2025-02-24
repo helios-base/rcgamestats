@@ -186,7 +186,7 @@ def validate_host_token(host_name, host_token):
     """
     host = Host.query.filter_by(token=host_token).first()
     if host is None:
-        return "Invalid token.", 401
+        return "Invalid host token.", 401
     if host.name != host_name:
         return "Host name do not match.", 400
     return None, 200
@@ -198,6 +198,8 @@ def validate_match(match, params):
     """
     if match is None:
         return "Match not found.", 404
+    if match.group is None:
+        return "Group not found.", 404
     if match.left_team is None or match.right_team is None:
         return "Teams not found.", 404
     if match.left_team.name != params["left_team_name"]:
@@ -207,28 +209,21 @@ def validate_match(match, params):
     if match.processed != MatchStatus.IN_PROGRESS:
         return "Match is not in progress.", 400
     if match.host_id != params["host_id"]:
-        current_app.logger.error(f"@{match.host_name} Host ID does not match for {match.group.name}/{match.index}.")
-        match.reset_assignment()
-        db.session.commit()
-        return "Host ID do not match.", 401
+        return "Host ID does not match.", 401
+    if match.host is None:
+        return "Host not found.", 404
     if match.token != params["match_token"]:
-        current_app.logger.error(f"@{match.host_name} Token does not match for {match.group.name}/{match.index}.")
-        match.reset_assignment()
-        db.session.commit()
-        return "Token do not match.", 401
+        return "Token does not match.", 401
     if params["left_score"] < 0 or params["right_score"] < 0:
-        current_app.logger.error(f"@{match.host_name} Invalid score for {match.group.name}/{match.index}.")
-        match.reset_assignment()
-        db.session.commit()
         return "Invalid score.", 400
     return None, 200
 
 
-def save_log_files(match, group):
+def save_log_files(match):
     """
     Save the log files.
     """
-    log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+    log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
@@ -239,7 +234,7 @@ def save_log_files(match, group):
             new_file_name = re.sub(r'^[^.]+', common_name, file.filename)
             file.save(os.path.join(log_dir, new_file_name))
             count += 1
-    current_app.logger.info(f"@{match.host_name} Saved    {group.name}/{match.index}, files={count}")
+    current_app.logger.info(f"@{match.host_name} Saved    {match.group.name}/{match.index}, files={count}")
 
 
 def update_match_result(match, params, end_time):
@@ -252,21 +247,21 @@ def update_match_result(match, params, end_time):
     match.processed = MatchStatus.COMPLETED
 
 
-def update_host(host, match, end_time):
+def update_host(match, end_time):
     """
     Update the host record.
     """
-    host.last_accessed_at = end_time
-    host.assigned_match_id = None
+    match.host.last_accessed_at = end_time
+    match.host.assigned_match_id = None
 
     # The seconds of the match duration are calculated as the difference between the start and end times.
     duration = (end_time - match.start_time).total_seconds()
     if match.left_team.synch_mode and match.right_team.synch_mode:
-        host.total_runtime_synch_mode += duration
-        host.total_matches_synch_mode += 1
+        match.host.total_runtime_synch_mode += duration
+        match.host.total_matches_synch_mode += 1
     else:
-        host.total_runtime_normal += duration
-        host.total_matches_normal += 1
+        match.host.total_runtime_normal += duration
+        match.host.total_matches_normal += 1
 
 
 @api.route("/submit_result", methods=["POST"])
@@ -290,16 +285,17 @@ def submit_result():
     match = Match.query.get(params["match_id"])
     error_msg, status_code = validate_match(match, params)
     if error_msg:
+        current_app.logger.error(f"@{params['host_name']} {error_msg} for {match.group.name}/{match.index}.")
         return jsonify({"error": error_msg}), status_code
 
-    group = Group.query.get(match.group_id)
-    if group is None:
-        return jsonify({"error": "Group not found."}), 404
+    # Save the log files
+    save_log_files(match)
+    end_time = datetime.now()
 
-    # Save the log files and commit the result
-    save_log_files(match, group)
-    end_time = datetime.now().replace(microsecond=0)
-    group.updated_at = end_time
+    # Update group updated_at
+    match.group.updated_at = end_time
+
+    # Update the match result
     update_match_result(match, params, end_time)
     try:
         db.session.commit()
@@ -308,19 +304,14 @@ def submit_result():
         return jsonify({"error": str(e)}), 500
 
     # Update the host record
-    host = Host.query.get(match.host_id)
-    if host is None:
-        current_app.logger.error(f"@{match.host_name} Host not found.")
-        return jsonify({"error": "Host not found."}), 404
-
-    update_host(host, match, end_time)
+    update_host(match, end_time)
     try:
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-    message = f"@{match.host_name} Result   {group.name}/{match.index}, {params['left_score']} - {params['right_score']}"
+    message = f"@{match.host_name} Result   {match.group.name}/{match.index}, {match.left_score} - {match.right_score}"
     current_app.logger.info(message)
     return jsonify({"message": message})
 

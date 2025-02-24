@@ -34,12 +34,13 @@ def get_host_status(host):
     """
     Return the status of the host.
     """
-    if host.assigned_match and host.assigned_match.processed == MatchStatus.IN_PROGRESS:
+    match = Match.query.get(host.assigned_match_id)
+    if match and match.processed == MatchStatus.IN_PROGRESS:
         threshold = timedelta(minutes=15)
-        if host.assigned_match.left_team.synch_mode and host.assigned_match.right_team.synch_mode:
+        if match.left_team.synch_mode and match.right_team.synch_mode:
             threshold = timedelta(minutes=5)
 
-        if (datetime.now() - host.assigned_match.start_time) < threshold:
+        if (datetime.now() - match.start_time) < threshold:
             return "busy"
         else:
             return "stalled"

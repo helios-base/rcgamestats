@@ -18,9 +18,3 @@ class Host(db.Model):
     total_matches_synch_mode = db.Column(db.Integer, default=0)
     total_runtime_normal = db.Column(db.Float, default=0.0)
     total_matches_normal = db.Column(db.Integer, default=0)
-
-    assigned_match = db.relationship(
-        "Match",
-        foreign_keys=[assigned_match_id],
-        lazy="joined",  # simultenous query with Host
-        uselist=False)  # only 1 connection

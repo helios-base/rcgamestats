@@ -18,3 +18,11 @@ class Host(db.Model):
     total_matches_synch_mode = db.Column(db.Integer, default=0)
     total_runtime_normal = db.Column(db.Float, default=0.0)
     total_matches_normal = db.Column(db.Integer, default=0)
+
+    def reset_stats(self):
+        self.decline_count = 0
+        self.total_runtime_synch_mode = 0.0
+        self.total_matches_synch_mode = 0
+        self.total_runtime_normal = 0.0
+        self.total_matches_normal = 0
+        db.session.commit()

@@ -36,6 +36,14 @@ def request_match():
         response = requests.post(url, headers=headers, json=data, timeout=10)
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
+        if 400 <= response.status_code < 500:
+            response_data = response.json()
+            error_msg = ""
+            if "error" in response_data:
+                error_msg = response_data["error"]
+            if response.status_code == 404:
+                logger.error(f"request_match: [{error_msg}] {e}")
+                return None
         logger.error(f"HTTP error occurred: {e}")
         return None
     except requests.exceptions.RequestException as e:

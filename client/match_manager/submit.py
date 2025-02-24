@@ -73,6 +73,22 @@ def submit_result(match):
             logger.info(f"SubmitResponse: {response.json()}")
             break
         except requests.exceptions.HTTPError as e:
+            if 400 <= response.status_code < 500:
+                response_data = response.json()
+                error_msg = ""
+                if "error" in response_data:
+                    error_msg = response_data["error"]
+                if response.status_code == 401:
+                    logger.error(f"submit_result: The match token may be changed. [{error_msg}] {e}")
+                elif response.status_code == 404:
+                    logger.error(f"submit_result: The match may be deleted. [{error_msg}] {e}")
+                elif response.status_code == 409:
+                    logger.error(f"submit_result: Some information may be wrong. [{error_msg}] {e}")
+                elif response.status_code == 410:
+                    logger.error(f"submit_result: The match may be reset. [{error_msg}] {e}")
+                else:
+                    logger.error(f"submit_result: Client error occurred: [{error_msg}] {e}")
+                break  # No need to retry
             logger.error(f"submit_result: HTTP error occurred: {e}")
         except requests.exceptions.RequestException as e:
             logger.error(f"submit_result: Request error occurred: {e}")

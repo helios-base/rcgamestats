@@ -85,18 +85,16 @@ def request_match():
         current_app.logger.error("Missing host token.")
         return jsonify({"error": "Missing host token."}), 400
 
-    # Create or update the host record
+    # Update the host record
     host = Host.query.filter_by(name=host_name, token=host_token).first()
     if host is None:
         current_app.logger.error(f"Host {host_name} not found.")
         return jsonify({"error": "Host not found."}), 404
-
     client_ip = request.remote_addr
     # In case of reverse proxy
     x_forwarded_for = request.headers.get('X-Forwarded-For')
     if x_forwarded_for:
         client_ip = x_forwarded_for.split(',')[0].strip()
-
     host.ip_v4_address = client_ip
     host.last_accessed_at = start_time
     try:
@@ -115,7 +113,6 @@ def request_match():
     match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
     if match is None:
         return jsonify({"message": "No scheduled matches."}), 200
-
     if match.group is None:
         return jsonify({"error": "Group found."}), 404
     if match.left_team is None:
@@ -160,6 +157,11 @@ def request_match():
     )
 
 
+#
+# Helpers for submit_result
+#
+
+
 def extract_result_params(data):
     """
     Extract match result parameters.
@@ -202,20 +204,20 @@ def validate_match(match, params):
         return "Group not found.", 404
     if match.left_team is None or match.right_team is None:
         return "Teams not found.", 404
-    if match.left_team.name != params["left_team_name"]:
-        return "Left team name do not match.", 400
-    if match.right_team.name != params["right_team_name"]:
-        return "Right team name do not match.", 400
     if match.processed != MatchStatus.IN_PROGRESS:
-        return "Match is not in progress.", 400
+        return "Match is not in progress.", 410  # Gone
+    if match.token != params["match_token"]:
+        return "Token does not match.", 401  # Unauthorized
+    if match.left_team.name != params["left_team_name"]:
+        return "Left team name does not match.", 409  # Conflict
+    if match.right_team.name != params["right_team_name"]:
+        return "Right team name does not match.", 409  # Conflict
     if match.host_id != params["host_id"]:
-        return "Host ID does not match.", 401
+        return "Host ID does not match.", 409  # Conflict
     if match.host is None:
         return "Host not found.", 404
-    if match.token != params["match_token"]:
-        return "Token does not match.", 401
     if params["left_score"] < 0 or params["right_score"] < 0:
-        return "Invalid score.", 400
+        return "Invalid score.", 400  # Bad Request
     return None, 200
 
 

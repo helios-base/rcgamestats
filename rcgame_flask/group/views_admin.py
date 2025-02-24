@@ -490,26 +490,14 @@ def reset_match(group_id):
             current_app.logger.info(f"Removing log file {log_file_path} ...")
             os.remove(log_file_path)
 
-        match.host_id = None
-        match.host_name = None
-        match.start_time = None
-        match.end_time = None
-        match.processed = MatchStatus.UNEXECUTED
-        match.log_file_name = None
-        match.token = None
+        match.reset_assignment()
         db.session.commit()
         flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")
     elif match.processed == MatchStatus.IN_PROGRESS:
-        match.host_id = None
-        match.host_name = None
-        match.start_time = None
-        match.processed = MatchStatus.UNEXECUTED
-        match.log_file_name = None
-        match.token = None
-
-        match.assigned_host.assigned_match_id = None
-
+        if match.host:
+            match.host.assigned_match_id = None
+        match.reset_assignment()
         db.session.commit()
         flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")

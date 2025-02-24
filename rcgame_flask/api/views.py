@@ -247,7 +247,7 @@ def update_match_result(match, params, end_time):
     match.processed = MatchStatus.COMPLETED
 
 
-def update_host(match, end_time):
+def update_host_by_submit(match, end_time):
     """
     Update the host record.
     """
@@ -304,7 +304,7 @@ def submit_result():
         return jsonify({"error": str(e)}), 500
 
     # Update the host record
-    update_host(match, end_time)
+    update_host_by_submit(match, end_time)
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -335,10 +335,10 @@ def decline_match():
 
     host = Host.query.filter_by(token=host_token).first()
     if host is None:
-        current_app.logger.error(f"@{host_name} Decline: Host not found.")
-        return jsonify({"error": "Host not found."}), 404
+        current_app.logger.error(f"@{host_name} Decline: invalid host token.")
+        return jsonify({"error": "Invalid host token."}), 404
 
-    host.last_accessed_at = datetime.now().replace(microsecond=0)
+    host.last_accessed_at = datetime.now()
     host.assigned_match_id = None
     host.decline_count += 1
     db.session.commit()

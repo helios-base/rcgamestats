@@ -20,7 +20,7 @@ class Match:
         """
         self.match_id = match_id
         self.host_id = host_id
-        self.token = None
+        self.match_token = None
         self.group_name = group_name
         self.index = index
         self.left_team_name = left_team_name
@@ -44,7 +44,7 @@ class Match:
         try:
             match_id = json_data["match_id"]
             host_id = json_data.get("host_id")
-            token = json_data.get("token")
+            match_token = json_data["match_token"]
             group_name = json_data["group_name"]
             index = json_data["index"]
             left_team_name = json_data["left_team_name"]
@@ -59,7 +59,7 @@ class Match:
             return None
 
         match = Match(match_id, host_id, group_name, index, left_team_name, right_team_name, log_file_name)
-        match.token = token
+        match.match_token = match_token
         match.left_team_version = left_team_version
         match.right_team_version = right_team_version
         match.left_score = left_score
@@ -73,7 +73,7 @@ class Match:
         """
         return {
             "match_id": self.match_id,
-            "token": self.token,
+            "match_token": self.match_token,
             "group_name": self.group_name,
             "left_team_name": self.left_team_name,
             "right_team_name": self.right_team_name,

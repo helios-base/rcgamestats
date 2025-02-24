@@ -3,6 +3,7 @@ import time
 import logging
 from urllib.parse import urljoin
 from config import config
+from host_manager import load_token
 
 logger = logging.getLogger("client")
 
@@ -14,6 +15,11 @@ def decline_match(match):
     endpoint = "api/decline_match"
     url = urljoin(config.SERVER_URL, endpoint)
 
+    host_token = load_token()
+    if host_token is None:
+        logger.error("decline_match: Host token does not exist.")
+        return
+
     headers = {
         "Accept": "application/json",
         'x-api-key': config.API_KEY
@@ -22,8 +28,9 @@ def decline_match(match):
     data = {
         "type": "decline_match",
         "host_name": config.HOST_NAME,
+        "host_token": host_token,
         "match_id": match.match_id,
-        "token": match.token,
+        "match_token": match.match_token,
     }
 
     max_retries = 3

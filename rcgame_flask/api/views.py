@@ -17,6 +17,53 @@ api = Blueprint("api", __name__, url_prefix="/api")
 # Client API
 #
 
+@api.route("/register_host", methods=["POST"])
+@csrf.exempt
+@api_key_required
+def register_host():
+    """
+    Register a host.
+    """
+    data = request.get_json()
+    host_name = data.get("host_name")
+    host_token = data.get("host_token")
+
+    if host_name is None:
+        current_app.logger.error("Missing host name.")
+        return jsonify({"error": "Missing host name."}), 400
+
+    client_ip = request.remote_addr
+    x_forwarded_for = request.headers.get('X-Forwarded-For')  # In case of reverse proxy
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(',')[0].strip()
+
+    host = Host.query.filter_by(name=host_name).first()
+    if host:
+        if host_token:
+            if host.token == host_token:
+                host.last_accessed_at = datetime.now()
+                host.ip_v4_address = client_ip
+                db.session.commit()
+                return jsonify({"message": "Host already registered."})
+            else:
+                return jsonify({"error": "Invalid token."}), 401
+        else:
+            return jsonify({"error": f"{host_name} already registererd. Please provide a token."}), 400        
+
+    # host_name is not found, create a new host record
+    host = Host(name=host_name, ip_v4_address=client_ip, last_accessed_at=datetime.now())
+    db.session.add(host)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Failed to register host {host_name}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    current_app.logger.info(f"Registered host {host_name}")
+    return jsonify({"message": "Host registered.",
+                    "host_token": host.token})
+
 
 @api.route("/request_match", methods=["POST"])
 @csrf.exempt
@@ -27,18 +74,22 @@ def request_match():
     """
     data = request.get_json()
     host_name = data.get("host_name")
+    host_token = data.get("host_token")
     start_time = datetime.now().replace(microsecond=0)
 
     if host_name is None:
         current_app.logger.error("Missing host name.")
         return jsonify({"error": "Missing host name."}), 400
 
+    if host_token is None:
+        current_app.logger.error("Missing host token.")
+        return jsonify({"error": "Missing host token."}), 400
+
     # Create or update the host record
-    host = Host.query.filter_by(name=host_name).first()
+    host = Host.query.filter_by(name=host_name, token=host_token).first()
     if host is None:
-        host = Host(name=host_name)
-        current_app.logger.info(f"@{host_name} Adding host {host_name} ...")
-        db.session.add(host)
+        current_app.logger.error(f"Host {host_name} not found.")
+        return jsonify({"error": "Host not found."}), 404
 
     client_ip = request.remote_addr
     # In case of reverse proxy
@@ -55,8 +106,10 @@ def request_match():
         return jsonify({"error": str(e)}), 500
 
     if host.assigned_match_id is not None:
-        current_app.logger.warning(f"@{host_name} Already assigned a match.")
-        return jsonify({"error": "Already assigned a match."}), 200
+        match = Match.query.filter_by(id=host.assigned_match_id).first()
+        if match and match.processed == MatchStatus.IN_PROGRESS:
+            current_app.logger.warning(f"@{host_name} Already assigned a match.")
+            return jsonify({"error": "Already assigned a match."}), 200
 
     # Find an unexecuted match
     match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
@@ -101,7 +154,7 @@ def request_match():
             "right_team_name": match.right_team.name,
             "right_team_version": match.right_team.version,
             "log_file_name": match.log_file_name,
-            "token": match.token,
+            "match_token": match.token,
             "synch_mode": synch_mode,
         }
     )
@@ -115,14 +168,28 @@ def extract_result_params(data):
         return {
             "match_id": int(data.get("match_id")),
             "host_id": int(data.get("host_id")),
+            "host_name": data.get("host_name"),
+            "host_token": data.get("host_token"),
             "left_team_name": data.get("left_team_name"),
             "right_team_name": data.get("right_team_name"),
             "left_score": int(data.get("left_score")),
             "right_score": int(data.get("right_score")),
-            "token": data.get("token"),
+            "match_token": data.get("match_token"),
         }
     except Exception as e:
         raise ValueError(f"Invalid parameters: {e}")
+
+
+def validate_host_token(host_name, host_token):
+    """
+    Validate the host token.
+    """
+    host = Host.query.filter_by(token=host_token).first()
+    if host is None:
+        return "Invalid token.", 401
+    if host.name != host_name:
+        return "Host name do not match.", 400
+    return None, 200
 
 
 def validate_match(match, params):
@@ -144,7 +211,7 @@ def validate_match(match, params):
         match.reset_assignment()
         db.session.commit()
         return "Host ID do not match.", 401
-    if match.token != params["token"]:
+    if match.token != params["match_token"]:
         current_app.logger.error(f"@{match.host_name} Token does not match for {match.group.name}/{match.index}.")
         match.reset_assignment()
         db.session.commit()
@@ -215,6 +282,11 @@ def submit_result():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
+    error_msg, status_code = validate_host_token(params["host_name"], params["host_token"])
+    if error_msg:
+        current_app.logger.error(f"@{params['host_name']} {error_msg}.")
+        return jsonify({"error": error_msg}), status_code
+
     match = Match.query.get(params["match_id"])
     error_msg, status_code = validate_match(match, params)
     if error_msg:
@@ -264,24 +336,28 @@ def decline_match():
 
     try:
         host_name = data.get("host_name")
+        host_token = data.get("host_token")
         match_id = data.get("match_id")
-        token = data.get("token")
+        match_token = data.get("match_token")
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-    host = Host.query.filter_by(name=host_name).first()
-    if host:
-        host.last_accessed_at = datetime.now().replace(microsecond=0)
-        host.assigned_match_id = None
-        host.decline_count += 1
-        db.session.commit()
+    host = Host.query.filter_by(token=host_token).first()
+    if host is None:
+        current_app.logger.error(f"@{host_name} Decline: Host not found.")
+        return jsonify({"error": "Host not found."}), 404
+
+    host.last_accessed_at = datetime.now().replace(microsecond=0)
+    host.assigned_match_id = None
+    host.decline_count += 1
+    db.session.commit()
 
     match = Match.query.get(match_id)
     if match is None:
         current_app.logger.error(f"@{host_name} deline_assignment: Match {match_id} not found.")
         return jsonify({"error": "Match not found."}), 404
 
-    if match.token != token:
+    if match.token != match_token:
         current_app.logger.error(f"@{host_name} deline_assignment: Token does not match {match.group.name}/{match.index} @{match.host_name}")
         return jsonify({"error": "Token does not match."}), 401
 

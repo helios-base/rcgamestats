@@ -2,10 +2,10 @@ import os
 import time
 import signal
 import logging
-import json
 from logging.handlers import RotatingFileHandler
 import match_manager
 import team_manager
+import host_manager
 from config import config
 
 
@@ -107,12 +107,22 @@ def check_teams(match):
     return False
 
 
+def check_or_register_host():
+    if not host_manager.register_host():
+            return False
+    return True
+
+
 def main():
     if not config.API_KEY:
         print("no API_KEY")
         return
-
     remove_stop_file()
+
+    if not check_or_register_host():
+        logger.error("Failed to load host_token or register host.")
+        return
+
     try:
         create_directories()
     except Exception as e:

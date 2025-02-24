@@ -26,6 +26,7 @@ class Config:
     API_KEY = os.getenv("API_KEY", "")
     # HOST_NAME = os.getenv("HOST_NAME") or get_hostname()
     HOST_NAME = os.getenv("HOST_NAME") or socket.gethostname()
+    HOST_TOKEN_PATH = os.getenv("HOST_TOKEN_PATH", "~/rcgamestats/host_token.txt")
     SERVER_URL = os.getenv("SERVER_URL", "http://127.0.0.1:5000")
     # RUN_SCRIPT =  os.path.join(os.path.dirname(__file__), 'match_manager', 'run_match.sh')
     TEAM_DIR = os.path.expanduser(os.getenv("TEAM_DIR", "~/rcgamestats/teams"))

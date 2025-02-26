@@ -10,7 +10,7 @@ load_dotenv(root_dir / ".env", override=True)
 
 
 class Config:
-    APPLICATION_ROOT= "/rcgamestats"
+    APPLICATION_ROOT= os.getenv("APPLICATION_ROOT", "/")
     SECRET_KEY = os.getenv("SECRET_KEY", "my_secret_key")
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(root_dir, 'instance', 'rcgamestats.sqlite')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False

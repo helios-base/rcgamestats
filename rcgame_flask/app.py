@@ -88,7 +88,7 @@ def create_app(test_config=None):
         app.logger.info('Google OAuth enabled')
 
     if config.APPLICATION_ROOT and config.APPLICATION_ROOT != "/":
-        app.wsgi_app = DispatcherMiddleware(app, {config.APPLICATION_ROOT: app.wsgi_app})
+        app.wsgi_app = DispatcherMiddleware(Flask('dummy_app'), {config.APPLICATION_ROOT: app.wsgi_app})
 
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')

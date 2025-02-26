@@ -38,30 +38,30 @@ class MatchRunner:
         Build the options for rcssserver.
         """
         options = [
-            "server::game_logging = true",
-            "server::text_logging = true",
-            "server::game_log_dated = true",
-            "server::text_log_dated = false",
-            "server::game_log_fixed = true",
-            "server::text_log_fixed = true",
-            f"server::game_log_fixed_name = '{self.log_name}'",
-            f"server::text_log_fixed_name = '{self.log_name}'",
-            "server::game_log_compression = 9",
-            "server::text_log_compression = 9",
-            f"server::game_log_dir = '{self.log_dir}'",
-            f"server::text_log_dir = '{self.log_dir}'",
-            "server::nr_normal_halfs = 2",
-            "server::nr_extra_halfs = 0",
-            "server::penalty_shoot_outs = false",
-            "server::half_time = 300",
-            "server::extra_half_time = 100",
-            f"server::synch_mode = {str(self.synch_mode).lower()}",
-            "server::auto_mode = true",
-            "server::connect_wait = 100",
-            f"server::team_l_start = '{self.team_l_start}'",
-            f"server::team_r_start = '{self.team_r_start}'",
-            "CSVSaver::save = true",
-            f"CSVSaver::filename = '{self.log_name}.result.csv'"
+            "server::game_logging=true",
+            "server::text_logging=true",
+            "server::game_log_dated=true",
+            "server::text_log_dated=false",
+            "server::game_log_fixed=true",
+            "server::text_log_fixed=true",
+            f"server::game_log_fixed_name='{self.log_name}'",
+            f"server::text_log_fixed_name='{self.log_name}'",
+            "server::game_log_compression=9",
+            "server::text_log_compression=9",
+            f"server::game_log_dir='{self.log_dir}'",
+            f"server::text_log_dir='{self.log_dir}'",
+            "server::nr_normal_halfs=300",
+            "server::nr_extra_halfs=0",
+            "server::penalty_shoot_outs=false",
+            "server::half_time=20",
+            "server::extra_half_time=100",
+            f"server::synch_mode={str(self.synch_mode).lower()}",
+            "server::auto_mode=true",
+            "server::connect_wait=100",
+            f"server::team_l_start='{self.team_l_start}'",
+            f"server::team_r_start='{self.team_r_start}'",
+            "CSVSaver::save=true",
+            f"CSVSaver::filename='{self.log_name}.result.csv'"
         ]
         return options
 
@@ -108,7 +108,6 @@ class MatchRunner:
         # logger.info(f"Running command: rcssserver {opt}")
         logger.info(f"start rcssserver: {self.log_name}")
         with open("stdout.log", "w") as stdout_file, open("stderr.log", "w") as stderr_file:
-            # result = subprocess.run(server_cmd, stdout=stdout_file, stderr=stderr_file)
             result = subprocess.run(["rcssserver"] + opt, stdout=stdout_file, stderr=stderr_file)
         if result.returncode != 0:
             logger.error("rcssserver failed.")

@@ -3,6 +3,7 @@ import re
 import secrets
 from datetime import datetime
 from flask import Blueprint, jsonify, request, current_app
+from flask import send_file, abort
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.app import db, csrf
 from rcgame_flask.auth.decorators import api_key_required, admin_api_key_required

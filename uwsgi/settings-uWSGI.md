@@ -1,5 +1,6 @@
 # uWSGI設定のメモ
 
+https://flask.palletsprojects.com/en/stable/deploying/
 https://flask.palletsprojects.com/en/stable/deploying/uwsgi/
 
 ---
@@ -89,6 +90,9 @@ rcgamestatsプレフィックスをつける
 
 参考
 https://qiita.com/katsuko0303/items/8d13654341859f5a9bbe
+
+公式の情報では恐らくこれが該当する？
+https://flask.palletsprojects.com/en/stable/patterns/appdispatch/
 
 
 ConfigにAPPLICATION_ROOTを追加する．

@@ -116,6 +116,8 @@
         document.getElementById("filtered-form").submit();
     }
 
+    // 最終更新時間
+    let pageLoadAt = Date.now();
     // ユーザー操作の最終時刻を記録する変数
     let lastActivityTime = Date.now();
     // 無操作とみなす閾値
@@ -134,7 +136,7 @@
         // かつ、最終操作から閾値以上経過している場合
         if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
             // 更新チェック
-            fetch("{{ url_for('group.has_updates') }}")
+            fetch("{{ url_for('group.has_updates') }}?page_load_at=" + pageLoadAt)
                 .then(response => response.json())
                 .then(data => {
                     if (data.update) {

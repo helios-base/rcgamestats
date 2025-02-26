@@ -3,6 +3,10 @@
 https://flask.palletsprojects.com/en/stable/deploying/
 https://flask.palletsprojects.com/en/stable/deploying/uwsgi/
 
+
+---
+source env/bin/activate
+
 ---
 ```bash
 pip install pyuwsgi
@@ -58,7 +62,9 @@ sudo systemctl restart apache2
 ```
 
 Apache の VirtualHost 設定ファイルを作成または編集する。
-今回は /etc/apache2/sites-available/rcgamestats.conf として作成する．
+今回は /etc/apache2/sites-available/rcgamestats.conf として作成し，000-default.confを無効化する．
+80番ポートですべてまとめて動かすなら 000-default.conf を編集する．
+
 
 ```apacheconf
 <VirtualHost *:80>
@@ -69,8 +75,9 @@ Apache の VirtualHost 設定ファイルを作成または編集する。
     ProxyPass / http://127.0.0.1:5000/
     ProxyPassReverse / http://127.0.0.1:5000/
 
-    ErrorLog ${APACHE_LOG_DIR}/rcgamestats_error.log
-    CustomLog ${APACHE_LOG_DIR}/rcgamestats_access.log combined
+    # 独自のエラーログを作る場合
+    # ErrorLog ${APACHE_LOG_DIR}/rcgamestats_error.log
+    # CustomLog ${APACHE_LOG_DIR}/rcgamestats_access.log combined
 </VirtualHost>
 
 ```
@@ -84,32 +91,11 @@ sudo systemctl reload apache2
 
 ---
 
-テスト中
-rcgamestatsプレフィックスをつける
-最初からソース内でプレフィックスをつけておくほうが無難か？
+URLにプレフィックスをつける
 
-参考
-https://qiita.com/katsuko0303/items/8d13654341859f5a9bbe
+プロジェクトの.env内でAPPLICATION_ROOTを設定する．（例: "/subdir"）
 
-公式の情報では恐らくこれが該当する？
-https://flask.palletsprojects.com/en/stable/patterns/appdispatch/
-
-
-ConfigにAPPLICATION_ROOTを追加する．
-ただし，これをやると通常時のログインができなくなってしまう．
-```python
-class Config:
-    APPLICATION_ROOT= "/rcgamestats"
-    SECRET_KEY = os.getenv("SECRET_KEY", "my_secret_key")
-```
-
-app.pyの末尾に追記する
-```python
-app = create_app()
-from werkzeug.middleware.proxy_fix import ProxyFix
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
-```
-
+Apacheのモジュールを有効化する
 ```
 sudo a2enmode headers
 ```
@@ -122,11 +108,8 @@ apacheの設定ファイルを修正
 
     # ApacheがリバースプロキシとしてuWSGIのHTTPポートに転送する
     # 最後の'/'をつけておく
-    ProxyPass /rcgamestats/ http://127.0.0.1:5000/
-    ProxyPassReverse /rcgamestats/ http://127.0.0.1:5000/
-
-    ErrorLog ${APACHE_LOG_DIR}/rcgamestats_error.log
-    CustomLog ${APACHE_LOG_DIR}/rcgamestats_access.log combined
+    ProxyPass /rcgamestats/ http://127.0.0.1:5000/rcgamestats/
+    ProxyPassReverse /rcgamestats/ http://127.0.0.1:5000/rcgamestats/
 
     <Location /rcgamestats>
         require all granted
@@ -134,8 +117,3 @@ apacheの設定ファイルを修正
     </Location>
 </VirtualHost>
 ```
-
-
-他のやり方？
-https://stackoverflow.com/questions/18967441/add-a-prefix-to-all-flask-routes
-

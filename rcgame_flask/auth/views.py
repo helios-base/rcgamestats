@@ -1,6 +1,7 @@
 
 import os
 import time
+import re
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask import jsonify, request
@@ -360,6 +361,10 @@ def bulk_delete_allowed_emails():
     return redirect(url_for("auth.show_allowed_emails"))
 
 
+def is_valid_prefix(prefix):
+    return re.match(r'^/[^/]', prefix) is not None
+
+
 @auth.route("/admin/logs", methods=["GET"])
 @login_required
 @admin_required
@@ -367,7 +372,11 @@ def show_server_logs():
     """
     Show server logs
     """
-    return render_template("auth/server_logs.html")
+    if is_valid_prefix(config.APPLICATION_ROOT):
+        prefix = config.APPLICATION_ROOT
+    else:
+        prefix = ""
+    return render_template("auth/server_logs.html", prefix=prefix)
 
 
 @auth.route("/admin/logs/stream", methods=["GET"])

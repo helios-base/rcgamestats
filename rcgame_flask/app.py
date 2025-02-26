@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from authlib.integrations.flask_client import OAuth
 from rcgame_flask.config import config
 
@@ -86,6 +87,9 @@ def create_app(test_config=None):
         app.oauth = oauth
         app.logger.info('Google OAuth enabled')
 
+    if config.APPLICATION_ROOT and config.APPLICATION_ROOT != "/":
+        app.wsgi_app = DispatcherMiddleware(app, {config.APPLICATION_ROOT: app.wsgi_app})
+
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')
 
@@ -124,5 +128,5 @@ def create_app(test_config=None):
 
 
 app = create_app()
-from werkzeug.middleware.proxy_fix import ProxyFix
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+# from werkzeug.middleware.proxy_fix import ProxyFix
+# app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)

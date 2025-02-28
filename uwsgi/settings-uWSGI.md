@@ -95,7 +95,7 @@ APPLICATION_ROOT = "/subdir"
 
 Apacheの mod_headers モジュールを有効化する
 ```bash
-sudo a2enmode headers
+sudo a2enmod headers
 ```
 
 apacheの設定ファイルを修正
@@ -105,7 +105,9 @@ apacheの設定ファイルを修正
     # DocumentRoot は任意。静的ファイルがある場合など設定
 
     # ApacheがリバースプロキシとしてuWSGIのHTTPポートに転送する
-    # プレフィックスを追加する．最後の'/'をつけておく．
+    # Googleログインのコールバック対応のために ProxyPreserveHost On にしておく
+    # プレフィックスを追加する場合は最後の'/'をつけておく．
+    ProxyPreserveHost On
     ProxyPass /subdir/ http://127.0.0.1:5000/subdir/
     ProxyPassReverse /subdir/ http://127.0.0.1:5000/subdir/
 

@@ -29,7 +29,7 @@ def submit_result(match):
     Submit the result to the server.
     """
     endpoint = "api/submit_result"
-    url = urljoin(config.SERVER_URL, endpoint)
+    url = urljoin(config.SERVER_URL + '/', endpoint)
 
     host_token = load_token()
     if host_token is None:

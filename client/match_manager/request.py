@@ -14,7 +14,7 @@ def request_match():
     Request a match from the server.
     """
     endpoint = "api/request_match"
-    url = urljoin(config.SERVER_URL, endpoint)
+    url = urljoin(config.SERVER_URL + '/', endpoint)
 
     host_token = load_token()
     if host_token is None:

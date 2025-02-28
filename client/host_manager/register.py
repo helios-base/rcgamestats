@@ -11,7 +11,7 @@ def register_host():
     host_token = load_token()
 
     endpoint = "api/register_host"
-    url = urljoin(config.SERVER_URL, endpoint)
+    url = urljoin(config.SERVER_URL + '/', endpoint)
 
     headers = {
         "Content-Type": "application/json",

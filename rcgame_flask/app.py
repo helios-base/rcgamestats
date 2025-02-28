@@ -6,6 +6,8 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
 from rcgame_flask.config import config
 
@@ -86,6 +88,18 @@ def create_app(test_config=None):
         app.oauth = oauth
         app.logger.info('Google OAuth enabled')
 
+    # URL Prefix
+    if config.APPLICATION_ROOT and config.APPLICATION_ROOT != "/":
+        app.wsgi_app = DispatcherMiddleware(Flask('dummy_app'), {config.APPLICATION_ROOT: app.wsgi_app})
+
+    # ProxyFix
+    # if app.config.get("ENV") == "production":
+    #     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+    #
+    # Register Blueprints
+    #
+
     from rcgame_flask.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')
 
@@ -103,7 +117,9 @@ def create_app(test_config=None):
     from rcgame_flask.api import views as api_views
     app.register_blueprint(api_views.api, url_prefix='/api')
 
+    #
     # set Enums as global variables for Jinja templates
+    #
     from rcgame_flask.auth.models import UserType
     from rcgame_flask.group.models import GroupStatus
     from rcgame_flask.group.models import MatchStatus

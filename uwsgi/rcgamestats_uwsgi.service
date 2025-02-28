@@ -1,0 +1,13 @@
+[Unit]
+Description=uWSGI instance to serve rcgamestats Flask app
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/path-to/rcgamestats
+Environment="PATH=/path-to/rcgamestats/venv/bin"
+ExecStart=/path-to/rcgamestats/venv/bin/uwsgi --ini /path-to/rcgamestats/uwsgi.ini
+
+[Install]
+WantedBy=multi-user.target

@@ -68,6 +68,8 @@ Apache の VirtualHost 設定ファイルを作成または編集する。ここ
     # DocumentRoot は任意。静的ファイルがある場合など設定
 
     # ApacheがリバースプロキシとしてuWSGIのHTTPポートに転送する
+    # Googleログインのコールバック対応のために ProxyPreserveHost On にしておく
+    ProxyPreserveHost On
     ProxyPass / http://127.0.0.1:5000/
     ProxyPassReverse / http://127.0.0.1:5000/
 
@@ -144,14 +146,14 @@ WantedBy=multi-user.target
 ※データベースファイル，ログディレクトリ，ログファイルなどにUserとGroupの書き込みパーミッションが与えられていることを確認する．
 
 
-サービスをリロードして起動、かつ自動起動設定を行う：
+サービスをリロードして起動、かつ自動起動設定を行う
 ```
 sudo systemctl daemon-reload  
 sudo systemctl start rcgamestats_uwsgi  
 sudo systemctl enable rcgamestats_uwsgi
 ```
 
-動かない場合は以下でエラーログを確認する
+動かない場合はjournalctlでエラーログを確認する
 ```
 sudo journalctl -u rcgamestats_uwsgi.service -f
 ```

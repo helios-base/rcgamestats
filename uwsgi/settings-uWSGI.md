@@ -115,3 +115,41 @@ apacheの設定ファイルを修正
     </Location>
 </VirtualHost>
 ```
+
+### (本番用)uWSGIをデーモンとして動作させる
+
+本番運用時はsystemdでuWSGIをデーモンとして動作させる．
+以下は /etc/systemd/system/rcgamestats_uwsgi.service として登録する場合の例．
+"path-to"を自分の環境に合わせて編集する．
+
+```ini
+[Unit]
+Description=uWSGI instance to serve rcgamestats Flask app
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/path-to/rcgamestats
+Environment="PATH=/path-to/rcgamestats/venv/bin"
+ExecStart=/path-to/rcgamestats/venv/bin/uwsgi --ini uwsgi.ini
+
+[Install]
+WantedBy=multi-user.target
+```
+
+※UserとGroupは実際の運用環境に合わせて www-data などの適切なユーザーに設定する．
+※データベースファイル，ログディレクトリ，ログファイルなどにUserとGroupの書き込みパーミッションが与えられていることを確認する．
+
+
+サービスをリロードして起動、かつ自動起動設定を行う：
+```
+sudo systemctl daemon-reload  
+sudo systemctl start rcgamestats_uwsgi  
+sudo systemctl enable rcgamestats_uwsgi
+```
+
+動かない場合は以下でエラーログを確認する
+```
+sudo journalctl -u rcgamestats_uwsgi.service -f
+```

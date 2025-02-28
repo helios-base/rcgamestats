@@ -1,25 +1,25 @@
 # uWSGI設定のメモ
 
-https://flask.palletsprojects.com/en/stable/deploying/
-https://flask.palletsprojects.com/en/stable/deploying/uwsgi/
+Apache2+uWSGIで動作させるまでの設定手順を記す．
+
+公式資料
+- https://flask.palletsprojects.com/en/stable/deploying/
+- https://flask.palletsprojects.com/en/stable/deploying/uwsgi/
 
 
----
-source env/bin/activate
-
----
+## uWSGIのインストール
 ```bash
+source env/bin/activate
 pip install pyuwsgi
 ```
----
+
 実行テスト
 ```bash
-# uwsgi --http 127.0.0.1:8000 --master -p 4 -w "rcgame_flask.app:create_app()"
 uwsgi --http 127.0.0.1:8000 --master -p 4 -w rcgame_flask.app:app
 ```
-ブラウザで http://127.0.0.1:8000 へアクセスしてみる
+ブラウザで http://127.0.0.1:8000 へアクセスして確認
 
----
+## 設定ファイルの作成
 
 uwsgi.ini を作成
 ```ini
@@ -51,21 +51,17 @@ iniファイルでの実行テスト
 uwsgi --ini uwsgi.ini
 ```
 
-ブラウザで http://127.0.0.1:8000 へアクセスしてみる
+ブラウザで http://127.0.0.1:8000 へアクセスして確認
 
----
+## Apache2の設定
 
-Apache で以下のモジュールを有効にする  
+Apache で mod_proxy, mod_proxy_http, mod_proxy_uwsgi のモジュールを有効にする  
 ```bash
 sudo a2enmod proxy proxy_http proxy_uwsgi
 sudo systemctl restart apache2
 ```
 
-Apache の VirtualHost 設定ファイルを作成または編集する。
-今回は /etc/apache2/sites-available/rcgamestats.conf として作成し，000-default.confを無効化する．
-80番ポートですべてまとめて動かすなら 000-default.conf を編集する．
-
-
+Apache の VirtualHost 設定ファイルを作成または編集する。ここでは， /etc/apache2/sites-available/rcgamestats.conf として作成し，000-default.confを無効化する．新規作成せずにデフォルト設定ファイル群(000-default.conf, default-ssl.conf)を編集しても良い．
 ```apacheconf
 <VirtualHost *:80>
     ServerName localhost
@@ -82,21 +78,23 @@ Apache の VirtualHost 設定ファイルを作成または編集する。
 
 ```
 
-仮想ホストを有効化し Apache を再起動する
+仮想ホストを有効化し Apache をリロードする
+(000-default.confをそのまま使う場合はApacheのリロードのみでOK)
 ```bash
 sudo a2dissite 000-default.conf
 sudo a2ensite rcgamestats.conf
 sudo systemctl reload apache2
 ```
 
----
-
-URLにプレフィックスをつける
+### (optional) URLにプレフィックスをつける
 
 プロジェクトの.env内でAPPLICATION_ROOTを設定する．（例: "/subdir"）
-
-Apacheのモジュールを有効化する
+```.env
+APPLICATION_ROOT = "/subdir"
 ```
+
+Apacheの mod_headers モジュールを有効化する
+```bash
 sudo a2enmode headers
 ```
 
@@ -107,13 +105,13 @@ apacheの設定ファイルを修正
     # DocumentRoot は任意。静的ファイルがある場合など設定
 
     # ApacheがリバースプロキシとしてuWSGIのHTTPポートに転送する
-    # 最後の'/'をつけておく
-    ProxyPass /rcgamestats/ http://127.0.0.1:5000/rcgamestats/
-    ProxyPassReverse /rcgamestats/ http://127.0.0.1:5000/rcgamestats/
+    # プレフィックスを追加する．最後の'/'をつけておく．
+    ProxyPass /subdir/ http://127.0.0.1:5000/subdir/
+    ProxyPassReverse /subdir/ http://127.0.0.1:5000/subdir/
 
-    <Location /rcgamestats>
+    <Location /subdir>
         require all granted
-        RequestHeader set X-Forwarded-Prefix /rcgamestats/
+        RequestHeader set X-Forwarded-Prefix /subdir/
     </Location>
 </VirtualHost>
 ```

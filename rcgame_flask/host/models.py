@@ -12,7 +12,9 @@ class Host(db.Model):
     token = db.Column(db.String(36), unique=True, nullable=False, default=generate_host_token)
     ip_v4_address = db.Column(db.String(16), default="")
     last_accessed_at = db.Column(db.DateTime)
-    assigned_match_id = db.Column(db.Integer, db.ForeignKey("match.id"))
+    assigned_match_id = db.Column(db.Integer,
+                                  db.ForeignKey("match.id", use_alter=True, name="fk_host_match_id"),
+                                  nullable=True)
     decline_count = db.Column(db.Integer, default=0)
     total_runtime_synch_mode = db.Column(db.Float, default=0.0)
     total_matches_synch_mode = db.Column(db.Integer, default=0)

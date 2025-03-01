@@ -49,6 +49,9 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             current_app.logger.info(f"User [{user.username}] logged in")
+            user.last_login_at = datetime.now(timezone.utc)
+            db.session.commit()
+            flash("successfully logged in", "success")
             return redirect(url_for("index"))
 
         flash("authentication failed", "error")
@@ -162,6 +165,9 @@ def login_google_callback():
 
         login_user(user)
         current_app.logger.info(f"GoogleLogin: LoggedIn [{user.username}]")
+        user.last_login_at = datetime.now(timezone.utc)
+        db.session.commit()
+        flash(f"GoogleLogin: Logged in as [{user.username}]", "success")
         return redirect(url_for("index"))
     except OAuthError:
         flash(f"Exception: {OAuthError}", "error")

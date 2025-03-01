@@ -20,6 +20,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(120), nullable=False)
     auth_provider = db.Column(db.String(50), nullable=False, default='local')  # local, google ...
     type = db.Column(db.Enum(UserType), default=UserType.USER)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    last_login_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -55,7 +57,8 @@ class APIKey(db.Model):
         return secrets.token_hex(16)
 
     def is_expired(self):
-        return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at
+        return (self.expires_at is not None
+                and datetime.now(timezone.utc) > self.expires_at)
 
 
 @login_manager.user_loader

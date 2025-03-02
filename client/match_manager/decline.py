@@ -36,29 +36,24 @@ def decline_match(match):
         "match_token": match.match_token,
     }
 
-    session = requests.Session()
-    retry_count = 3
-    retries = Retry(total=retry_count, backoff_factor=0.3, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
-    session.mount("https://", HTTPAdapter(max_retries=retries))
-    session.mount("http://", HTTPAdapter(max_retries=retries))
+    with requests.Session() as session:
+        retry_count = 3
+        retries = Retry(total=retry_count, backoff_factor=0.3, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        session.mount("http://", HTTPAdapter(max_retries=retries))
 
-    try:
-        response = session.post(url, headers=headers, json=data, timeout=(3, 10))
-        response.raise_for_status()
-        logger.info(f"Decline match response content: {response.json()}")
-        return
-    except requests.exceptions.HTTPError as e:
-        logger.error(f"decline_match: HTTP error occurred: {e}")
-        return
-    except requests.exceptions.RequestException as e:
-        logger.error(f"decline_match: Request error occurred: {e}")
-        return
-    except Exception as e:
-        logger.error(f"decline_match: An error occurred: {e}")
-        return
-    finally:
-        logger.info("decline_match: Failed after {retry_count} retries.")
-        return
+        try:
+            response = session.post(url, headers=headers, json=data, timeout=(3, 10))
+            response.raise_for_status()
+            logger.info(f"Decline match response content: {response.json()}")
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"decline_match: HTTP error occurred: {e}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"decline_match: Request error occurred: {e}")
+        except Exception as e:
+            logger.error(f"decline_match: An error occurred: {e}")
+        finally:
+            logger.info("decline_match: Failed after {retry_count} retries.")
 
     # max_retries = 3
     # retry_delay = 5  # seconds

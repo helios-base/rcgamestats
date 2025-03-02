@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from rcgame_flask.app import db
 
 
@@ -8,11 +9,17 @@ def generate_host_token():
 
 class Host(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(30), unique=True, nullable=False)
-    token = db.Column(db.String(36), unique=True, nullable=False, default=generate_host_token)
+    name = db.Column(db.String(30), nullable=False)
+    token = db.Column(db.String(36), unique=True, nullable=False,
+                      default=generate_host_token)
     ip_v4_address = db.Column(db.String(16), default="")
-    last_accessed_at = db.Column(db.DateTime)
-    assigned_match_id = db.Column(db.Integer, db.ForeignKey("match.id"))
+    last_accessed_at = db.Column(db.DateTime, default=datetime.now().replace(microsecond=0))
+    assigned_match_id = db.Column(db.Integer,
+                                  db.ForeignKey("match.id",
+                                                use_alter=True,
+                                                name="fk_host_match_id"),
+                                  nullable=True)
+    reset_count = db.Column(db.Integer, default=0)  # Number of times the assigned match has been reset
     decline_count = db.Column(db.Integer, default=0)
     total_runtime_synch_mode = db.Column(db.Float, default=0.0)
     total_matches_synch_mode = db.Column(db.Integer, default=0)

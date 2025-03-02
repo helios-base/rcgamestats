@@ -1,7 +1,8 @@
 
 import os
 import time
-from datetime import datetime, timedelta, timezone
+import re
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask import jsonify, request
 from flask import Response
@@ -48,6 +49,9 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             current_app.logger.info(f"User [{user.username}] logged in")
+            user.last_login_at = datetime.now().replace(microsecond=0)
+            db.session.commit()
+            flash("successfully logged in", "success")
             return redirect(url_for("index"))
 
         flash("authentication failed", "error")
@@ -161,6 +165,9 @@ def login_google_callback():
 
         login_user(user)
         current_app.logger.info(f"GoogleLogin: LoggedIn [{user.username}]")
+        user.last_login_at = datetime.now().replace(microsecond=0)
+        db.session.commit()
+        flash(f"GoogleLogin: Logged in as [{user.username}]", "success")
         return redirect(url_for("index"))
     except OAuthError:
         flash(f"Exception: {OAuthError}", "error")
@@ -360,6 +367,10 @@ def bulk_delete_allowed_emails():
     return redirect(url_for("auth.show_allowed_emails"))
 
 
+def is_valid_prefix(prefix):
+    return re.match(r'^/[^/]', prefix) is not None
+
+
 @auth.route("/admin/logs", methods=["GET"])
 @login_required
 @admin_required
@@ -367,7 +378,11 @@ def show_server_logs():
     """
     Show server logs
     """
-    return render_template("auth/server_logs.html")
+    if is_valid_prefix(config.APPLICATION_ROOT):
+        prefix = config.APPLICATION_ROOT
+    else:
+        prefix = ""
+    return render_template("auth/server_logs.html", prefix=prefix)
 
 
 @auth.route("/admin/logs/stream", methods=["GET"])
@@ -451,7 +466,7 @@ def create_api_key():
         key=APIKey.generate_api_key(),
         user_id=current_user.id,
         scope=scope,
-        expires_at=datetime.now(timezone.utc) + timedelta(seconds=expires_in) if expires_in else None
+        expires_at=datetime.now() + timedelta(seconds=expires_in) if expires_in else None
     )
     db.session.add(api_key)
     db.session.commit()

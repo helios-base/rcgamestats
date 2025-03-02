@@ -109,7 +109,7 @@ def check_teams(match):
 
 def check_or_register_host():
     if not host_manager.register_host():
-            return False
+        return False
     return True
 
 

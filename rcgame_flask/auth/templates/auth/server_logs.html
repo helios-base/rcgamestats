@@ -13,7 +13,7 @@
 {% endblock %}
 {% block scripts %}
   <script>
-    const source = new EventSource("/auth/admin/logs/stream");
+    const source = new EventSource("{{ prefix }}/auth/admin/logs/stream");
     const logContainer = document.getElementById("logContainer");
     const maxLines = 100; // max number of lines to display
     let lines = [];

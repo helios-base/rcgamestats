@@ -1,6 +1,5 @@
 import os
 import glob
-import json
 import shutil
 from datetime import datetime
 from flask import render_template, redirect, url_for, flash, current_app
@@ -497,6 +496,8 @@ def reset_match(group_id):
     elif match.processed == MatchStatus.IN_PROGRESS:
         if match.host:
             match.host.assigned_match_id = None
+            match.host.reset_count += 1
+            db.session.commit()
         match.reset_assignment()
         db.session.commit()
         flash(f"Match {group_name}/{match.index} has been reset.", "success")

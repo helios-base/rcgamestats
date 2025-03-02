@@ -1,15 +1,18 @@
 import os
+import shutil
 import re
 import secrets
 from datetime import datetime
 from flask import Blueprint, jsonify, request, current_app
+from flask import send_file, abort
 from sqlalchemy.exc import IntegrityError
+from werkzeug.utils import secure_filename
 from rcgame_flask.app import db, csrf
 from rcgame_flask.auth.decorators import api_key_required, admin_api_key_required
 from rcgame_flask.group.models import Group, GroupStats, Match, MatchStatus
 from rcgame_flask.group.utils import save_group_metadata
 from rcgame_flask.host.models import Host
-from rcgame_flask.team.models import Team
+from rcgame_flask.team.models import Team, current_datetime_str
 
 api = Blueprint("api", __name__, url_prefix="/api")
 
@@ -25,6 +28,7 @@ def register_host():
     Register a host.
     """
     data = request.get_json()
+    host_id = data.get("host_id")
     host_name = data.get("host_name")
     host_token = data.get("host_token")
 
@@ -37,21 +41,30 @@ def register_host():
     if x_forwarded_for:
         client_ip = x_forwarded_for.split(',')[0].strip()
 
-    host = Host.query.filter_by(name=host_name).first()
-    if host:
-        if host_token:
-            if host.token == host_token:
-                host.last_accessed_at = datetime.now()
-                host.ip_v4_address = client_ip
-                db.session.commit()
-                return jsonify({"message": "Host already registered."})
+    if host_id:
+        host = Host.query.get(host_id)
+        if host:
+            if host_token:
+                if host.token == host_token:
+                    if host_name is not None and host.name != host_name:
+                        host.name = host_name
+                        current_app.logger.info(f"Updated host name: the name of host {host_id} is changed to {host_name}.")
+                    host.last_accessed_at = datetime.now().replace(microsecond=0)
+                    host.ip_v4_address = client_ip
+                    db.session.commit()
+                    return jsonify({"message": "Host already registered."})
+                else:
+                    current_app.logger.warning(f"Received invalid token for host id={host_id} name={host_name}.")
+                    return jsonify({"error": "Invalid token."}), 401
             else:
-                return jsonify({"error": "Invalid token."}), 401
-        else:
-            return jsonify({"error": f"{host_name} already registererd. Please provide a token."}), 400        
+                current_app.logger.warning(f"Received a request to register an already registered host {host_name}.")
+                return jsonify({"error": f"{host_name} already registererd. Please provide a token."}), 400
+        # else:
+        #     current_app.logger.warning(f"Host not found: id={host_id}.")
+        #     return jsonify({"error": f"Host {host_id} not found."}), 404  
 
-    # host_name is not found, create a new host record
-    host = Host(name=host_name, ip_v4_address=client_ip, last_accessed_at=datetime.now())
+    # host not found, create a new host record
+    host = Host(name=host_name, ip_v4_address=client_ip)
     db.session.add(host)
     try:
         db.session.commit()
@@ -60,8 +73,9 @@ def register_host():
         current_app.logger.error(f"Failed to register host {host_name}: {e}")
         return jsonify({"error": str(e)}), 500
 
-    current_app.logger.info(f"Registered host {host_name}")
+    current_app.logger.info(f"Registered host: id={host.id} name={host_name}")
     return jsonify({"message": "Host registered.",
+                    "host_id": host.id,
                     "host_token": host.token})
 
 
@@ -73,9 +87,14 @@ def request_match():
     Request a match.
     """
     data = request.get_json()
+    host_id = data.get("host_id")
     host_name = data.get("host_name")
     host_token = data.get("host_token")
     start_time = datetime.now().replace(microsecond=0)
+
+    if host_id is None:
+        current_app.logger.error("Missing host ID.")
+        return jsonify({"error": "Missing host ID."}), 400
 
     if host_name is None:
         current_app.logger.error("Missing host name.")
@@ -86,10 +105,14 @@ def request_match():
         return jsonify({"error": "Missing host token."}), 400
 
     # Update the host record
-    host = Host.query.filter_by(name=host_name, token=host_token).first()
+    host = Host.query.get(host_id)
     if host is None:
         current_app.logger.error(f"Host {host_name} not found.")
         return jsonify({"error": "Host not found."}), 404
+    if host.token != host_token:
+        current_app.logger.error(f"Invalid token for host {host_name}.")
+        return jsonify({"error": "Invalid token."}), 401
+
     client_ip = request.remote_addr
     # In case of reverse proxy
     x_forwarded_for = request.headers.get('X-Forwarded-For')
@@ -182,15 +205,17 @@ def extract_result_params(data):
         raise ValueError(f"Invalid parameters: {e}")
 
 
-def validate_host_token(host_name, host_token):
+def validate_host_token(host_id, host_name, host_token):
     """
     Validate the host token.
     """
-    host = Host.query.filter_by(token=host_token).first()
+    host = Host.query.get(host_id)
     if host is None:
-        return "Invalid host token.", 401
+        return "Invalid host id.", 401
     if host.name != host_name:
         return "Host name do not match.", 400
+    if host.token != host_token:
+        return "Token does not match,.", 401
     return None, 200
 
 
@@ -279,7 +304,7 @@ def submit_result():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-    error_msg, status_code = validate_host_token(params["host_name"], params["host_token"])
+    error_msg, status_code = validate_host_token(params["host_id"], params["host_name"], params["host_token"])
     if error_msg:
         current_app.logger.error(f"@{params['host_name']} {error_msg}.")
         return jsonify({"error": error_msg}), status_code
@@ -328,6 +353,7 @@ def decline_match():
     data = request.form.to_dict()
 
     try:
+        host_id = data.get("host_id")
         host_name = data.get("host_name")
         host_token = data.get("host_token")
         match_id = data.get("match_id")
@@ -335,12 +361,15 @@ def decline_match():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-    host = Host.query.filter_by(token=host_token).first()
+    host = Host.query.get(host_id)
     if host is None:
         current_app.logger.error(f"@{host_name} Decline: invalid host token.")
         return jsonify({"error": "Invalid host token."}), 404
+    if host.token != host_token:
+        current_app.logger.error(f"@{host_name} Decline: Token does not match.")
+        return jsonify({"error": "Token does not match."}), 401
 
-    host.last_accessed_at = datetime.now()
+    host.last_accessed_at = datetime.now().replace(microsecond=0)
     host.assigned_match_id = None
     host.decline_count += 1
     db.session.commit()
@@ -374,7 +403,7 @@ def download(name, version):
 
     team = Team.query.filter_by(name=name, version=version).first()
     if team:
-        print(team.archive_path)
+        # print(team.archive_path)
         abs_path = os.path.join(current_app.static_folder, team.archive_path)
         try:
             current_app.logger.info(f"Send team {name} ({version}) to {client_ip}")
@@ -395,7 +424,7 @@ def download(name, version):
 @api.route("/admin/create_group", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
-def admin_api_create_group():
+def admin_create_group():
     """
     Create a group.
     """
@@ -490,7 +519,7 @@ def admin_api_create_group():
 @api.route("/admin/submit_result", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
-def admin_api_submit_result():
+def admin_submit_result():
     """
     Submit a match result.
     """
@@ -581,3 +610,83 @@ def admin_api_submit_result():
 
     current_app.logger.info(f"@admin Accepted {group.name}/{match.index}")
     return jsonify({"message": f"Accepted the result of match index={match.index}."})
+
+
+@api.route("/admin/upload_team", methods=["POST"])
+@csrf.exempt
+@admin_api_key_required
+def admin_upload_team():
+    """
+    Upload a team archive.
+    """
+    team_name = request.form.get("team_name")
+    team_version = request.form.get("team_version")
+    synch_mode = request.form.get("synch_mode")
+    description = request.form.get("description")
+    if team_name is None:
+        current_app.logger.error("admin_upload_team: Missing team name.")
+        return jsonify({"error": "Missing team name."}), 400
+
+    if team_version is None:
+        team_version = current_datetime_str()
+
+    team_name = secure_filename(team_name)
+    team_version = secure_filename(team_version)
+
+    if synch_mode is not None:
+        if synch_mode.lower() in ["false", "0"]:
+            synch_mode = False
+        elif synch_mode.lower() in ["true", "1"]:
+            synch_mode = True
+        else:
+            current_app.logger.error("admin_upload_team: Invalid synch_mode.")
+            return jsonify({"error": "Invalid synch_mode."}), 400
+    else:
+        synch_mode = True
+
+    if description is None:
+        description = ""
+
+    # Check if the team already exists
+    team = Team.query.filter_by(name=team_name, version=team_version).first()
+    if team is not None:
+        current_app.logger.error("admin_upload_team: Team already exists.")
+        return jsonify({"error": "Team already exists."}), 400
+
+    archive_dir = os.path.join("teams", team_name, team_version)
+    absolute_path = os.path.join(current_app.static_folder, archive_dir)
+    if not os.path.exists(absolute_path):
+        os.makedirs(absolute_path)
+
+    # Save the uploaded file
+    files = request.files.getlist("team_archive")
+    if len(files) == 0:
+        current_app.logger.error("admin_upload_team: No file uploaded.")
+        return jsonify({"error": "No file uploaded."}), 400
+    if len(files) > 1:
+        current_app.logger.error("admin_upload_team: Multiple files uploaded.")
+        return jsonify({"error": "Multiple files uploaded."}), 400
+    file = files[0]
+    if file and file.filename:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(absolute_path, filename))
+    else:
+        current_app.logger.error("admin_upload_team: No file uploaded.")
+        return jsonify({"error": "No file uploaded."}), 400
+
+    # Create a new team record
+    team = Team(name=team_name,
+                version=team_version,
+                synch_mode=synch_mode,
+                archive_path=os.path.join(archive_dir, filename),
+                description=description)
+    db.session.add(team)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        shutil.rmtree(absolute_path)
+        return jsonify({"error": str(e)}), 500
+
+    current_app.logger.info(f"admin_upload_team: Uploaded team {team_name} ({team_version})")
+    return jsonify({"message": "Team uploaded successfully."})

@@ -7,6 +7,7 @@
 <table id="host-table" class="tablesorter">
     <thead>
         <tr>
+            <th>ID</th>
             <th>Host Name</th>
             <th>IPv4</th>
             <th>Last Access</th>
@@ -18,6 +19,7 @@
             <th>Total Runtime</th>
             <th>Average Runtime</th>
             <th id="lborder">Declines</th>
+            <th>Resets</th>
             <th></th>
         </tr>
     </thead>
@@ -29,6 +31,7 @@
         {% set total_n = host.total_runtime_normal %}
         {% set average_n = 0 if host.total_matches_normal == 0 else host.total_runtime_normal / host.total_matches_normal %}
         <tr>
+            <td>{{ host.id }}</td>
             <td class="host-name"><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
             <td>{{ host.ip_v4_address }}</td>
             <td class="time">{{ host.last_accessed_at }}</td>
@@ -40,6 +43,7 @@
             <td>{{ "%02d" % (total_n // 3600) }}:{{ "%02d" % ((total_n % 3600) // 60) }}:{{ "%02d" % (total_n % 60) }} </td>
             <td>{{ "%02d" % (average_n // 3600) }}:{{ "%02d" % ((average_n % 3600) // 60) }}:{{ "%02d" % (average_n % 60) }}</td>
             <td id="lborder">{{ host.decline_count }}</td>
+            <td>{{ host.reset_count }}</td>
             <td id="lborder">
                 <div style="display:flex; justify-content: center; align-items:center; gap:4px;">
                 <form method="POST" action="{{ url_for('host.reset_host', host_id=host.id) }}" style="display:inline-block; margin:0;">

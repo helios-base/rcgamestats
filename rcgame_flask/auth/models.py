@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -20,6 +20,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(120), nullable=False)
     auth_provider = db.Column(db.String(50), nullable=False, default='local')  # local, google ...
     type = db.Column(db.Enum(UserType), default=UserType.USER)
+    created_at = db.Column(db.DateTime, default=datetime.now().replace(microsecond=0))
+    last_login_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -44,7 +46,7 @@ class APIKey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(32), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=datetime.now().replace(microsecond=0))
     expires_at = db.Column(db.DateTime, nullable=True)
     scope = db.Column(db.Enum(UserType), default=UserType.USER)
 
@@ -55,7 +57,8 @@ class APIKey(db.Model):
         return secrets.token_hex(16)
 
     def is_expired(self):
-        return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at
+        return (self.expires_at is not None
+                and datetime.now() > self.expires_at)
 
 
 @login_manager.user_loader

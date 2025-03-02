@@ -15,6 +15,8 @@ host.total_matches_synch_mode %}
     <li>Host Name: {{ host.name }}</li>
     <li>Host Token: {{ host.token }}</li>
     <li>Host IP: {{ host.ip_v4_address }}</li>
+    <li>Last Access: {{ host.last_accessed_at }}</li>
+    <li>Status: {{ get_host_status(host) }}</li>
     <li>sync_mode Matches: {{ host.total_matches_synch_mode }}</li>
     <ul>
         <li>Total Runtime: {{ "%02d" % (total_s // 3600) }}:{{ "%02d" % ((total_s % 3600) // 60) }}:{{ "%02d" % (total_s
@@ -30,6 +32,8 @@ host.total_matches_synch_mode %}
         <li>Average Runtime: {{ "%02d" % (average_n // 3600) }}:{{ "%02d" % ((average_n % 3600) // 60) }}:{{ "%02d" %
             (average_n % 60) }}</li>
     </ul>
+    <li>Declines: {{ host.decline_count }}</li>
+    <li>Resets: {{ host.reset_count }}</li>
 </ul>
 
 {% endblock %}

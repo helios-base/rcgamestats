@@ -161,7 +161,18 @@
     function plotConfidenceIntervals(filteredScoreList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
         const scoreList = filteredScoreList || scoreInfo;
-        const groupLabels = scoreList.map(stats => stats.group_name);
+        const groupLabels = scoreList.map(stats => {
+            let label = stats.group_name;
+            let firstIdx = label.indexOf('-');
+            if (firstIdx !== -1) {
+                let secondIdx = label.indexOf('-', firstIdx + 1);
+                if (secondIdx !== -1) {
+                    // 2箇所目のハイフンを <br> に置換
+                    return label.substring(0, secondIdx) + '<br>' + label.substring(secondIdx + 1);
+                }
+            }
+            return label;
+        });
         // 左チームの場合、平均値とエラーバーの値を計算
         // error_x.array: 平均値から上方向の誤差 (upper - mean)
         // error_x.arrayminus: 平均値から下方向の誤差 (mean - lower)
@@ -348,18 +359,40 @@
             });
         }
 
+        // 左チームの最小値（平均値－下側誤差）の最小値と最大値（平均値＋上側誤差）の最大値を計算
+        // const leftMin = Math.min(...leftMean.map((m, i) => m - leftErrorLower[i]));
+        const leftMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i]));
+        // 右チームの最小値と最大値を計算
+        // const rightMin = Math.min(...rightMean.map((m, i) => m - rightErrorLower[i]));
+        const rightMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i]));
+
+        // const bothMax = Math.max(leftMax, rightMax);
+        // 各軸の範囲をそれぞれ広げる
+        const leftRange = [0, leftMax + 0.5];
+        const rightRange = [0, rightMax + 0.5];
+
         // レイアウト設定：グリッド機能を使って2列に分割し、同じ y 軸 (yaxis1) を共有
         const layout = {
             grid: { rows: 1, columns: 2, pattern: 'independent', xgap: 0.1 },
             // 第1カラムの x 軸の領域（左チーム）
             xaxis1: {
-                title: 'Mean Score',
-                domain: [0, 0.45]
+                title: {
+                    text: 'Left Team',
+                    side: 'top',
+                    standoff: 10,  // 適宜調整
+                },
+                domain: [0, 0.5],
+                range: leftRange
             },
             // 第2カラムの x 軸の領域（右チーム）
             xaxis2: {
-                title: 'Mean Score',
-                domain: [0.55, 1]
+                title: {
+                    text: 'Right Team',
+                    side: 'top',
+                    standoff: 10,  // 適宜調整
+                },
+                domain: [0.5, 1],
+                range: rightRange
             },
             // 共有の y 軸
             yaxis1: {
@@ -367,8 +400,19 @@
                 automargin: true,
                 autorange: 'reversed'  // 必要に応じて順序調整
             },
-            title: '95% Confidence Intervals',
-            annotations: annotations
+            // margin: { t: 80 },  // 上部に余白を確保することで全体タイトルが表示される
+            title: 'Mean Score 95% Confidence Intervals',
+            annotations: annotations.concat([
+                {
+                    xref: 'paper',
+                    yref: 'paper',
+                    x: 0.5,
+                    y: 1.15,       // 上部中央
+                    text: 'Mean Score 95% Confidence Intervals',
+                    showarrow: false,
+                    font: { size: 16 }
+                }
+            ])
         };
 
         Plotly.newPlot('ciSubplots', data, layout);

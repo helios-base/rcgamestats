@@ -350,20 +350,21 @@ def decline_match():
     """
     Decline an assigned match.
     """
-    data = request.form.to_dict()
+    data = request.get_json()
 
-    try:
-        host_id = data.get("host_id")
-        host_name = data.get("host_name")
-        host_token = data.get("host_token")
-        match_id = data.get("match_id")
-        match_token = data.get("match_token")
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    host_id = data.get("host_id")
+    host_name = data.get("host_name")
+    host_token = data.get("host_token")
+    match_id = data.get("match_id")
+    match_token = data.get("match_token")
+
+    if host_id is None or host_name is None or host_token is None or match_id is None or match_token is None:
+        current_app.logger.error("Missing parameters.")
+        return jsonify({"error": "Missing parameters."}), 400
 
     host = Host.query.get(host_id)
     if host is None:
-        current_app.logger.error(f"@{host_name} Decline: invalid host token.")
+        current_app.logger.error(f"@{host_name} Decline: host not found.")
         return jsonify({"error": "Invalid host token."}), 404
     if host.token != host_token:
         current_app.logger.error(f"@{host_name} Decline: Token does not match.")

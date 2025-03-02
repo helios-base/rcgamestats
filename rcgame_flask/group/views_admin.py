@@ -6,16 +6,16 @@ from flask import render_template, redirect, url_for, flash, current_app
 from flask import request
 from flask_login import login_required
 from sqlalchemy.exc import IntegrityError
-from rcgame_flask.app import db
-from rcgame_flask.group import group as group_bp
-from rcgame_flask.group.forms import GroupCreateForm, RoundrobinCreateForm
-from rcgame_flask.group.forms import GroupEditForm
-from rcgame_flask.group.models import Group, GroupStats, Match
-from rcgame_flask.group.utils import create_group_name, save_group_metadata
-from rcgame_flask.group.models import GroupStatus, MatchStatus
-from rcgame_flask.auth.decorators import admin_required
-from rcgame_flask.team.models import Team
-from rcgame_flask import googlesheet
+from ..app import db
+from ..auth.decorators import admin_required
+from ..team.models import Team
+from .. import googlesheet
+from . import group as group_bp
+from .forms import GroupCreateForm, RoundrobinCreateForm
+from .forms import GroupEditForm
+from .models import Group, GroupStats, Match
+from .utils import create_group_name, save_group_metadata
+from .models import GroupStatus, MatchStatus
 
 
 @group_bp.route("/create", methods=["GET", "POST"])

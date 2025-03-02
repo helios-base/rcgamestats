@@ -2,10 +2,10 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, request
 from flask import flash
 from flask_login import login_required
-from rcgame_flask.app import db
-from rcgame_flask.auth.decorators import admin_required
-from rcgame_flask.host.models import Host
-from rcgame_flask.group.models import Match, MatchStatus
+from ..app import db
+from ..auth.decorators import admin_required
+from ..group.models import Match, MatchStatus
+from .models import Host
 
 
 host = Blueprint("host", __name__, template_folder="templates", url_prefix="/host")

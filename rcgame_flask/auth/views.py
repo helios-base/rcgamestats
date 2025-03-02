@@ -10,11 +10,11 @@ from flask import current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import generate_csrf
 from authlib.integrations.base_client.errors import OAuthError
-from rcgame_flask.app import db
-from rcgame_flask.auth.decorators import admin_required
-from rcgame_flask.auth.forms import LoginForm, UserRegistrationForm, PasswordChangeForm, EmailRegistrationForm
-from rcgame_flask.auth.models import User, AllowedEmail, APIKey, UserType
-from rcgame_flask.config import config
+from ..app import db
+from ..auth.decorators import admin_required
+from ..auth.forms import LoginForm, UserRegistrationForm, PasswordChangeForm, EmailRegistrationForm
+from ..auth.models import User, AllowedEmail, APIKey, UserType
+from ..config import config
 
 auth = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
 

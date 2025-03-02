@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from rcgame_flask.app import db
+from ..app import db
 
 
 def generate_host_token():

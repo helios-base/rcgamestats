@@ -1,8 +1,8 @@
 import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from .config import config
 
-from rcgame_flask.config import config
 
 def _get_spreadsheet():
     """

@@ -155,10 +155,12 @@
     }, 30000); // 30秒ごとに更新チェック
     */
 
+    var scoreInfo = {{ score_info | tojson }};
+
     // 95%信頼区間のエラーバーをChart.jsで描画
-    function plotConfidenceIntervals() {
+    function plotConfidenceIntervals(filteredScoreList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
-        const scoreList = {{ score_info | tojson }};
+        const scoreList = filteredScoreList || scoreInfo;
         const groupLabels = scoreList.map(stats => stats.group_name);
         // 左チームの場合、平均値とエラーバーの値を計算
         // error_x.array: 平均値から上方向の誤差 (upper - mean)
@@ -371,6 +373,30 @@
 
         Plotly.newPlot('ciSubplots', data, layout);
     } // end of plotConfidenceIntervals
+
+    function plotFilteredConfidenceIntervals() {
+        let filteredIds = [];
+        $('#stats-table tbody tr:visible').each(function() {
+            filteredIds.push($(this).data('id'));
+        });
+        
+        // scoreInfo内の各レコードは group_id プロパティを持つと仮定
+        let filteredScoreList = scoreInfo.filter(item => {
+            // group_idが直接ある場合
+            return filteredIds.indexOf(item.group_id) !== -1;
+            // もし item.group.id のようにネストされている場合はこちら:
+            // return filteredIds.indexOf(item.group.id) !== -1;
+        });
+        
+        // 1秒後に再描画
+        setTimeout(function() {
+            plotConfidenceIntervals(filteredScoreList);
+        }, 500);
+    }
+
+    $('#stats-table').on('filterEnd', function() {
+        plotFilteredConfidenceIntervals();
+    });
 
     window.addEventListener('load', () => {
         plotConfidenceIntervals();

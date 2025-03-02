@@ -23,7 +23,7 @@ uwsgi --http 127.0.0.1:5000 --master -p 4 -w rcgame_flask.app:app
 
 ## 2. 設定ファイルの作成
 
-uwsgi.ini を作成
+uwsgi.ini を作成する（プロジェクトルートディレクトリに配置済み）。
 ```ini
 [uwsgi]
 ; Flaskアプリケーションのモジュール。例：rcgame_flask/app.py 内の app インスタンス
@@ -64,6 +64,7 @@ sudo systemctl restart apache2
 ```
 
 Apache の VirtualHost 設定ファイルを作成または編集する。ここでは /etc/apache2/sites-available/rcgamestats.conf として作成し，000-default.confを無効化する例で説明します。新規作成せずにデフォルト設定ファイル群(000-default.conf, default-ssl.conf)を編集しても良いでしょう。
+uwsgiディレクトリ以下にサンプルファイルを置いています。
 ```apacheconf
 <VirtualHost *:80>
     ServerName localhost
@@ -79,7 +80,6 @@ Apache の VirtualHost 設定ファイルを作成または編集する。ここ
     # ErrorLog ${APACHE_LOG_DIR}/rcgamestats_error.log
     # CustomLog ${APACHE_LOG_DIR}/rcgamestats_access.log combined
 </VirtualHost>
-
 ```
 
 仮想ホストを有効化し Apache をリロードする。
@@ -125,7 +125,7 @@ apacheの設定ファイルを修正する。
 ## 5. (本番用)uWSGIをデーモンとして動作させる
 
 本番運用時はsystemdでuWSGIをデーモンとして動作させます。以下は /etc/systemd/system/rcgamestats_uwsgi.service として登録する場合の例です。"path-to"を自分の環境に合わせて編集してください。
-
+uwsgiディレクトリ以下にサンプルファイルを置いています。
 ```ini
 [Unit]
 Description=uWSGI instance to serve rcgamestats Flask app
@@ -142,8 +142,8 @@ ExecStart=/path-to/rcgamestats/venv/bin/uwsgi --ini uwsgi.ini
 WantedBy=multi-user.target
 ```
 
-※UserとGroupは実際の運用環境に合わせて www-data などの適切なユーザーに設定する。
-※データベースファイル，ログディレクトリ，ログファイルなどにUserとGroupの書き込みパーミッションが与えられていることを確認する。
+※UserとGroupは実際の運用環境に合わせて www-data などの適切なユーザーに設定してください。
+※データベースファイル，ログディレクトリ，ログファイルなどにUserとGroupの書き込みパーミッションが与えられていることを確認してください。ディレクトリのオーナーを www-data などの実際の運用ユーザーに設定しておくのが簡単です。
 
 
 サービスをリロードして起動、かつ自動起動設定を行います。
@@ -153,7 +153,7 @@ sudo systemctl start rcgamestats_uwsgi
 sudo systemctl enable rcgamestats_uwsgi
 ```
 
-動かない場合はjournalctlでエラーログを確認する。
+動かない場合はjournalctlでエラーログを確認してください。パーミッションの設定ミスがあればここで何かしらのメッセージが出るはずです。
 ```
 sudo journalctl -u rcgamestats_uwsgi.service -f
 ```

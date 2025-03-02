@@ -7,6 +7,7 @@
 <table id="host-table" class="tablesorter">
     <thead>
         <tr>
+            <th>ID</th>
             <th>Host Name</th>
             <th>IPv4</th>
             <th>Last Access</th>
@@ -29,6 +30,7 @@
         {% set total_n = host.total_runtime_normal %}
         {% set average_n = 0 if host.total_matches_normal == 0 else host.total_runtime_normal / host.total_matches_normal %}
         <tr>
+            <td>{{ host.id }}</td>
             <td class="host-name"><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
             <td>{{ host.ip_v4_address }}</td>
             <td class="time">{{ host.last_accessed_at }}</td>

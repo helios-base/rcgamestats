@@ -15,7 +15,7 @@ def decline_match(match):
     endpoint = "api/decline_match"
     url = urljoin(config.SERVER_URL + '/', endpoint)
 
-    host_token = load_token()
+    host_id, host_token = load_token()
     if host_token is None:
         logger.error("decline_match: Host token does not exist.")
         return
@@ -27,6 +27,7 @@ def decline_match(match):
 
     data = {
         "type": "decline_match",
+        "host_id": host_id,
         "host_name": config.HOST_NAME,
         "host_token": host_token,
         "match_id": match.match_id,

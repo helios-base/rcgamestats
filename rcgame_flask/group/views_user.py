@@ -8,7 +8,6 @@ from rcgame_flask.app import db
 from rcgame_flask.group import group as group_bp
 from rcgame_flask.group.models import Group, Match, MatchStatus, GroupStats
 from rcgame_flask.group.stats import plot_confidence_intervals
-from rcgame_flask.auth.models import UserType
 from rcgame_flask.config import config
 
 

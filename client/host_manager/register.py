@@ -8,7 +8,7 @@ logger = logging.getLogger("client")
 
 
 def register_host():
-    host_token = load_token()
+    host_id, host_token = load_token()
 
     endpoint = "api/register_host"
     url = urljoin(config.SERVER_URL + '/', endpoint)
@@ -19,6 +19,7 @@ def register_host():
         'x-api-key': config.API_KEY
     }
     data = {
+        "host_id": host_id,
         "host_name": config.HOST_NAME,
         "host_token": host_token
     }
@@ -41,10 +42,14 @@ def register_host():
 
     json_message = response.json()
     if "message" in json_message:
+        if "host_id" in json_message:
+            logger.info(f"Received host_id: {json_message.get('host_id')}")
+            host_id = json_message.get("host_id")
+
         if "host_token" in json_message:
             logger.info(f"Received host_token: {json_message.get('host_token')}")
             host_token = json_message.get("host_token")
-            return save_token(host_token)
+            return save_token(host_id, host_token)
         else:
             logger.info(f"message: {json_message['message']}")
             return True

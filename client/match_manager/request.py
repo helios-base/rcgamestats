@@ -16,7 +16,7 @@ def request_match():
     endpoint = "api/request_match"
     url = urljoin(config.SERVER_URL + '/', endpoint)
 
-    host_token = load_token()
+    host_id, host_token = load_token()
     if host_token is None:
         logger.error("request_match: Host token does not exist.")
         return None
@@ -28,6 +28,7 @@ def request_match():
     }
     data = {
         "type": "request_match",
+        "host_id": host_id,
         "host_name": config.HOST_NAME,
         "host_token": host_token
     }

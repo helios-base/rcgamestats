@@ -1,14 +1,12 @@
 import os
 import shutil
-from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
 from flask import send_file, abort, flash
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from rcgame_flask.app import db
-from rcgame_flask.config import config
-from rcgame_flask.auth.decorators import api_key_required, admin_required
+from rcgame_flask.auth.decorators import admin_required
 from rcgame_flask.team.forms import TeamUploadForm
 from rcgame_flask.team.models import Team, current_datetime_str
 from rcgame_flask.group.models import Group

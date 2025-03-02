@@ -31,9 +31,13 @@ def submit_result(match):
     endpoint = "api/submit_result"
     url = urljoin(config.SERVER_URL + '/', endpoint)
 
-    host_token = load_token()
+    host_id, host_token = load_token()
     if host_token is None:
         logger.error("submit_result: Host token does not exist.")
+        return None
+
+    if match.host_id != host_id:
+        logger.error(f"submit_result: Host ID does not match. match({match.host_id}) != own({host_id})")
         return None
 
     headers = {

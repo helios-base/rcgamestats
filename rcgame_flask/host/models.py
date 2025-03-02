@@ -19,6 +19,7 @@ class Host(db.Model):
                                                 use_alter=True,
                                                 name="fk_host_match_id"),
                                   nullable=True)
+    reset_count = db.Column(db.Integer, default=0)  # Number of times the assigned match has been reset
     decline_count = db.Column(db.Integer, default=0)
     total_runtime_synch_mode = db.Column(db.Float, default=0.0)
     total_matches_synch_mode = db.Column(db.Integer, default=0)

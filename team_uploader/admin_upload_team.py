@@ -53,27 +53,26 @@ team_data = {
 
 print(f"Uploading team: {team_name} version: {team_version} synch_mode: {sync_mode} description: [{description}]")
 
-session = requests.Session()
-retry_count = 3
-retries = Retry(total=retry_count, backoff_factor=0.3, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
-session.mount("https://", HTTPAdapter(max_retries=retries))
-session.mount("http://", HTTPAdapter(max_retries=retries))
+with requests.Session() as session:
+    retry_count = 3
+    retries = Retry(total=retry_count, backoff_factor=0.3, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    session.mount("http://", HTTPAdapter(max_retries=retries))
 
-try:
-    response = session.post(url, headers=headers, data=team_data, files=files, timeout=(3, 10))
-    response.raise_for_status()
-    print(f"Upload team response content: {response.json()}")
-except requests.exceptions.HTTPError as e:
-    print(f"Upload team: HTTP error occurred: {e}")
-    exit(1)
-except requests.exceptions.RequestException as e:
-    print(f"Upload team: Request error occurred: {e}")
-    exit(1)
-except Exception as e:
-    print(f"Upload team: An error occurred: {e}")
-    exit(1)
-finally:
-    files["team_archive"].close()
-    session.close()
+    try:
+        response = session.post(url, headers=headers, data=team_data, files=files, timeout=(3, 10))
+        response.raise_for_status()
+        print(f"Upload team response content: {response.json()}")
+    except requests.exceptions.HTTPError as e:
+        print(f"Upload team: HTTP error occurred: {e}")
+        exit(1)
+    except requests.exceptions.RequestException as e:
+        print(f"Upload team: Request error occurred: {e}")
+        exit(1)
+    except Exception as e:
+        print(f"Upload team: An error occurred: {e}")
+        exit(1)
+    finally:
+        files["team_archive"].close()
 
 exit(0)

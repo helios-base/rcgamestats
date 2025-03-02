@@ -4,11 +4,11 @@ from datetime import datetime
 from flask import render_template, redirect, url_for, flash, jsonify, request, current_app
 from flask import send_file, send_from_directory
 from flask_login import login_required, current_user
-from rcgame_flask.app import db
-from rcgame_flask.group import group as group_bp
-from rcgame_flask.group.models import Group, Match, MatchStatus, GroupStats
-from rcgame_flask.group.stats import plot_confidence_intervals
-from rcgame_flask.config import config
+from ..app import db
+from . import group as group_bp
+from .models import Group, Match, MatchStatus, GroupStats
+from .stats import plot_confidence_intervals
+from ..config import config
 
 
 @group_bp.route("/")

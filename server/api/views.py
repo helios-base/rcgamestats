@@ -7,18 +7,19 @@ from flask import Blueprint, jsonify, request, current_app
 from flask import send_file, abort
 from sqlalchemy.exc import IntegrityError
 from werkzeug.utils import secure_filename
-from rcgame_flask.app import db, csrf
-from rcgame_flask.auth.decorators import api_key_required, admin_api_key_required
-from rcgame_flask.group.models import Group, GroupStats, Match, MatchStatus
-from rcgame_flask.group.utils import save_group_metadata
-from rcgame_flask.host.models import Host
-from rcgame_flask.team.models import Team, current_datetime_str
+from ..app import db, csrf
+from ..auth.decorators import api_key_required, admin_api_key_required
+from ..group.models import Group, GroupStats, Match, MatchStatus
+from ..group.utils import save_group_metadata
+from ..host.models import Host
+from ..team.models import Team, current_datetime_str
 
 api = Blueprint("api", __name__, url_prefix="/api")
 
 #
 # Client API
 #
+
 
 @api.route("/register_host", methods=["POST"])
 @csrf.exempt

@@ -9,7 +9,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 # from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
-from rcgame_flask.config import config
+from .config import config
 
 
 db = SQLAlchemy()
@@ -47,7 +47,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     # app.config.from_mapping(
     #     SECRET_KEY='xxxxxxxx',
-    #     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'rcgame_flask.sqlite'),
+    #     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'server.sqlite'),
     #     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     #     WTF_CSRF_ENABLED=True,
     #     WTF_CSRF_SECRET_KEY='xxxxxxxx',
@@ -101,29 +101,29 @@ def create_app(test_config=None):
     # Register Blueprints
     #
 
-    from rcgame_flask.auth import views as auth_views
+    from .auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix='/auth')
 
-    # from rcgame_flask.group import views as group_views
+    # from .group import views as group_views
     # app.register_blueprint(group_views.group, url_prefix='/group')
-    from rcgame_flask.group import group
+    from .group import group
     app.register_blueprint(group, url_prefix='/group')
 
-    from rcgame_flask.team import views as team_views
+    from .team import views as team_views
     app.register_blueprint(team_views.team, url_prefix='/team')
 
-    from rcgame_flask.host import views as host_views
+    from .host import views as host_views
     app.register_blueprint(host_views.host, url_prefix='/host')
 
-    from rcgame_flask.api import views as api_views
+    from .api import views as api_views
     app.register_blueprint(api_views.api, url_prefix='/api')
 
     #
     # set Enums as global variables for Jinja templates
     #
-    from rcgame_flask.auth.models import UserType
-    from rcgame_flask.group.models import GroupStatus
-    from rcgame_flask.group.models import MatchStatus
+    from .auth.models import UserType
+    from .group.models import GroupStatus
+    from .group.models import MatchStatus
     app.jinja_env.globals['UserType'] = UserType
     app.jinja_env.globals['GroupStatus'] = GroupStatus
     app.jinja_env.globals['MatchStatus'] = MatchStatus

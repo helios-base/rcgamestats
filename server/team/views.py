@@ -5,11 +5,11 @@ from flask import send_file, abort, flash
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
-from rcgame_flask.app import db
-from rcgame_flask.auth.decorators import admin_required
-from rcgame_flask.team.forms import TeamUploadForm
-from rcgame_flask.team.models import Team, current_datetime_str
-from rcgame_flask.group.models import Group
+from ..app import db
+from ..auth.decorators import admin_required
+from ..group.models import Group
+from .forms import TeamUploadForm
+from .models import Team, current_datetime_str
 
 
 team = Blueprint("team", __name__, template_folder="templates", url_prefix="/team")

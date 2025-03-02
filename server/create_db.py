@@ -3,10 +3,10 @@ import csv
 import click
 import secrets
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from rcgame_flask.app import db
-from rcgame_flask.auth.models import UserType, User, AllowedEmail, APIKey
-from rcgame_flask.team.models import Team
-from rcgame_flask.config import config
+from .app import db
+from .auth.models import UserType, User, AllowedEmail, APIKey
+from .team.models import Team
+from .config import config
 
 
 def __load_default_users(csv_path):

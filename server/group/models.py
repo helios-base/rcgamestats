@@ -3,7 +3,7 @@ import scipy.stats as stats
 from collections import Counter
 from datetime import datetime
 from enum import Enum
-from rcgame_flask.app import db
+from ..app import db
 
 
 class GroupStatus(Enum):

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, EmailField, SubmitField, PasswordField, SelectField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, Regexp
-from rcgame_flask.auth.models import User, AllowedEmail
+from .models import User, AllowedEmail
 
 
 class LoginForm(FlaskForm):

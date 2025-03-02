@@ -51,7 +51,7 @@ URLにプレフィックスをつけたい場合は、APPLICATION_ROOTを設定�
 
 ```dotenv
 # .env ファイル例
-FLASK_APP=rcgame_flask.app:create_app
+FLASK_APP=server.app:create_app
 
 APPLICATION_ROOT="/"
 

@@ -17,7 +17,7 @@ pip install pyuwsgi
 
 実行テスト
 ```bash
-uwsgi --http 127.0.0.1:5000 --master -p 4 -w rcgame_flask.app:app
+uwsgi --http 127.0.0.1:5000 --master -p 4 -w server.app:app
 ```
 ブラウザで http://127.0.0.1:5000 へアクセスして確認。
 
@@ -26,8 +26,8 @@ uwsgi --http 127.0.0.1:5000 --master -p 4 -w rcgame_flask.app:app
 uwsgi.ini を作成する（プロジェクトルートディレクトリに配置済み）。
 ```ini
 [uwsgi]
-; Flaskアプリケーションのモジュール。例：rcgame_flask/app.py 内の app インスタンス
-module = rcgame_flask.app:app
+; Flaskアプリケーションのモジュール。例：server/app.py 内の app インスタンス
+module = server.app:app
 
 ; HTTPモードで127.0.0.1:5000でリッスン（Apacheからリバースプロキシ予定）
 http = 127.0.0.1:5000

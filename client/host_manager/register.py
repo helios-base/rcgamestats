@@ -1,5 +1,7 @@
-import requests
 import logging
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from urllib.parse import urljoin
 from config import config
 from .token import load_token, save_token
@@ -24,8 +26,14 @@ def register_host():
         "host_token": host_token
     }
 
+    session = requests.Session()
+    retries = Retry(total=3, backoff_factor=0.3, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    session.mount("http://", HTTPAdapter(max_retries=retries))
+
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=10)
+        response = session.post(url, headers=headers, json=data, timeout=(3, 10))
+        response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         logger.error(f"HTTP error occurred: {e}")
         return False

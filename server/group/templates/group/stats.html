@@ -8,6 +8,11 @@
     <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
 </ul>
 
+<div style="display: flex; justify-content: center; width: 100%; max-width: 1200px; margin: 0 auto; overflow: hidden;">
+    <canvas id="leftCiErrorBars" style="width: 50% !important; max-width: 60%; height: auto !important; display: block;"></canvas>
+    <canvas id="rightCiErrorBars" style="width: 50% !important; max-width: 40%; height: auto !important;"></canvas>
+</div>
+
 <div class="button-container">
 <form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups_confidence_intervals') }}" target="_blank">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -72,6 +77,8 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='chartjs-plugin-datalabels.min.js')}}"></script>
 <script>
     $(function () {
         $('#stats-table').tablesorter({
@@ -116,6 +123,7 @@
         document.getElementById("filtered-form").submit();
     }
 
+    /*
     // 最終更新時間
     let pageLoadAt = Date.now();
     // ユーザー操作の最終時刻を記録する変数
@@ -149,6 +157,240 @@
                 });
         }
     }, 30000); // 30秒ごとに更新チェック
+    */
+
+    // 95%信頼区間のエラーバーをChart.jsで描画
+    function plotConfidenceIntervals() {
+        // 横方向エラーバーを描画するカスタムプラグイン
+        Chart.register({
+            id: 'horizontalErrorBars',
+            afterDatasetsDraw: (chart, easing) => {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                // 各バーに対してエラーバーを描画
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (!dataset.errorBars) return; // errorBars プロパティがなければ何もしない
+                    dataset.errorBars.forEach((error, i) => {
+                        // 横バー用：y軸は各ラベルの中心位置、x軸はそれぞれ下限、上限に合わせる
+                        const centerY = yScale.getPixelForValue(chart.data.labels[i]);
+                        const xLower = xScale.getPixelForValue(error.lower);
+                        const xUpper = xScale.getPixelForValue(error.upper);
+                        const xMean = xScale.getPixelForValue(error.mean); // 平均値の位置
+                        // 描画設定
+                        ctx.save();
+                        ctx.strokeStyle = dataset.errorBarColor || 'black';
+                        ctx.lineWidth = 1;
+                        // 横方向のエラーバー線
+                        ctx.beginPath();
+                        ctx.moveTo(xLower, centerY);
+                        ctx.lineTo(xUpper, centerY);
+                        ctx.stroke();
+                        // 左側キャップ
+                        ctx.beginPath();
+                        ctx.moveTo(xLower, centerY - 4);
+                        ctx.lineTo(xLower, centerY + 4);
+                        ctx.stroke();
+                        // 右側キャップ
+                        ctx.beginPath();
+                        ctx.moveTo(xUpper, centerY - 4);
+                        ctx.lineTo(xUpper, centerY + 4);
+                        ctx.stroke();
+                        // -------------------------------
+                        // 各エラーバー上部にテキストを描画
+                        ctx.fillStyle = 'black';
+                        ctx.font = '10px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        // 少し上にずらすためのオフセット
+                        const yOffset = centerY - 6;
+                        // 下限値
+                        ctx.fillText(parseFloat(error.lower).toFixed(3), xLower, yOffset);
+                        // 平均値
+                        ctx.fillText(parseFloat(error.mean).toFixed(3), xMean, yOffset - 8);
+                        // 上限値
+                        ctx.fillText(parseFloat(error.upper).toFixed(3), xUpper, yOffset);
+                        // -------------------------------
+                        ctx.restore();
+                    });
+                });
+            }
+        });
+
+        // カスタムプラグイン：afterDatasetsDraw フックで平均値の縦線を描画
+        Chart.register({
+            id: 'meanLinePlugin',
+            afterDatasetsDraw: (chart, easing) => {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+
+                // meaanMarkers プロパティに平均値の配列をセットしていると仮定
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (!dataset.meanMarkers) return; // meanMarkers がない場合は処理しない
+
+                    dataset.meanMarkers.forEach((mean, i) => {
+                        // 対応するラベルのバーの中心位置を取得
+                        // 横方向バー (indexAxis: 'y') の場合、y軸はカテゴリ位置となる
+                        const barMeta = chart.getDatasetMeta(datasetIndex).data[i];
+                        if (!barMeta) return;
+
+                        const centerY = barMeta.y;
+                        // x軸座標は平均値に対応する位置
+                        const xPixel = xScale.getPixelForValue(mean);
+
+                        ctx.save();
+                        ctx.lineWidth = 3; // 太い縦線
+                        // ctx.strokeStyle = dataset.borderColor[i] || dataset.borderColor; // 色は dataset から
+                        ctx.strokeStyle = dataset.errorBarColor || 'black'; // エラーバーと同じ色
+                        ctx.beginPath();
+                        // バーの上下の位置に合わせて線を引く
+                        // const barTop = barMeta.y - barMeta.height / 2;
+                        // const barBottom = barMeta.y + barMeta.height / 2;
+                        const barTop = barMeta.y - 10;
+                        const barBottom = barMeta.y + 10;
+                        ctx.moveTo(xPixel, barTop);
+                        ctx.lineTo(xPixel, barBottom);
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                });
+            }
+        });
+
+        // 信頼区間の値をサーバで計算済みのstats_listから取得
+        const scoreList = {{ score_info | tojson }};
+        const groupLabels = scoreList.map(stats => stats.group_name);
+        const leftErrorBarsData = scoreList.map(stats => ({
+            lower: stats.left_ci_lower,
+            upper: stats.left_ci_upper,
+            mean: stats.left_mean
+        }));
+        const rightErrorBarsData = scoreList.map(stats => ({
+            lower: stats.right_ci_lower,
+            upper: stats.right_ci_upper,
+            mean: stats.right_mean
+        }));
+        const leftXMin = Math.min(...leftErrorBarsData.map(error => error.lower)) - 1;
+        const leftXMax = Math.max(...leftErrorBarsData.map(error => error.upper)) + 1;
+        const rightXMin = Math.min(...rightErrorBarsData.map(error => error.lower)) - 1;
+        const rightXMax = Math.max(...rightErrorBarsData.map(error => error.upper)) + 1;
+
+        const leftMeanMarkers = scoreList.map(stats => stats.left_mean);
+        const rightMeanMarkers = scoreList.map(stats => stats.right_mean);
+
+        var leftCtx = document.getElementById('leftCiErrorBars').getContext('2d');
+        var leftChart = new Chart(leftCtx, {
+            type: 'bar',
+            data: {
+                labels: groupLabels,
+                datasets: [
+                    {
+                        label: 'Left Team',
+                        data: new Array(groupLabels.length).fill(null),
+                        meanMarkers: leftMeanMarkers,
+                        errorBars: leftErrorBarsData,
+                        backgroundColor: ['rgba(0, 0, 0, 0)'], // 描画しないので透明
+                        borderColor: ['rgba(255, 215, 0, 1)', 'rgba(240, 20, 20, 1)'],
+                        borderWidth: 1,
+                        errorBarColor: 'blue',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        min: leftXMin,
+                        max: leftXMax,
+                        title: {
+                            display: true,
+                            text: 'Mean Score and 95% Confidence Interval'
+                        },
+                        grid: {
+                            display: true
+                        },
+                        ticks: {
+                            stepSize: 0.5
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Group Name'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            },
+            plugins: ['horizontalErrorBars', 'meanLinePlugin']
+        });
+
+        var rightCtx = document.getElementById('rightCiErrorBars').getContext('2d');
+        var rightChart = new Chart(rightCtx, {
+            type: 'bar',
+            data: {
+                labels: groupLabels,
+                datasets: [
+                    {
+                        label: 'Right Team',
+                        data: new Array(groupLabels.length).fill(null),
+                        meanMarkers: rightMeanMarkers,
+                        errorBars: rightErrorBarsData,
+                        backgroundColor: ['rgba(0, 0, 0, 0)'], // 描画しないので透明
+                        borderColor: ['rgba(255, 215, 0, 1)', 'rgba(240, 20, 20, 1)'],
+                        borderWidth: 1,
+                        errorBarColor: 'red',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        min: rightXMin,
+                        max: rightXMax,
+                        title: {
+                            display: true,
+                            text: 'Mean Score and 95% Confidence Interval'
+                        },
+                        grid: {
+                            display: true
+                        },
+                        ticks: {
+                            stepSize: 0.5
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: true
+                        },
+                        ticks: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            },
+            plugins: ['horizontalErrorBars', 'meanLinePlugin']
+        });
+    } // end of plotConfidenceIntervals
+
+    window.addEventListener('load', () => {
+        plotConfidenceIntervals();
+    });
 </script>
 {% endblock %}
 

@@ -1,16 +1,18 @@
 import os
+import shutil
 import re
 import secrets
 from datetime import datetime
 from flask import Blueprint, jsonify, request, current_app
 from flask import send_file, abort
 from sqlalchemy.exc import IntegrityError
+from werkzeug.utils import secure_filename
 from rcgame_flask.app import db, csrf
 from rcgame_flask.auth.decorators import api_key_required, admin_api_key_required
 from rcgame_flask.group.models import Group, GroupStats, Match, MatchStatus
 from rcgame_flask.group.utils import save_group_metadata
 from rcgame_flask.host.models import Host
-from rcgame_flask.team.models import Team
+from rcgame_flask.team.models import Team, current_datetime_str
 
 api = Blueprint("api", __name__, url_prefix="/api")
 
@@ -422,7 +424,7 @@ def download(name, version):
 @api.route("/admin/create_group", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
-def admin_api_create_group():
+def admin_create_group():
     """
     Create a group.
     """
@@ -517,7 +519,7 @@ def admin_api_create_group():
 @api.route("/admin/submit_result", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
-def admin_api_submit_result():
+def admin_submit_result():
     """
     Submit a match result.
     """
@@ -608,3 +610,83 @@ def admin_api_submit_result():
 
     current_app.logger.info(f"@admin Accepted {group.name}/{match.index}")
     return jsonify({"message": f"Accepted the result of match index={match.index}."})
+
+
+@api.route("/admin/upload_team", methods=["POST"])
+@csrf.exempt
+@admin_api_key_required
+def admin_upload_team():
+    """
+    Upload a team archive.
+    """
+    team_name = request.form.get("team_name")
+    team_version = request.form.get("team_version")
+    synch_mode = request.form.get("synch_mode")
+    description = request.form.get("description")
+    if team_name is None:
+        current_app.logger.error("admin_upload_team: Missing team name.")
+        return jsonify({"error": "Missing team name."}), 400
+
+    if team_version is None:
+        team_version = current_datetime_str()
+
+    team_name = secure_filename(team_name)
+    team_version = secure_filename(team_version)
+
+    if synch_mode is not None:
+        if synch_mode.lower() in ["false", "0"]:
+            synch_mode = False
+        elif synch_mode.lower() in ["true", "1"]:
+            synch_mode = True
+        else:
+            current_app.logger.error("admin_upload_team: Invalid synch_mode.")
+            return jsonify({"error": "Invalid synch_mode."}), 400
+    else:
+        synch_mode = True
+
+    if description is None:
+        description = ""
+
+    # Check if the team already exists
+    team = Team.query.filter_by(name=team_name, version=team_version).first()
+    if team is not None:
+        current_app.logger.error("admin_upload_team: Team already exists.")
+        return jsonify({"error": "Team already exists."}), 400
+
+    archive_dir = os.path.join("teams", team_name, team_version)
+    absolute_path = os.path.join(current_app.static_folder, archive_dir)
+    if not os.path.exists(absolute_path):
+        os.makedirs(absolute_path)
+
+    # Save the uploaded file
+    files = request.files.getlist("team_archive")
+    if len(files) == 0:
+        current_app.logger.error("admin_upload_team: No file uploaded.")
+        return jsonify({"error": "No file uploaded."}), 400
+    if len(files) > 1:
+        current_app.logger.error("admin_upload_team: Multiple files uploaded.")
+        return jsonify({"error": "Multiple files uploaded."}), 400
+    file = files[0]
+    if file and file.filename:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(absolute_path, filename))
+    else:
+        current_app.logger.error("admin_upload_team: No file uploaded.")
+        return jsonify({"error": "No file uploaded."}), 400
+
+    # Create a new team record
+    team = Team(name=team_name,
+                version=team_version,
+                synch_mode=synch_mode,
+                archive_path=os.path.join(archive_dir, filename),
+                description=description)
+    db.session.add(team)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        shutil.rmtree(absolute_path)
+        return jsonify({"error": str(e)}), 500
+
+    current_app.logger.info(f"admin_upload_team: Uploaded team {team_name} ({team_version})")
+    return jsonify({"message": "Team uploaded successfully."})

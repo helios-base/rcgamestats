@@ -46,14 +46,20 @@ def decline_match(match):
             response = session.post(url, headers=headers, json=data, timeout=(3, 10))
             response.raise_for_status()
             logger.info(f"Decline match response content: {response.json()}")
+            return
         except requests.exceptions.HTTPError as e:
-            logger.error(f"decline_match: HTTP error occurred: {e}")
+            try:
+                response_data = response.json()
+                error_msg = response_data.get("error", "")
+            except Exception:
+                error_msg = ""
+            logger.error(f"decline_match: HTTP error occurred: [{error_msg}] {e}")
         except requests.exceptions.RequestException as e:
             logger.error(f"decline_match: Request error occurred: {e}")
         except Exception as e:
             logger.error(f"decline_match: An error occurred: {e}")
         finally:
-            logger.info("decline_match: Failed after {retry_count} retries.")
+            logger.info(f"decline_match: Failed after {retry_count} retries.")
 
     # max_retries = 3
     # retry_delay = 5  # seconds

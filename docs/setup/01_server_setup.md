@@ -1,6 +1,6 @@
-# Server SetUp Instruction
+# Server Setup Instruction
 
-このドキュメントでは、Ubuntu 22.04 での環境構築手順および外部公開時の Apache 設定例について説明します。
+このドキュメントでは、Ubuntu 22.04 での環境構築手順について説明します。
 
 ## 1. 必要なパッケージのインストール
 
@@ -17,16 +17,16 @@ sudo apt install python3 python3-venv python3-pip
 
 ## 2. Python仮想環境の構築
 
-プロジェクトルート内に仮想環境を作成し、依存パッケージをインストールします。以下の例では、仮想環境の名前を `rcgamestats` としています。必要に応じて名前は変更してください。
+プロジェクトルート内に仮想環境を作成し、依存パッケージをインストールします。以下の例では、仮想環境の名前を `venv` としています。必要に応じて名前は変更してください。
 
 ```bash
-python3 -m venv rcgamestats
+python3 -m venv venv
 ```
 
 作成した仮想環境をアクティベートします。
 
 ```bash
-source rcgamestats/bin/activate
+source venv/bin/activate
 ```
 
 ---
@@ -45,10 +45,16 @@ pip install -r requirements.txt
 
 ## 4. .env ファイルの設定
 
-プロジェクトルートに `.env` ファイルを作成し、環境変数を設定します。以下は設定例です。
+プロジェクトルートに `.env` ファイルを作成し、環境変数を設定します。`.env.example` に雛形を用意していいます。以下は設定例です。
+URLにプレフィックスをつけたい場合は、APPLICATION_ROOTを設定してください。プレフィックスをつけるとは、例えば `http://127.0.0.1:5000` ではなく `http://127.0.0.1:5000/rcgamestats` がルートになるようにすることを意味します（`APPLICATION_ROOT="/rcgamestats"`と設定する）。
+
 
 ```dotenv
 # .env ファイル例
+FLASK_APP=rcgame_flask.app:create_app
+
+APPLICATION_ROOT="/"
+
 # Flaskアプリ用シークレットキー設定
 SECRET_KEY=your_secret_key
 WTF_CSRF_SECRET_KEY=your_wtf_csrf_secret_key
@@ -71,8 +77,19 @@ GOOGLE_KEY_PATH=your_google_document_key_filepath
 ※ 設定項目はプロジェクトの仕様に合わせて適宜変更してください。
 
 ---
+## 5. その他の初期設定
 
-## 5. データベースの初期化とマイグレーション
+データベース初期化時にユーザーとOAuth用メールアドレスを登録することができます。後からWebインタフェースでも追加できます。
+
+default_users.csv に初期ユーザーをリストできます。ユーザー名、メールアドレス、ユーザーのタイプ(admin,user)をCSV形式で列挙してください
+
+default_allowed_emails.csv にOAuth用メールアドレスをリストできます。メールアドレスとユーザーのタイプをCSV形式で列挙してください。
+※OAuthログインはGoogleアカウントでのみ利用可能です。OAuthを利用するにはGoogle側で設定した上で、.envファイルにその内容を記入しておく必要があります。
+
+
+---
+
+## 6. データベースの初期化とマイグレーション
 
 初回セットアップやデータベース構造の変更があった場合は、データベースの初期化およびマイグレーションを行います。
 以下は Flask-Migrate を利用している場合の例です。
@@ -99,9 +116,23 @@ flask db upgrade
 
 ---
 
-## 6. Google OAuth の設定
+## 7. ローカルで実行
 
-Google OAuth を利用して認証を行う場合、[Google Cloud Console]((https://console.cloud.google.com/)) 上で以下の設定を行います。
+LAN内で動かすだけならば、プロジェクトのルートで以下を実行すれば動作します。
+```bash
+flask run --host=0.0.0.0
+```
+Webブラウザで http://127.0.0.1:5000 (プレフィックスをつけている場合は http://127.0.0.1:5000/PREFIX ) へアクセスしてログイン画面が表示されれば成功です。
+
+
+---
+
+## 8. (optional) Google OAuth の設定
+
+Google OAuth を利用した認証機能を用意しています。
+通常のアカウントに対してはパスワードリマインド機能を用意していないため、Googleアカウントでの利用を推奨します。
+
+[Google Cloud Console]((https://console.cloud.google.com/)) 上で以下の設定を行います。
 
 1. OAuth同意画面 (上部検索ボックスで検索可能)
    1. Google Auth Platform が構成されていない場合は開始する
@@ -113,9 +144,10 @@ Google OAuth を利用して認証を行う場合、[Google Cloud Console]((http
 3. OAuthクライアントを作成（OAuth クライアント ID の作成）
    1. アプリケーションの種類 -> ウェブアプリケーション
    2. 名前 -> プロジェクト名と同じで良い？
-   3. 承認済みのJavaScript生成元 (仮入力)-> http://127.0.0.1:5000
-   4. 承認済みのリダイレクトURI (仮入力)->  http://127.0.0.1:5000/auth/google/callback
-   5. 作成 ボタンを押下
+   3. 承認済みのJavaScript生成元 (仮入力)-> http://127.0.0.1:5000/PREFIX
+   4. 承認済みのリダイレクトURI (仮入力)->  http://127.0.0.1:5000/PREFIX/auth/google/callback
+   5. (外部公開アドレスが用意できているなら追加しておく)
+   6. 作成 ボタンを押下
 4. データアクセス（左サイドメニューから）
    1. スコープを追加または削除
       1. チェック -> Googleアカウントのメインのメールアドレスの参照
@@ -126,14 +158,6 @@ Google OAuth を利用して認証を行う場合、[Google Cloud Console]((http
    3. クライアントシークレットをコピーしておく
    4. クライアントシークレットのJSONファイルをダウンロードして保管 client_secret_xxx.json
 6. .env の GOOGLE_OAUTH_CLIENT_ID と GOOGLE_OAUTH_CLIENT_SECRET を設定する
-
-
-## 7. 外部公開する場合の補足設定
-
-外部公開 (プロダクション環境) の場合、Apache や Nginx を利用したリバースプロキシの設定が必要です。
-WSGI サーバ（例：gunicorn, uWSGI）との連携設定も検討してください。
-
-また、セキュリティの観点から HTTPS（SSL/TLS）の設定を行い、適切な証明書を導入することも推奨します。
 
 ---
 

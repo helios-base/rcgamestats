@@ -1,6 +1,5 @@
 import os
 import glob
-import json
 import shutil
 from datetime import datetime
 from flask import render_template, redirect, url_for, flash, current_app

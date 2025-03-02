@@ -10,7 +10,7 @@ from rcgame_flask.app import db
 from rcgame_flask.config import config
 from rcgame_flask.auth.decorators import api_key_required, admin_required
 from rcgame_flask.team.forms import TeamUploadForm
-from rcgame_flask.team.models import Team
+from rcgame_flask.team.models import Team, current_datetime_str
 from rcgame_flask.group.models import Group
 
 
@@ -219,7 +219,7 @@ def upload():
 
         name = secure_filename(name)
         name = name.replace("-", "")
-        version = form.version.data if form.version.data else datetime.now().strftime("%Y%m%d-%H%M")
+        version = form.version.data if form.version.data else current_datetime_str()
         version = secure_filename(version)
 
         # check if the team name and the version already exist

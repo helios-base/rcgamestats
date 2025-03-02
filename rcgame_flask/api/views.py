@@ -42,7 +42,7 @@ def register_host():
     if host:
         if host_token:
             if host.token == host_token:
-                host.last_accessed_at = datetime.now()
+                host.last_accessed_at = datetime.now().replace(microsecond=0)
                 host.ip_v4_address = client_ip
                 db.session.commit()
                 return jsonify({"message": "Host already registered."})
@@ -52,7 +52,7 @@ def register_host():
             return jsonify({"error": f"{host_name} already registererd. Please provide a token."}), 400        
 
     # host_name is not found, create a new host record
-    host = Host(name=host_name, ip_v4_address=client_ip, last_accessed_at=datetime.now())
+    host = Host(name=host_name, ip_v4_address=client_ip)
     db.session.add(host)
     try:
         db.session.commit()
@@ -341,7 +341,7 @@ def decline_match():
         current_app.logger.error(f"@{host_name} Decline: invalid host token.")
         return jsonify({"error": "Invalid host token."}), 404
 
-    host.last_accessed_at = datetime.now()
+    host.last_accessed_at = datetime.now().replace(microsecond=0)
     host.assigned_match_id = None
     host.decline_count += 1
     db.session.commit()

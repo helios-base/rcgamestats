@@ -277,24 +277,25 @@ def has_updates():
     """
     Check if there are any updates to the groups.
     """
-    last_updated_at = request.args.get("page_load_at")
-    # print(f"page_load_at: {last_updated_at}")
-    # If last_updated_at is None, return True as there are updates.
-    if last_updated_at is None:
+    last_load_at = request.args.get("page_load_at")
+    # print(f"page_load_at: {last_load_at}")
+    # If last_load_at is None, return True as there are updates.
+    if last_load_at is None:
         return jsonify({"update": True})
 
     try:
-        if last_updated_at.isdigit():
-            timestamp = int(last_updated_at) / 1000.0
-            last_updated_at_dt = datetime.fromtimestamp(timestamp)
+        if last_load_at.isdigit():
+            timestamp = int(last_load_at) / 1000.0
+            last_load_at_dt = datetime.fromtimestamp(timestamp)
         else:
-            last_updated_at_dt = datetime.strptime(last_updated_at, "%Y-%m-%d %H:%M:%S")
-        # print(f"page_load_at: {last_updated_at_dt}")
+            last_load_at_dt = datetime.strptime(last_load_at, "%Y-%m-%d %H:%M:%S")
+        # print(f"page_load_at: {last_load_at_dt}")
     except ValueError:
         return jsonify({"error": "Invalid datetime format"}), 400
 
-    group_list = Group.query.filter(Group.updated_at > last_updated_at_dt).all()
+    group_list = Group.query.filter(Group.updated_at > last_load_at_dt).all()
     has_updates = len(group_list) > 0
 
+    # print(f"last_load_at_dt: {last_load_at_dt}")
     # print(f"has_updates: {has_updates}")
     return jsonify({"update": has_updates})

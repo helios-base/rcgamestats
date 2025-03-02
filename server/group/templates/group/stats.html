@@ -74,7 +74,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.plot.ly/plotly-3.0.0.min.js" charset="utf-8"></script>
+<script src="{{ url_for('static', filename='plotly-3.0.0.min.js') }}" charset="utf-8"></script>
 <script>
     $(function () {
         $('#stats-table').tablesorter({
@@ -381,20 +381,20 @@
         });
         
         // scoreInfo内の各レコードは group_id プロパティを持つと仮定
-        let filteredScoreList = scoreInfo.filter(item => {
-            // group_idが直接ある場合
-            return filteredIds.indexOf(item.group_id) !== -1;
-            // もし item.group.id のようにネストされている場合はこちら:
-            // return filteredIds.indexOf(item.group.id) !== -1;
-        });
-        
+        // let filteredScoreList = scoreInfo.filter(item => {
+        //     return filteredIds.indexOf(item.group_id) !== -1;
+        // });
+
+        // filteredIds の順番に沿って scoreInfo からオブジェクトを抽出
+        let filteredScoreList = filteredIds.map(id => scoreInfo.find(item => item.group_id === id));
+
         // 1秒後に再描画
         setTimeout(function() {
             plotConfidenceIntervals(filteredScoreList);
         }, 500);
     }
 
-    $('#stats-table').on('filterEnd', function() {
+    $('#stats-table').on('filterEnd sortEnd', function() {
         plotFilteredConfidenceIntervals();
     });
 

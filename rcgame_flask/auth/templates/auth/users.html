@@ -66,7 +66,7 @@
                     {% endif %}
                     </a>
                 </td>
-                <td>{% if user.last_login_at %}{{ user.last_login_at | to_localtime }}{% endif %}</td>
+                <td>{{ user.last_login_at }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,19 +1,16 @@
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from datetime import timezone
-from tzlocal import get_localzone
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
-from werkzeug.middleware.proxy_fix import ProxyFix
+# from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
 from rcgame_flask.config import config
 
-LOCAL_TZ = get_localzone()
 
 db = SQLAlchemy()
 csrf = CSRFProtect()
@@ -139,14 +136,6 @@ def create_app(test_config=None):
     @app.template_filter('basename')
     def basename(path):
         return os.path.basename(path)
-
-    @app.template_filter('to_localtime')
-    def to_localtime(dt):
-        if dt is None:
-            return ""
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone(LOCAL_TZ).strftime('%Y-%m-%d %H:%M:%S')
 
     return app
 

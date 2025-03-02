@@ -2,7 +2,7 @@
 import os
 import time
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask import jsonify, request
 from flask import Response
@@ -49,7 +49,7 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             current_app.logger.info(f"User [{user.username}] logged in")
-            user.last_login_at = datetime.now(timezone.utc)
+            user.last_login_at = datetime.now().replace(microsecond=0)
             db.session.commit()
             flash("successfully logged in", "success")
             return redirect(url_for("index"))
@@ -165,7 +165,7 @@ def login_google_callback():
 
         login_user(user)
         current_app.logger.info(f"GoogleLogin: LoggedIn [{user.username}]")
-        user.last_login_at = datetime.now(timezone.utc)
+        user.last_login_at = datetime.now().replace(microsecond=0)
         db.session.commit()
         flash(f"GoogleLogin: Logged in as [{user.username}]", "success")
         return redirect(url_for("index"))
@@ -466,7 +466,7 @@ def create_api_key():
         key=APIKey.generate_api_key(),
         user_id=current_user.id,
         scope=scope,
-        expires_at=datetime.now(timezone.utc) + timedelta(seconds=expires_in) if expires_in else None
+        expires_at=datetime.now() + timedelta(seconds=expires_in) if expires_in else None
     )
     db.session.add(api_key)
     db.session.commit()

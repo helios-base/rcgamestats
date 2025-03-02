@@ -1,5 +1,5 @@
-from rcgame_flask.app import db
 from datetime import datetime
+from rcgame_flask.app import db
 
 
 def current_datetime_str():

@@ -175,6 +175,8 @@ class GroupStats(db.Model):
 
         if self.completed_count > 1:
             self.left_score_confidence_interval_lower, self.left_score_confidence_interval_upper = self.__compute_confidence_interval(left_scores, self.left_mean_score)
+            self.left_score_confidence_interval_lower = max(0, self.left_score_confidence_interval_lower)
             self.right_score_confidence_interval_lower, self.right_score_confidence_interval_upper = self.__compute_confidence_interval(right_scores, self.right_mean_score)
+            self.right_score_confidence_interval_lower = max(0, self.right_score_confidence_interval_lower)
 
         self.updated_at = datetime.now().replace(microsecond=0)

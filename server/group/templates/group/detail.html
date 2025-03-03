@@ -172,6 +172,9 @@
             return rightScoreCounts[label] || 0;
         });
 
+        // x軸は左右対称となるように、ゼロライン中心に設定
+        var xMax = Math.max(Math.max.apply(null, leftData), Math.max.apply(null, rightData)) + 1;
+
         // 左側は負の値として表示するため変換（※ツールチップには元の数値を表示するなどの調整は可能）
         var leftTransformed = leftData.map(function(value) {
             return -value;
@@ -240,8 +243,8 @@
         };
 
         // エラーバー描画位置
-        var leftErrorBarPosition = -2.5; //-xMax / 2.7;
-        var rightErrorBarPosition = 2.5; //xMax / 2.7;
+        var leftErrorBarPosition = -xMax / 3.7;
+        var rightErrorBarPosition = xMax / 3.7;
 
         // 左チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
         var traceLeftCI = {
@@ -423,8 +426,6 @@
         //
         // レイアウトの設定
         //
-        // x軸は左右対称となるように、ゼロライン中心に設定
-        var xMax = Math.max(Math.max.apply(null, leftData), Math.max.apply(null, rightData)) + 1;
         var tickVals = [];
         for (var i = -xMax; i <= xMax; i++) {
             tickVals.push(i);
@@ -484,7 +485,7 @@
         var hostLabels = Object.keys(hosts).sort();
         var hostData = hostLabels.map(label => hosts[label]);
 
-        var traceHosts = {
+        var trace = {
             x: hostLabels,
             y: hostData,
             type: 'bar',
@@ -497,7 +498,11 @@
             }
         };
 
-        var hostLayout = {
+        // var modifiedHostLabels = hostLabels.map(function(label) {
+        //     return label.replace(' ', '<br>');
+        // });
+
+        var layout = {
             title: '',
             height: 300,
             barmode: 'overlay',
@@ -510,6 +515,9 @@
                 range: [-0.51, hostLabels.length - 0.49],
                 tickvals: hostLabels,
                 ticktext: hostLabels,
+                // ticktext: modifiedHostLabels,
+                // tickangle: -90,
+                // tickfont: { size: 10 },
             },
             yaxis: {
                 title: {
@@ -529,14 +537,14 @@
                 xref: 'paper',
                 yref: 'paper',
                 x: 0.5,
-                y: -0.17,
+                y: -0.18,
                 text: 'Histogram of Matches by Host',
                 showarrow: false,
                 font: { size: 16, color: 'black' }
             }]
         };
 
-        Plotly.newPlot('hostsHistogram', [traceHosts], hostLayout);
+        Plotly.newPlot('hostsHistogram', [trace], layout);
     }
 
     $(function () {

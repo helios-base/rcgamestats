@@ -1,5 +1,6 @@
 import os
 import shutil
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
 from flask import send_file, abort, flash
 from flask_login import login_required
@@ -242,6 +243,7 @@ def upload():
         team = Team(
             name=name,
             version=version,
+            uploaded_at=datetime.now().replace(microsecond=0),
             synch_mode=form.synch_mode.data,
             archive_path=os.path.join(archive_dir, filename),
             description=form.description.data,

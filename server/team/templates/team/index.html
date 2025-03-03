@@ -23,6 +23,7 @@
                 <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Team Name</th>
                 <th>Version</th>
+                <th>Uploaded At</th>
                 <th>Synch Mode</th>
                 <th>Archive File</th>
                 <th>Description</th>
@@ -34,6 +35,7 @@
                 <td><input type="checkbox" name="team_ids" value="{{ team.id }}" onclick="checkCheckboxes()"></td>
                 <td>{{ team.name }}</td>
                 <td>{{ team.version }}</td>
+                <td class="time">{{ team.uploaded_at }}</td>
                 <td class="{% if team.synch_mode %}bg-true{% else %}bg-false{% endif %}">{{ team.synch_mode }}</td>
                 <td><a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></td>
                 <td>{{ team.description }}</td>

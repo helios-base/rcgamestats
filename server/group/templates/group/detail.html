@@ -184,11 +184,11 @@
         // 区間推定結果を合わせて描画
         // 信頼区間の値はサーバで計算済みの変数から取得
         var leftMean = {{ stats.left_mean_score }};
-        var leftCI_lower = {{ left_score_confidence_interval[0] }};
-        var leftCI_upper = {{ left_score_confidence_interval[1] }};
+        var leftCI_lower = {{ stats.left_score_confidence_interval_lower }};
+        var leftCI_upper = {{ stats.left_score_confidence_interval_upper }};
         var rightMean = {{ stats.right_mean_score }};
-        var rightCI_lower = {{ right_score_confidence_interval[0] }};
-        var rightCI_upper = {{ right_score_confidence_interval[1] }};
+        var rightCI_lower = {{ stats.right_score_confidence_interval_lower }};
+        var rightCI_upper = {{ stats.right_score_confidence_interval_upper }};
 
         // 左右のバー trace の定義
         var traceLeft = {

@@ -107,20 +107,17 @@ def show_group_matches(group_name):
         stats = GroupStats(group.id)
         db.session.add(stats)
         db.session.commit()
+
     if stats.updated_at is None or group.updated_at > stats.updated_at:
         stats.update()
         current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
         db.session.commit()
 
-    left_ci = stats.left_score_confidence_interval_lower, stats.left_score_confidence_interval_upper
-    right_ci = stats.right_score_confidence_interval_lower, stats.right_score_confidence_interval_upper
     return render_template(
         "group/detail.html",
         group=group,
         matches=matches,
         stats=stats,
-        left_score_confidence_interval=left_ci,
-        right_score_confidence_interval=right_ci,
         use_googlesheet=use_googlesheet
     )
 

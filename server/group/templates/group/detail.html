@@ -87,9 +87,11 @@
     </tbody>
 </table>
 
-<div id="matchScoreHistgram" style="border: 1px solid black; padding: 0px; margin-top: 5px;"></div>
+<h3>Scores Histgram and 95% Confidence Intervals</h3>
+<div id="matchScoreHistgram" style="border: 1px solid black; padding: 0px; margin-top: 0px;"></div>
 
-<canvas id="hostsHistogram" width="300" height="50"></canvas>
+<h3>Host Counts</h3>
+<div id="hostsHistogram" style="border: 1px solid black; padding: 0px; margin-top: 0px;"></div>
 
 <h3>Matches</h3>
 <div id="pager" class="pager">
@@ -144,8 +146,6 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='plotly-3.0.0.min.js') }}"></script>
-<script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
-<script src="{{ url_for('static', filename='chartjs-plugin-datalabels.min.js')}}"></script>
 <script>
     function resetMatch(matchId) {
         document.getElementById('matchId').value = matchId;
@@ -256,8 +256,23 @@
             hoverinfo: 'x+y'
         };
 
-        // 各バーの根元( x = 0 付近 )にカウントと割合を表示するための annotations を生成
+        //
+        // annotations の設定
+        //
         var annotations = [];
+
+        // グラフ下部にタイトルを追加
+        annotations.push({
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.5,
+            y: -0.17,  // グラフ下部の位置。必要に応じて調整
+            text: 'Match Scores Histogram with 95% Confidence Intervals',
+            showarrow: false,
+            font: { size: 16, color: 'black' }
+        });
+
+        // 各バーの根元( x = 0 付近 )にカウントと割合を表示するための annotations を生成
         scoreLabels.forEach(function(label, i) {
             // 左チーム用（bar の値は leftData[i]）
             var lCount = leftData[i] || 0;
@@ -303,6 +318,9 @@
             });
         });
 
+        //
+        // レイアウトの設定
+        //
         // x軸は左右対称となるように、ゼロライン中心に設定
         var xMax = Math.max(Math.max.apply(null, leftData), Math.max.apply(null, rightData)) + 1;
         var tickVals = [];
@@ -330,7 +348,7 @@
                 tickmode: 'array',
                 tickvals: tickVals,
                 ticktext: tickText,
-                showgird: true,
+                showgrid: true,
                 dtick: 1,
             },
             yaxis: {
@@ -349,15 +367,7 @@
             //     y: 1.1,
             //     yanchor: 'bottom'
             // },
-            annotations: annotations.concat([{
-                xref: 'paper',
-                yref: 'paper',
-                x: 0.5,
-                y: -0.17,  // グラフ下部の位置。必要に応じて調整
-                text: 'Match Scores Histogram and 95% Confidence Interval',
-                showarrow: false,
-                font: { size: 16, color: 'black' }
-            }]),
+            annotations: annotations,
             margin: { l: 10, r: 10, t: 10, b: 65 },
         };
 
@@ -371,8 +381,8 @@
         var rightCI_upper = {{ right_score_confidence_interval[1] }};
 
         // 描画位置
-        var leftRegionCenter = -xMax / 3;
-        var rightRegionCenter = xMax / 3;
+        var leftRegionCenter = -2.5; //-xMax / 2.7;
+        var rightRegionCenter = 2.5; //xMax / 2.7;
 
         // 左チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
         var traceLeftCI = {
@@ -502,52 +512,62 @@
 
         // draw hosts histogram
         var hosts = {{ stats.host_counts | tojson }};
-        var hostLabels = Object.keys(hosts);
+        var hostLabels = Object.keys(hosts).sort();
         var hostData = hostLabels.map(label => hosts[label]);
-        var ctx = document.getElementById('hostsHistogram').getContext('2d');
-        var hostsHistogram = new Chart(ctx, {
+
+        var traceHosts = {
+            x: hostLabels,
+            y: hostData,
             type: 'bar',
-            data: {
-                labels: hostLabels,
-                datasets: [
-                    {
-                        label: 'Hosts',
-                        data: hostData,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Hosts'
-                        },
-                        grid: {
-                            display: true
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Number of Matches'
-                        },
-                        grid: {
-                            display: true
-                        },
-                        ticks: {
-                            callback: function (value) {
-                                return Number.isInteger(value) ? value : null;
-                            }
-                        }
-                    }
+            marker: {
+                color: 'rgba(75, 192, 192, 0.2)',
+                line: {
+                    color: 'rgba(75, 192, 192, 1)',
+                    width: 1
                 }
             }
-        });
+        };
+
+        var hostLayout = {
+            title: '',
+            height: 300,
+            barmode: 'overlay',
+            bargap: 0,
+            bargroupgap: 0,
+            xaxis: {
+                title: 'Hosts',
+                showgrid: true,
+                tickson: 'boundaries',
+                range: [-0.51, hostLabels.length - 0.49],
+                tickvals: hostLabels,
+                ticktext: hostLabels,
+            },
+            yaxis: {
+                title: {
+                    text: 'Number of Matches',
+                },
+                beginAtZero: true,
+                showgrid: true,
+                dtick: 1,
+                ticks: {
+                    callback: function (value) {
+                        return Number.isInteger(value) ? value : null;
+                    }
+                }
+            },
+            margin: { l: 50, r: 10, t: 10, b: 50 },
+            annotations: [{
+                xref: 'paper',
+                yref: 'paper',
+                x: 0.5,
+                y: -0.17,
+                text: 'Histogram of Matches by Host',
+                showarrow: false,
+                font: { size: 16, color: 'black' }
+            }]
+        };
+
+        Plotly.newPlot('hostsHistogram', [traceHosts], hostLayout);
     }); // end of $(function() { ... });
 </script>
 {% endblock %}

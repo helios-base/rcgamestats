@@ -89,7 +89,6 @@
 
 <div id="matchScoreHistgram" style="border: 1px solid black; padding: 0px; margin-top: 5px;"></div>
 
-<canvas id="ciChart" width="300" height="30"></canvas>
 <canvas id="hostsHistogram" width="300" height="50"></canvas>
 
 <h3>Matches</h3>
@@ -179,6 +178,7 @@
         //
         // ================================================
         //
+
         // prepare data for histograms
         var leftScoreCounts = {{ stats.left_score_counts | tojson }};
         var rightScoreCounts = {{ stats.right_score_counts | tojson }};
@@ -316,7 +316,7 @@
         var layout = {
             // title: 'Match Scores Histogram',
             title: '',
-            height: 250,
+            height: 400,
             barmode: 'overlay',
             bargap: 0,         // バー間のグループ間隔を 0 に設定
             bargroupgap: 0,    // グループ内のバー間隔を 0 に設定
@@ -353,121 +353,16 @@
                 xref: 'paper',
                 yref: 'paper',
                 x: 0.5,
-                y: -0.25,  // グラフ下部の位置。必要に応じて調整
-                text: 'Match Scores Histogram',
+                y: -0.17,  // グラフ下部の位置。必要に応じて調整
+                text: 'Match Scores Histogram and 95% Confidence Interval',
                 showarrow: false,
                 font: { size: 16, color: 'black' }
             }]),
-            margin: { l: 10, r: 10, t: 10, b: 50 },
+            margin: { l: 10, r: 10, t: 10, b: 65 },
         };
 
-        var data = [traceLeft, traceRight];
-
-        Plotly.newPlot('matchScoreHistgram', data, layout);
-        //
-        // ================================================
-        //
-
-        // 
-        // draw confidence interval chart
-        //
-        // カスタムプラグイン：afterDatasetsDraw フックで横方向エラーバーを描画
-        Chart.register({
-            id: 'horizontalErrorBars',
-            afterDatasetsDraw: (chart, easing) => {
-                const ctx = chart.ctx;
-                const xScale = chart.scales.x;
-                const yScale = chart.scales.y;
-                // 各バーに対してエラーバーを描画
-                chart.data.datasets.forEach((dataset, datasetIndex) => {
-                    if (!dataset.errorBars) return; // errorBars プロパティがなければ何もしない
-                    dataset.errorBars.forEach((error, i) => {
-                        // 横バー用：y軸は各ラベルの中心位置、x軸はそれぞれ下限、上限に合わせる
-                        const centerY = yScale.getPixelForValue(chart.data.labels[i]);
-                        const xLower = xScale.getPixelForValue(error.lower);
-                        const xUpper = xScale.getPixelForValue(error.upper);
-                        const xMean = xScale.getPixelForValue(error.mean); // 平均値の位置
-                        // 描画設定
-                        ctx.save();
-                        ctx.strokeStyle = dataset.errorBarColor || 'black';
-                        ctx.lineWidth = 1;
-                        // 横方向のエラーバー線
-                        ctx.beginPath();
-                        ctx.moveTo(xLower, centerY);
-                        ctx.lineTo(xUpper, centerY);
-                        ctx.stroke();
-                        // 左側キャップ
-                        ctx.beginPath();
-                        ctx.moveTo(xLower, centerY - 4);
-                        ctx.lineTo(xLower, centerY + 4);
-                        ctx.stroke();
-                        // 右側キャップ
-                        ctx.beginPath();
-                        ctx.moveTo(xUpper, centerY - 4);
-                        ctx.lineTo(xUpper, centerY + 4);
-                        ctx.stroke();
-                        // -------------------------------
-                        // 各エラーバー上部にテキストを描画
-                        ctx.fillStyle = 'black';
-                        ctx.font = '10px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'bottom';
-                        // 少し上にずらすためのオフセット
-                        const yOffset = centerY - 6;
-                        // 下限値
-                        ctx.fillText(parseFloat(error.lower).toFixed(3), xLower, yOffset);
-                        // 平均値
-                        ctx.fillText(parseFloat(error.mean).toFixed(3), xMean, yOffset - 8);
-                        // 上限値
-                        ctx.fillText(parseFloat(error.upper).toFixed(3), xUpper, yOffset);
-                        // -------------------------------
-                        ctx.restore();
-                    });
-                });
-            }
-        });
-
-        // カスタムプラグイン：afterDatasetsDraw フックで平均値の縦線を描画
-        Chart.register({
-            id: 'meanLinePlugin',
-            afterDatasetsDraw: (chart, easing) => {
-                const ctx = chart.ctx;
-                const xScale = chart.scales.x;
-                const yScale = chart.scales.y;
-
-                // meaanMarkers プロパティに平均値の配列をセットしていると仮定
-                chart.data.datasets.forEach((dataset, datasetIndex) => {
-                    if (!dataset.meanMarkers) return; // meanMarkers がない場合は処理しない
-
-                    dataset.meanMarkers.forEach((mean, i) => {
-                        // 対応するラベルのバーの中心位置を取得
-                        // 横方向バー (indexAxis: 'y') の場合、y軸はカテゴリ位置となる
-                        const barMeta = chart.getDatasetMeta(datasetIndex).data[i];
-                        if (!barMeta) return;
-
-                        const centerY = barMeta.y;
-                        // x軸座標は平均値に対応する位置
-                        const xPixel = xScale.getPixelForValue(mean);
-
-                        ctx.save();
-                        ctx.lineWidth = 3; // 太い縦線
-                        ctx.strokeStyle = dataset.borderColor[i] || dataset.borderColor; // 色は dataset から
-                        ctx.beginPath();
-                        // バーの上下の位置に合わせて線を引く
-                        // const barTop = barMeta.y - barMeta.height / 2;
-                        // const barBottom = barMeta.y + barMeta.height / 2;
-                        const barTop = barMeta.y - 10;
-                        const barBottom = barMeta.y + 10;
-                        ctx.moveTo(xPixel, barTop);
-                        ctx.lineTo(xPixel, barBottom);
-                        ctx.stroke();
-                        ctx.restore();
-                    });
-                });
-            }
-        });
-
-        // 信頼区間の値はサーバ計算済みの変数から取得
+        // 区間推定結果を合わせて描画
+        // 信頼区間の値はサーバで計算済みの変数から取得
         var leftMean = {{ stats.left_mean_score }};
         var leftCI_lower = {{ left_score_confidence_interval[0] }};
         var leftCI_upper = {{ left_score_confidence_interval[1] }};
@@ -475,76 +370,135 @@
         var rightCI_lower = {{ right_score_confidence_interval[0] }};
         var rightCI_upper = {{ right_score_confidence_interval[1] }};
 
-        // ヒストグラムと同じ x 軸範囲に合わせるための値（例：0～maxScore など）
-        // var numericLabels = scoreLabels.map(Number);
-        // var xMin = Math.min(leftCI_lower, rightCI_lower, Math.min.apply(null, numericLabels)) - 1;
-        // var xMax = Math.max(leftCI_upper, rightCI_upper, Math.max.apply(null, numericLabels)) + 1;
-        var xMin = Math.round(Math.min(leftCI_lower, rightCI_lower) - 1);
-        var xMax = Math.round(Math.max(leftCI_upper, rightCI_upper) + 1);
+        // 描画位置
+        var leftRegionCenter = -xMax / 3;
+        var rightRegionCenter = xMax / 3;
 
-        // 信頼区間のエラーバー情報は各データポイントごとに配列で用意
-        // ここでは、2つのデータ "Left" と "Right" のみ描画する
-        var errorBarsData = [
-            { mean: leftMean, lower: leftCI_lower, upper: leftCI_upper },
-            { mean: rightMean, lower: rightCI_lower, upper: rightCI_upper }
+        // 左チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
+        var traceLeftCI = {
+            x: [leftRegionCenter],
+            y: [leftMean],  // y 軸はスコア
+            mode: 'markers',
+            marker: {
+                color: 'blue',
+                size: 8
+            },
+            error_y: {
+                type: 'data',
+                array: [leftCI_upper - leftMean],
+                arrayminus: [leftMean - leftCI_lower],
+                visible: true,
+                thickness: 1.5,
+                width: 3,
+                color: 'blue'
+            },
+            showlegend: false
+        };
+
+        // 右チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
+        var traceRightCI = {
+            x: [rightRegionCenter],
+            y: [rightMean],
+            mode: 'markers',
+            marker: {
+                color: 'red',
+                size: 8
+            },
+            error_y: {
+                type: 'data',
+                array: [rightCI_upper - rightMean],
+                arrayminus: [rightMean - rightCI_lower],
+                visible: true,
+                thickness: 1.5,
+                width: 3,
+                color: 'red'
+            },
+            showlegend: false
+        };
+
+        var ciAnnotations = [
+            // 左チーム
+            {
+                // 平均値のテキスト
+                x: leftRegionCenter,
+                y: leftMean,
+                xref: 'x',
+                yref: 'y',
+                text: leftMean.toFixed(3),
+                showarrow: false,
+                font: { size: 10, color: 'blue' },
+                xanchor: 'left',
+                yanchor: 'center',
+                xshift: 10
+            },
+            {
+                // 上限のテキスト
+                x: leftRegionCenter,
+                y: leftCI_upper,
+                xref: 'x',
+                yref: 'y',
+                text: leftCI_upper.toFixed(3),
+                showarrow: false,
+                font: { size: 10, color: 'blue' },
+                xanchor: 'left',
+                yanchor: 'bottom'
+            },
+            {
+                // 下限のテキスト
+                x: leftRegionCenter,
+                y: leftCI_lower,
+                xref: 'x',
+                yref: 'y',
+                text: leftCI_lower.toFixed(3),
+                showarrow: false,
+                font: { size: 10, color: 'blue' },
+                xanchor: 'left',
+                yanchor: 'top'
+            },
+            // 右チーム
+            {
+                x: rightRegionCenter,
+                y: rightMean,
+                xref: 'x',
+                yref: 'y',
+                text: rightMean.toFixed(3),
+                showarrow: false,
+                font: { size: 10, color: 'red' },
+                xanchor: 'right',
+                yanchor: 'center',
+                xshift: -10
+            },
+            {
+                x: rightRegionCenter,
+                y: rightCI_upper,
+                xref: 'x',
+                yref: 'y',
+                text: rightCI_upper.toFixed(3),
+                showarrow: false,
+                font: { size: 10, color: 'red' },
+                xanchor: 'right',
+                yanchor: 'bottom'
+            },
+            {
+                x: rightRegionCenter,
+                y: rightCI_lower,
+                xref: 'x',
+                yref: 'y',
+                text: rightCI_lower.toFixed(3),
+                showarrow: false,
+                font: { size: 10, color: 'red' },
+                xanchor: 'right',
+                yanchor: 'top'
+            }
         ];
+        layout.annotations = layout.annotations.concat(ciAnnotations);
 
-        // 平均値の位置のみセットする（棒グラフ自体は描画せず縦線のみ描画）
-        var meanMarkers = [leftMean, rightMean];
+        var data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
 
-        // 信頼区間のグラフの作成（横方向バー）
-        var ctxCI = document.getElementById('ciChart').getContext('2d');
-        var ciChart = new Chart(ctxCI, {
-            type: 'bar',
-            data: {
-                labels: ['Left', 'Right'],
-                datasets: [{
-                    // 平均値の棒グラフは描画せず、meanMarkers に平均値のみ保持
-                    label: 'Mean Score',
-                    data: [null, null],
-                    meanMarkers: meanMarkers,
-                    errorBars: errorBarsData, // 信頼区間のエラーバー情報をセット
-                    backgroundColor: ['rgba(0, 0, 0, 0)'], // 描画しないので透明
-                    borderColor: ['rgba(255, 215, 0, 1)', 'rgba(240, 20, 20, 1)'],
-                    borderWidth: 1,
-                    errorBarColor: 'black' // エラーバーの色
-                }]
-            },
-            options: {
-                indexAxis: 'y',  // 横方向バーにする
-                scales: {
-                    x: {
-                        min: xMin,
-                        max: xMax,
-                        title: {
-                            display: true,
-                            text: 'Mean Score and 95% Confidence Interval'
-                        },
-                        grid: {
-                            display: true
-                        },
-                        ticks: {
-                            stepSize: 1
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Team'
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            },
-            plugins: ['meanLinePlugin', 'horizontalErrorBars']
-        });
+        Plotly.newPlot('matchScoreHistgram', data, layout);
+        //
+        // ================================================
+        //
 
         // draw hosts histogram
         var hosts = {{ stats.host_counts | tojson }};

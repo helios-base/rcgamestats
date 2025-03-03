@@ -380,9 +380,10 @@
                     text: 'Left Team',
                     side: 'top',
                     standoff: 10,  // 適宜調整
+                    font: { size: 16, color: 'rgba(0, 0, 255, 1)' }
                 },
                 domain: [0, 0.5],
-                range: leftRange
+                range: leftRange,
             },
             // 第2カラムの x 軸の領域（右チーム）
             xaxis2: {
@@ -390,24 +391,25 @@
                     text: 'Right Team',
                     side: 'top',
                     standoff: 10,  // 適宜調整
+                    font: { size: 16, color: 'rgba(255, 0, 0, 1)' }
                 },
                 domain: [0.5, 1],
-                range: rightRange
+                range: rightRange,
             },
             // 共有の y 軸
             yaxis1: {
                 title: 'Group Name',
                 automargin: true,
-                autorange: 'reversed'  // 必要に応じて順序調整
+                autorange: 'reversed',  // 必要に応じて順序調整
+                showgrid: true,
             },
-            // margin: { t: 80 },  // 上部に余白を確保することで全体タイトルが表示される
-            title: 'Mean Score 95% Confidence Intervals',
+            // title: 'Mean Score 95% Confidence Intervals',
             annotations: annotations.concat([
                 {
                     xref: 'paper',
                     yref: 'paper',
                     x: 0.5,
-                    y: 1.15,       // 上部中央
+                    y: -0.35, // グラフ下部の位置。必要に応じて調整
                     text: 'Mean Score 95% Confidence Intervals',
                     showarrow: false,
                     font: { size: 16 }
@@ -424,7 +426,7 @@
             filteredIds.push($(this).data('id'));
         });
         
-        // scoreInfo内の各レコードは group_id プロパティを持つと仮定
+        // filteredIds に含まれる group_id に対応する scoreInfo のオブジェクトを抽出
         // let filteredScoreList = scoreInfo.filter(item => {
         //     return filteredIds.indexOf(item.group_id) !== -1;
         // });
@@ -432,7 +434,7 @@
         // filteredIds の順番に沿って scoreInfo からオブジェクトを抽出
         let filteredScoreList = filteredIds.map(id => scoreInfo.find(item => item.group_id === id));
 
-        // 1秒後に再描画
+        // 0.5秒後に再描画
         setTimeout(function() {
             plotConfidenceIntervals(filteredScoreList);
         }, 500);

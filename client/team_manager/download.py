@@ -133,8 +133,8 @@ def download_team(team_name, version):
         return False
 
     # Download the team from the server
-    endpoint = "api/download/{team_name}/{version}"
-    url = urljoin(config.SERVER_URL, endpoint)
+    endpoint = f"api/download/{team_name}/{version}"
+    url = urljoin(config.SERVER_URL + '/', endpoint)
 
     headers = {
         "Accept-Encoding": "identity",

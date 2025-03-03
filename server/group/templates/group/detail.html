@@ -121,7 +121,7 @@
             <th>End At</th>
             <th>Left Score</th>
             <th>Right Score</th>
-            <th>Host Name</th>
+            <th>Host Name (ID)</th>
             <th>Status</th>
             <th>Log File</th>
         </tr>
@@ -133,7 +133,7 @@
             <td>{{ match.end_time }}</td>
             <td>{{ match.left_score }}</td>
             <td>{{ match.right_score }}</td>
-            <td>{{ match.host_name }}</td>
+            <td>{{ match.host_name }} ({{ match.host_id }})</td>
             <td>{% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
                 <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { resetMatch('{{ match.id }}'); }">{{ match.processed.value }}</a>
             {% else %}{{ match.processed.value }}{% endif %}</td>

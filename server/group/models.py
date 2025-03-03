@@ -170,7 +170,8 @@ class GroupStats(db.Model):
         self.right_score_counts = {i: int(count) for i, count in enumerate(np.bincount(right_scores, minlength=6))}
         self.left_mean_score = np.mean(left_scores)
         self.right_mean_score = np.mean(right_scores)
-        self.host_counts = Counter([match.host_name for match in matches])
+        # self.host_counts = Counter([match.host_name for match in matches if match.host_name is not None])
+        self.host_counts = Counter(f"{match.host_name} ({match.host_id})" for match in matches)
 
         if self.completed_count > 1:
             self.left_score_confidence_interval_lower, self.left_score_confidence_interval_upper = self.__compute_confidence_interval(left_scores, self.left_mean_score)

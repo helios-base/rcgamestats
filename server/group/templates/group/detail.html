@@ -152,33 +152,7 @@
         document.getElementById('resetForm').submit();
     }
 
-    $(function () {
-        $('#match-table').tablesorter(
-            {
-                headers: {
-                    7: { sorter: false, filter: false }
-                },
-                sortList: [[0, 0]], // sort by first column in ascending order
-                widgets: ['filter', 'pager'],
-                widgetOptions: {
-                    filter_columnFilters: true,
-                    // class name applied to filter row and each input
-                    filter_cssFilter: 'tablesorter-filter',
-                    // Set this option to false to make the searches case sensitive
-                    filter_ignoreCase: true,
-
-                }
-            }
-        ).tablesorterPager({
-            container: $(".pager"),
-            size: 100,
-            output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
-        });
-
-        //
-        // ================================================
-        //
-
+    function plotScoreHistogramWithCI() {
         // prepare data for histograms
         var leftScoreCounts = {{ stats.left_score_counts | tojson }};
         var rightScoreCounts = {{ stats.right_score_counts | tojson }};
@@ -206,6 +180,15 @@
         // 全体の合計値を算出（％表示に利用）
         var leftTotal = leftData.reduce(function(acc, cur) { return acc + cur; }, 0);
         var rightTotal = rightData.reduce(function(acc, cur) { return acc + cur; }, 0);
+
+        // 区間推定結果を合わせて描画
+        // 信頼区間の値はサーバで計算済みの変数から取得
+        var leftMean = {{ stats.left_mean_score }};
+        var leftCI_lower = {{ left_score_confidence_interval[0] }};
+        var leftCI_upper = {{ left_score_confidence_interval[1] }};
+        var rightMean = {{ stats.right_mean_score }};
+        var rightCI_lower = {{ right_score_confidence_interval[0] }};
+        var rightCI_upper = {{ right_score_confidence_interval[1] }};
 
         // 左右のバー trace の定義
         var traceLeft = {
@@ -254,6 +237,52 @@
                 }
             },
             hoverinfo: 'x+y'
+        };
+
+        // エラーバー描画位置
+        var leftErrorBarPosition = -2.5; //-xMax / 2.7;
+        var rightErrorBarPosition = 2.5; //xMax / 2.7;
+
+        // 左チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
+        var traceLeftCI = {
+            x: [leftErrorBarPosition],
+            y: [leftMean],  // y 軸はスコア
+            mode: 'markers',
+            marker: {
+                color: 'blue',
+                size: 8
+            },
+            error_y: {
+                type: 'data',
+                array: [leftCI_upper - leftMean],
+                arrayminus: [leftMean - leftCI_lower],
+                visible: true,
+                thickness: 1.5,
+                width: 3,
+                color: 'blue'
+            },
+            showlegend: false
+        };
+
+        // 右チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
+        var traceRightCI = {
+            x: [rightErrorBarPosition],
+            y: [rightMean],
+            mode: 'markers',
+            marker: {
+                color: 'red',
+                size: 8
+            },
+            error_y: {
+                type: 'data',
+                array: [rightCI_upper - rightMean],
+                arrayminus: [rightMean - rightCI_lower],
+                visible: true,
+                thickness: 1.5,
+                width: 3,
+                color: 'red'
+            },
+            showlegend: false
         };
 
         //
@@ -318,6 +347,79 @@
             });
         });
 
+        // 信頼区間のアノテーションを追加
+        // 左チーム
+        annotations.push({ // 平均値のテキスト
+            x: leftErrorBarPosition,
+            y: leftMean,
+            xref: 'x',
+            yref: 'y',
+            text: leftMean.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'blue' },
+            xanchor: 'left',
+            yanchor: 'center',
+            xshift: 10
+        });
+        annotations.push({ // 上限のテキスト
+            x: leftErrorBarPosition,
+            y: leftCI_upper,
+            xref: 'x',
+            yref: 'y',
+            text: leftCI_upper.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'blue' },
+            xanchor: 'left',
+            yanchor: 'bottom'
+        });
+        annotations.push({ // 下限のテキスト
+            // 下限のテキスト
+            x: leftErrorBarPosition,
+            y: leftCI_lower,
+            xref: 'x',
+            yref: 'y',
+            text: leftCI_lower.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'blue' },
+            xanchor: 'left',
+            yanchor: 'top'
+        });
+        // 右チーム
+        annotations.push({ // 平均値のテキスト
+            x: rightErrorBarPosition,
+            y: rightMean,
+            xref: 'x',
+            yref: 'y',
+            text: rightMean.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'red' },
+            xanchor: 'right',
+            yanchor: 'center',
+            xshift: -10
+        });
+        annotations.push({ // 上限のテキスト
+            x: rightErrorBarPosition,
+            y: rightCI_upper,
+            xref: 'x',
+            yref: 'y',
+            text: rightCI_upper.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'red' },
+            xanchor: 'right',
+            yanchor: 'bottom'
+        });
+        annotations.push({ // 下限のテキスト
+            x: rightErrorBarPosition,
+            y: rightCI_lower,
+            xref: 'x',
+            yref: 'y',
+            text: rightCI_lower.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'red' },
+            xanchor: 'right',
+            yanchor: 'top'
+        });
+
         //
         // レイアウトの設定
         //
@@ -371,145 +473,12 @@
             margin: { l: 10, r: 10, t: 10, b: 65 },
         };
 
-        // 区間推定結果を合わせて描画
-        // 信頼区間の値はサーバで計算済みの変数から取得
-        var leftMean = {{ stats.left_mean_score }};
-        var leftCI_lower = {{ left_score_confidence_interval[0] }};
-        var leftCI_upper = {{ left_score_confidence_interval[1] }};
-        var rightMean = {{ stats.right_mean_score }};
-        var rightCI_lower = {{ right_score_confidence_interval[0] }};
-        var rightCI_upper = {{ right_score_confidence_interval[1] }};
-
-        // 描画位置
-        var leftRegionCenter = -2.5; //-xMax / 2.7;
-        var rightRegionCenter = 2.5; //xMax / 2.7;
-
-        // 左チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
-        var traceLeftCI = {
-            x: [leftRegionCenter],
-            y: [leftMean],  // y 軸はスコア
-            mode: 'markers',
-            marker: {
-                color: 'blue',
-                size: 8
-            },
-            error_y: {
-                type: 'data',
-                array: [leftCI_upper - leftMean],
-                arrayminus: [leftMean - leftCI_lower],
-                visible: true,
-                thickness: 1.5,
-                width: 3,
-                color: 'blue'
-            },
-            showlegend: false
-        };
-
-        // 右チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
-        var traceRightCI = {
-            x: [rightRegionCenter],
-            y: [rightMean],
-            mode: 'markers',
-            marker: {
-                color: 'red',
-                size: 8
-            },
-            error_y: {
-                type: 'data',
-                array: [rightCI_upper - rightMean],
-                arrayminus: [rightMean - rightCI_lower],
-                visible: true,
-                thickness: 1.5,
-                width: 3,
-                color: 'red'
-            },
-            showlegend: false
-        };
-
-        var ciAnnotations = [
-            // 左チーム
-            {
-                // 平均値のテキスト
-                x: leftRegionCenter,
-                y: leftMean,
-                xref: 'x',
-                yref: 'y',
-                text: leftMean.toFixed(3),
-                showarrow: false,
-                font: { size: 10, color: 'blue' },
-                xanchor: 'left',
-                yanchor: 'center',
-                xshift: 10
-            },
-            {
-                // 上限のテキスト
-                x: leftRegionCenter,
-                y: leftCI_upper,
-                xref: 'x',
-                yref: 'y',
-                text: leftCI_upper.toFixed(3),
-                showarrow: false,
-                font: { size: 10, color: 'blue' },
-                xanchor: 'left',
-                yanchor: 'bottom'
-            },
-            {
-                // 下限のテキスト
-                x: leftRegionCenter,
-                y: leftCI_lower,
-                xref: 'x',
-                yref: 'y',
-                text: leftCI_lower.toFixed(3),
-                showarrow: false,
-                font: { size: 10, color: 'blue' },
-                xanchor: 'left',
-                yanchor: 'top'
-            },
-            // 右チーム
-            {
-                x: rightRegionCenter,
-                y: rightMean,
-                xref: 'x',
-                yref: 'y',
-                text: rightMean.toFixed(3),
-                showarrow: false,
-                font: { size: 10, color: 'red' },
-                xanchor: 'right',
-                yanchor: 'center',
-                xshift: -10
-            },
-            {
-                x: rightRegionCenter,
-                y: rightCI_upper,
-                xref: 'x',
-                yref: 'y',
-                text: rightCI_upper.toFixed(3),
-                showarrow: false,
-                font: { size: 10, color: 'red' },
-                xanchor: 'right',
-                yanchor: 'bottom'
-            },
-            {
-                x: rightRegionCenter,
-                y: rightCI_lower,
-                xref: 'x',
-                yref: 'y',
-                text: rightCI_lower.toFixed(3),
-                showarrow: false,
-                font: { size: 10, color: 'red' },
-                xanchor: 'right',
-                yanchor: 'top'
-            }
-        ];
-        layout.annotations = layout.annotations.concat(ciAnnotations);
-
         var data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
 
         Plotly.newPlot('matchScoreHistgram', data, layout);
-        //
-        // ================================================
-        //
+    }
 
+    function plotHostHistogram() {
         // draw hosts histogram
         var hosts = {{ stats.host_counts | tojson }};
         var hostLabels = Object.keys(hosts).sort();
@@ -568,6 +537,33 @@
         };
 
         Plotly.newPlot('hostsHistogram', [traceHosts], hostLayout);
-    }); // end of $(function() { ... });
+    }
+
+    $(function () {
+        $('#match-table').tablesorter(
+            {
+                headers: {
+                    7: { sorter: false, filter: false }
+                },
+                sortList: [[0, 0]], // sort by first column in ascending order
+                widgets: ['filter', 'pager'],
+                widgetOptions: {
+                    filter_columnFilters: true,
+                    // class name applied to filter row and each input
+                    filter_cssFilter: 'tablesorter-filter',
+                    // Set this option to false to make the searches case sensitive
+                    filter_ignoreCase: true,
+
+                }
+            }
+        ).tablesorterPager({
+            container: $(".pager"),
+            size: 100,
+            output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
+        });
+
+        plotScoreHistogramWithCI();
+        plotHostHistogram();
+    });
 </script>
 {% endblock %}

@@ -76,35 +76,6 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='plotly-basic-3.0.1.min.js') }}" charset="utf-8"></script>
 <script>
-    $(function () {
-        $('#stats-table').tablesorter({
-            sortList: [[0, 1]], // sort by the first column in descending order
-            duplicateSpan : true, // default setting
-
-            widgets: ['filter'],
-            widgetOptions: {
-                filter_columnFilters: true,
-                // class name applied to filter row and each input
-                filter_cssFilter: 'tablesorter-filter',
-                // Set this option to false to make the searches case sensitive
-                filter_ignoreCase: true,
-
-            }
-        });
-
-        $('#filtered-form').on('submit', function() {
-            var filteredIds = [];
-            $('#stats-table tbody tr:visible').each(function() {
-                filteredIds.push($(this).data('id'));
-            });
-            if (filteredIds.length === 0) {
-                alert('No groups are selected.');
-                return;
-            }
-            $('#filtered-ids').val(filteredIds.join(','));
-        });
-    });
-
     function submitInPopup() {
         // ポップアップウィンドウをあらかじめ指定
         // var features = "width=1200,height=600,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes";
@@ -444,7 +415,34 @@
         plotFilteredConfidenceIntervals();
     });
 
-    window.addEventListener('load', () => {
+    $(function () {
+        $('#stats-table').tablesorter({
+            sortList: [[0, 1]], // sort by the first column in descending order
+            duplicateSpan : true, // default setting
+
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
+
+        $('#filtered-form').on('submit', function() {
+            var filteredIds = [];
+            $('#stats-table tbody tr:visible').each(function() {
+                filteredIds.push($(this).data('id'));
+            });
+            if (filteredIds.length === 0) {
+                alert('No groups are selected.');
+                return;
+            }
+            $('#filtered-ids').val(filteredIds.join(','));
+        });
+
         plotConfidenceIntervals();
     });
 </script>

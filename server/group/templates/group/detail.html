@@ -87,6 +87,8 @@
     </tbody>
 </table>
 
+<div id="matchScoreHistgramPlotly" style="border: 1px solid black; padding: 0px; margin-top: 5px;"></div>
+
 <canvas id="matchScoresHistogram" width="300" height="50"></canvas>
 <canvas id="ciChart" width="300" height="30"></canvas>
 <canvas id="hostsHistogram" width="300" height="50"></canvas>
@@ -143,6 +145,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='plotly-3.0.0.min.js') }}"></script>
 <script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='chartjs-plugin-datalabels.min.js')}}"></script>
 <script>
@@ -331,6 +334,193 @@
             },
             plugins: [ChartDataLabels, fixedPositionLabelsPlugin, yAxisLabelOnX0Plugin]
         });
+
+        //
+        // ================================================
+        //
+
+        var scoreLabels2 = Array.from(
+            new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])
+        ).sort(function(a, b) {
+            return parseInt(a, 10) - parseInt(b, 10);
+        });
+
+        // 各ラベルごとに左＆右のカウントを抽出（存在しない場合は 0）
+        var leftData = scoreLabels.map(function(label) {
+            return leftScoreCounts[label] || 0;
+        });
+        var rightData = scoreLabels.map(function(label) {
+            return rightScoreCounts[label] || 0;
+        });
+
+        // 左側は負の値として表示するため変換（※ツールチップには元の数値を表示するなどの調整は可能）
+        var leftTransformed = leftData.map(function(value) {
+            return -value;
+        });
+
+        // 全体の合計値を算出（％表示に利用）
+        var leftTotal = leftData.reduce(function(acc, cur) { return acc + cur; }, 0);
+        var rightTotal = rightData.reduce(function(acc, cur) { return acc + cur; }, 0);
+
+        // 左右のバー trace の定義
+        var traceLeft = {
+            type: 'bar',
+            orientation: 'h',
+            x: leftTransformed,
+            y: scoreLabels,
+            name: 'Left Team Scores',
+            marker: {
+                // color: 'rgba(255,215,0,0.2)',
+                // line: { color: 'rgba(255,215,0,0.4)', width: 1 }
+                color: leftData.map(function(d) {
+                    return d === 0 ? 'rgba(255,215,0,0)' : 'rgba(255,215,0,0.2)';
+                }),
+                line: {
+                    color: leftData.map(function(d) {
+                        return d === 0 ? 'rgba(255,215,0,0)' : 'rgba(255,215,0,0.4)';
+                    }),
+                    width: leftData.map(function(d) {
+                        return d === 0 ? 0 : 1;
+                    })
+                }
+            },
+            hoverinfo: 'x+y'
+        };
+
+        var traceRight = {
+            type: 'bar',
+            orientation: 'h',
+            x: rightData,
+            y: scoreLabels,
+            name: 'Right Team Scores',
+            marker: {
+                // color: 'rgba(240,20,20,0.2)',
+                // line: { color: 'rgba(240,20,20,0.4)', width: 1 }
+                color: rightData.map(function(d) {
+                    return d === 0 ? 'rgba(240,20,20,0)' : 'rgba(240,20,20,0.2)';
+                }),
+                line: {
+                    color: rightData.map(function(d) {
+                        return d === 0 ? 'rgba(240,20,20,0)' : 'rgba(240,20,20,0.4)';
+                    }),
+                    width: rightData.map(function(d) {
+                        return d === 0 ? 0 : 1;
+                    })
+                }
+            },
+            hoverinfo: 'x+y'
+        };
+
+        // 各バーの根元( x = 0 付近 )にカウントと割合を表示するための annotations を生成
+        var annotations = [];
+        scoreLabels.forEach(function(label, i) {
+            // 左チーム用（bar の値は leftData[i]）
+            var lCount = leftData[i] || 0;
+            var lPercent = (leftTotal > 0) ? ((lCount / leftTotal) * 100).toFixed(1) + '%' : '0%';
+            if(lCount > 0){
+                annotations.push({
+                    x: 0,
+                    y: label,
+                    xanchor: 'right',  // 左側に配置
+                    text: lCount + " (" + lPercent + ")",
+                    showarrow: false,
+                    font: { size: 11, color: 'rgba(0,0,0,1)', family: 'Arial Black, Impact, Helvetica, sans-serif' },
+                    xshift: -10  // x=0から左へオフセット
+                });
+            }
+            // 右チーム用（bar の値は rightData[i]）
+            var rCount = rightData[i] || 0;
+            var rPercent = (rightTotal > 0) ? ((rCount / rightTotal) * 100).toFixed(1) + '%' : '0%';
+            if(rCount > 0){
+                annotations.push({
+                    x: 0,
+                    y: label,
+                    xanchor: 'left',  // 右側に配置
+                    text: rCount + " (" + rPercent + ")",
+                    showarrow: false,
+                    font: { size: 11, color: 'rgba(0,0,0,1)', family: 'Arial Black, Impact, Helvetica, sans-serif' },
+                    xshift: 10   // x=0から右へオフセット
+                });
+            }
+        });
+
+        // 追加：x=0 の直線上に、各バーの得点（score）ラベルを中央揃えで表示
+        scoreLabels.forEach(function(label) {
+            annotations.push({
+                x: 0,
+                y: label,
+                xanchor: 'center',
+                text: label,         // ここで得点の値（文字列）を表示
+                showarrow: false,
+                font: { size: 12, color: 'rgba(0,0,0,0.7)' },
+                xshift: 0,
+                yshift: 0
+            });
+        });
+
+        // x軸は左右対称となるように、ゼロライン中心に設定
+        var xMax = Math.max(Math.max.apply(null, leftData), Math.max.apply(null, rightData)) + 1;
+        var tickVals = [];
+        for (var i = -xMax; i <= xMax; i++) {
+            tickVals.push(i);
+        }
+        var tickText = tickVals.map(function(val) {
+            return Math.abs(val);
+        });
+
+        var layout = {
+            // title: 'Match Scores Histogram',
+            title: '',
+            height: 250,
+            barmode: 'overlay',
+            bargap: 0,         // バー間のグループ間隔を 0 に設定
+            bargroupgap: 0,    // グループ内のバー間隔を 0 に設定
+            // font: { color: 'rgba(0,0,0,1)' }, // 全体のデフォルトフォントカラーを設定
+            xaxis: {
+                title: 'Number of Matches',
+                zeroline: true,
+                zerolinecolor: 'rgba(0,0,0,0.2)',
+                zerolinewidth: 1,
+                range: [-xMax-0.01, xMax+0.01],
+                tickmode: 'array',
+                tickvals: tickVals,
+                ticktext: tickText,
+                showgird: true,
+                dtick: 1,
+            },
+            yaxis: {
+                title: 'Scores',
+                // autorange: 'reversed'  // 得点ラベルが上から降順になるように
+                showticklabels: false,  // y軸ラベルは非表示
+                showgrid: true,
+                tick0: 0.5,
+                dtick: 1,
+            },
+            legend: {
+                orientation: 'h',
+                x: 0.5,
+                xanchor: 'center',
+                y: 1.1,
+                yanchor: 'bottom'
+            },
+            annotations: annotations.concat([{
+                xref: 'paper',
+                yref: 'paper',
+                x: 0.5,
+                y: -0.3,  // グラフ下部の位置。必要に応じて調整
+                text: 'Match Scores Histogram',
+                showarrow: false,
+                font: { size: 16, color: 'black' }
+            }]),
+            margin: { l: 10, r: 10, t: 50, b: 50 },
+        };
+
+        var data = [traceLeft, traceRight];
+
+        Plotly.newPlot('matchScoreHistgramPlotly', data, layout);
+        //
+        // ================================================
+        //
 
         // 
         // draw confidence interval chart

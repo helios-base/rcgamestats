@@ -8,6 +8,8 @@
     <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
 </ul>
 
+<div id="ciSubplots" style="width: 100%; height: 400px;"></div>
+
 <div class="button-container">
 <form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups_confidence_intervals') }}" target="_blank">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -72,6 +74,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='plotly-3.0.0.min.js') }}" charset="utf-8"></script>
 <script>
     $(function () {
         $('#stats-table').tablesorter({
@@ -116,6 +119,7 @@
         document.getElementById("filtered-form").submit();
     }
 
+    /*
     // 最終更新時間
     let pageLoadAt = Date.now();
     // ユーザー操作の最終時刻を記録する変数
@@ -149,6 +153,298 @@
                 });
         }
     }, 30000); // 30秒ごとに更新チェック
+    */
+
+    var scoreInfo = {{ score_info | tojson }};
+
+    // 95%信頼区間のエラーバーをChart.jsで描画
+    function plotConfidenceIntervals(filteredScoreList) {
+        // 信頼区間の値をサーバで計算済みのstats_listから取得
+        const scoreList = filteredScoreList || scoreInfo;
+        const groupLabels = scoreList.map(stats => {
+            let label = stats.group_name;
+            let firstIdx = label.indexOf('-');
+            if (firstIdx !== -1) {
+                let secondIdx = label.indexOf('-', firstIdx + 1);
+                if (secondIdx !== -1) {
+                    // 2箇所目のハイフンを <br> に置換
+                    return label.substring(0, secondIdx) + '<br>' + label.substring(secondIdx + 1);
+                }
+            }
+            return label;
+        });
+        // 左チームの場合、平均値とエラーバーの値を計算
+        // error_x.array: 平均値から上方向の誤差 (upper - mean)
+        // error_x.arrayminus: 平均値から下方向の誤差 (mean - lower)
+        const leftMean = scoreList.map(stats => stats.left_mean);
+        const leftErrorUpper = scoreList.map(stats => stats.left_ci_upper - stats.left_mean);
+        const leftErrorLower = scoreList.map(stats => stats.left_mean - stats.left_ci_lower);
+        
+        const leftTrace = {
+            x: leftMean,
+            y: groupLabels,
+            type: 'bar',
+            orientation: 'h',
+            xaxis: 'x1',
+            yaxis: 'y1',
+            error_x: {
+                type: 'data',
+                array: leftErrorUpper,
+                arrayminus: leftErrorLower,
+                visible: true,
+                color: 'rgba(0, 0, 255, 0.5)',
+                thickness: 1.5,
+                width: 2
+            },
+            marker: { color: 'rgba(0,0,0,0)' },
+            showlegend: false
+        };
+
+        const leftMarkerTrace = {
+            x: leftMean,
+            y: groupLabels,
+            type: 'scatter',
+            mode: 'markers',
+            xaxis: 'x1',
+            yaxis: 'y1',
+            marker: {
+                symbol: 'line-ns-open',
+                color: 'rgba(0, 0, 255, 0.5)',
+                size: 10,
+                line: { width: 2 }
+            },
+            hoverinfo: 'skip',
+            showlegend: false
+        };
+
+        // 左チームの平均値の変遷を線で結ぶトレース
+        // const leftTrendTrace = {
+        //     x: leftMean,         // 平均値の位置
+        //     y: groupLabels,
+        //     type: 'scatter',
+        //     mode: 'lines',
+        //     line: {
+        //         color: 'rgba(0, 0, 255, 1)', // 左チームと同じ青
+        //         width: 2
+        //     },
+        //     xaxis: 'x1',
+        //     yaxis: 'y1',
+        //     hoverinfo: 'none',
+        //     showlegend: false
+        // };
+
+        // 右チームの場合、平均値とエラーバーの値を計算
+        const rightMean = scoreList.map(stats => stats.right_mean);
+        const rightErrorUpper = scoreList.map(stats => stats.right_ci_upper - stats.right_mean);
+        const rightErrorLower = scoreList.map(stats => stats.right_mean - stats.right_ci_lower);
+
+        const rightTrace = {
+            x: rightMean,
+            y: groupLabels,
+            type: 'bar',
+            orientation: 'h',
+            xaxis: 'x2',
+            yaxis: 'y1',
+            error_x: {
+                type: 'data',
+                array: rightErrorUpper,
+                arrayminus: rightErrorLower,
+                visible: true,
+                color: 'rgba(255, 0, 0, 0.5)',
+                thickness: 1.5,
+                width: 2
+            },
+            marker: { color: 'rgba(0,0,0,0)' },
+            showlegend: false
+        };
+
+        const rightMarkerTrace = {
+            x: rightMean,
+            y: groupLabels,
+            type: 'scatter',
+            mode: 'markers',
+            xaxis: 'x2',
+            yaxis: 'y1',
+            marker: {
+                symbol: 'line-ns-open',
+                color: 'rgba(255, 0, 0, 0.5)',
+                size: 10,
+                line: { width: 2 }
+            },
+            hoverinfo: 'skip',
+            showlegend: false
+        };
+
+        // const rightTrendTrace = {
+        //     x: rightMean,         // 平均値の位置
+        //     y: groupLabels,
+        //     type: 'scatter',
+        //     mode: 'lines',
+        //     line: {
+        //         color: 'rgba(255, 0, 0, 1)', // 右チームと同じ赤
+        //         width: 2
+        //     },
+        //     xaxis: 'x2',
+        //     yaxis: 'y1',
+        //     hoverinfo: 'none',
+        //     showlegend: false
+        // };
+
+        // 両サイドのトレースをひとまとめのデータ配列へ
+        const data = [
+            leftTrace, 
+            leftMarkerTrace,
+            // leftTrendTrace,
+            rightTrace, 
+            rightMarkerTrace, 
+            // rightTrendTrace
+        ];
+
+        // 平均値,上限，下限の annotations を作成する
+        const annotations = [];
+        for (let i = 0; i < groupLabels.length; i++) {
+            annotations.push({
+                x: leftMean[i],
+                y: groupLabels[i],
+                xref: 'x1',
+                yref: 'y1',
+                text: leftMean[i].toFixed(3),
+                showarrow: false,
+                yshift: 20  // この値を大きくすればさらに上にずらせます
+            });
+            annotations.push({
+                x: leftMean[i] + leftErrorUpper[i],
+                y: groupLabels[i],
+                xref: 'x1',
+                yref: 'y1',
+                text: (leftMean[i] + leftErrorUpper[i]).toFixed(3),
+                showarrow: false,
+                yshift: 10  // この値を大きくすればさらに上にずらせます
+            });
+            annotations.push({
+                x: leftMean[i] - leftErrorLower[i],
+                y: groupLabels[i],
+                xref: 'x1',
+                yref: 'y1',
+                text: (leftMean[i] - leftErrorLower[i]).toFixed(3),
+                showarrow: false,
+                yshift: 10  // この値を大きくすればさらに上にずらせます
+            });
+            annotations.push({
+                x: rightMean[i],
+                y: groupLabels[i],
+                xref: 'x2',
+                yref: 'y1',
+                text: rightMean[i].toFixed(3),
+                showarrow: false,
+                yshift: 20  // この値を大きくすればさらに上にずらせます
+            });
+            annotations.push({
+                x: rightMean[i] + rightErrorUpper[i],
+                y: groupLabels[i],
+                xref: 'x2',
+                yref: 'y1',
+                text: (rightMean[i] + rightErrorUpper[i]).toFixed(3),
+                showarrow: false,
+                yshift: 10  // この値を大きくすればさらに上にずらせます
+            });
+            annotations.push({
+                x: rightMean[i] - rightErrorLower[i],
+                y: groupLabels[i],
+                xref: 'x2',
+                yref: 'y1',
+                text: (rightMean[i] - rightErrorLower[i]).toFixed(3),
+                showarrow: false,
+                yshift: 10  // この値を大きくすればさらに上にずらせます
+            });
+        }
+
+        // 左チームの最小値（平均値－下側誤差）の最小値と最大値（平均値＋上側誤差）の最大値を計算
+        // const leftMin = Math.min(...leftMean.map((m, i) => m - leftErrorLower[i]));
+        const leftMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i]));
+        // 右チームの最小値と最大値を計算
+        // const rightMin = Math.min(...rightMean.map((m, i) => m - rightErrorLower[i]));
+        const rightMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i]));
+
+        // const bothMax = Math.max(leftMax, rightMax);
+        // 各軸の範囲をそれぞれ広げる
+        const leftRange = [0, leftMax + 0.5];
+        const rightRange = [0, rightMax + 0.5];
+
+        // レイアウト設定：グリッド機能を使って2列に分割し、同じ y 軸 (yaxis1) を共有
+        const layout = {
+            grid: { rows: 1, columns: 2, pattern: 'independent', xgap: 0.1 },
+            // 第1カラムの x 軸の領域（左チーム）
+            xaxis1: {
+                title: {
+                    text: 'Left Team',
+                    side: 'top',
+                    standoff: 10,  // 適宜調整
+                },
+                domain: [0, 0.5],
+                range: leftRange
+            },
+            // 第2カラムの x 軸の領域（右チーム）
+            xaxis2: {
+                title: {
+                    text: 'Right Team',
+                    side: 'top',
+                    standoff: 10,  // 適宜調整
+                },
+                domain: [0.5, 1],
+                range: rightRange
+            },
+            // 共有の y 軸
+            yaxis1: {
+                title: 'Group Name',
+                automargin: true,
+                autorange: 'reversed'  // 必要に応じて順序調整
+            },
+            // margin: { t: 80 },  // 上部に余白を確保することで全体タイトルが表示される
+            title: 'Mean Score 95% Confidence Intervals',
+            annotations: annotations.concat([
+                {
+                    xref: 'paper',
+                    yref: 'paper',
+                    x: 0.5,
+                    y: 1.15,       // 上部中央
+                    text: 'Mean Score 95% Confidence Intervals',
+                    showarrow: false,
+                    font: { size: 16 }
+                }
+            ])
+        };
+
+        Plotly.newPlot('ciSubplots', data, layout);
+    } // end of plotConfidenceIntervals
+
+    function plotFilteredConfidenceIntervals() {
+        let filteredIds = [];
+        $('#stats-table tbody tr:visible').each(function() {
+            filteredIds.push($(this).data('id'));
+        });
+        
+        // scoreInfo内の各レコードは group_id プロパティを持つと仮定
+        // let filteredScoreList = scoreInfo.filter(item => {
+        //     return filteredIds.indexOf(item.group_id) !== -1;
+        // });
+
+        // filteredIds の順番に沿って scoreInfo からオブジェクトを抽出
+        let filteredScoreList = filteredIds.map(id => scoreInfo.find(item => item.group_id === id));
+
+        // 1秒後に再描画
+        setTimeout(function() {
+            plotConfidenceIntervals(filteredScoreList);
+        }, 500);
+    }
+
+    $('#stats-table').on('filterEnd sortEnd', function() {
+        plotFilteredConfidenceIntervals();
+    });
+
+    window.addEventListener('load', () => {
+        plotConfidenceIntervals();
+    });
 </script>
 {% endblock %}
 

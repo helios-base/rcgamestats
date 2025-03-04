@@ -30,7 +30,7 @@ def submit_results(group_data, results):
 
 def __get_submit_results_url():
     endpoint = "api/admin/submit_result"
-    url = urljoin(config.SERVER_URL, endpoint)
+    url = urljoin(config.SERVER_URL + '/', endpoint)
     return url
 
 

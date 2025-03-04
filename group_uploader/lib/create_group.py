@@ -5,7 +5,7 @@ from .config import config
 
 def __get_create_group_url():
     endpoint = "api/admin/create_group"
-    url = urljoin(config.SERVER_URL, endpoint)
+    url = urljoin(config.SERVER_URL + '/', endpoint)
     return url
 
 

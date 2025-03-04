@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 
 end_point = "api/admin/upload_team"
-url = urljoin(args.server_url + "/", end_point)
+url = urljoin(args.server_url + '/', end_point)
 
 team_name = args.team_name
 if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9+]*$", team_name):

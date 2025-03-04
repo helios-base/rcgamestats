@@ -56,7 +56,9 @@ def show_stats():
             "left_ci_lower": stats.left_score_confidence_interval_lower,
             "left_ci_upper": stats.left_score_confidence_interval_upper,
             "right_ci_lower": stats.right_score_confidence_interval_lower,
-            "right_ci_upper": stats.right_score_confidence_interval_upper
+            "right_ci_upper": stats.right_score_confidence_interval_upper,
+            "left_score_counts" : stats.left_score_counts,
+            "right_score_counts" : stats.right_score_counts,
         })
 
     return render_template("group/stats.html", stats_list=stats_list, score_info=serializable_score_info)

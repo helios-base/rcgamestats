@@ -452,6 +452,9 @@ def admin_create_group():
     if number_of_matches is None or number_of_matches <= 0:
         return jsonify({"error": "Invalid number of matches."}), 400
 
+    if number_of_matches > 10000:
+        return jsonify({"error": "Too many matches."}), 400
+
     left_team = Team.query.filter_by(name=left_team_name, version=left_team_version).first()
     if left_team is None:
         if left_team_version == "":

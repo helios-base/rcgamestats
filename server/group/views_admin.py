@@ -195,6 +195,11 @@ def edit_group(group_id):
 
     if form.validate_on_submit():
         number_of_matches = group.matches.count()
+        if number_of_matches + form.additional_matches.data > 10000:
+            flash("The total number of matches cannot exceed 10,000.", "error")
+            current_app.logger.error("The total number of matches cannot exceed 10,000.")
+            return redirect(url_for("group.edit_group", group_id=group_id))
+        
         for i in range(int(form.additional_matches.data)):
             match = Match(
                 index=number_of_matches + i + 1,

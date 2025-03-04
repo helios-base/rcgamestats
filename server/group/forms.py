@@ -38,8 +38,9 @@ class GroupCreateForm(FlaskForm):
         return True
 
     def validate_number_of_matches(self, number_of_matches):
-        if number_of_matches.data < 1:
-            raise ValidationError("Number of matches must be greater than or equal to 1")
+        if number_of_matches.data < 1 or 10000 < number_of_matches.data:
+            raise ValidationError("Number of matches must be within [1, 10000]")
+        return True
 
 
 class GroupEditForm(FlaskForm):
@@ -60,6 +61,7 @@ class GroupEditForm(FlaskForm):
     def validate_additional_matches(self, additional_matches):
         if additional_matches.data < 0:
             raise ValidationError("Number of matches must be greater than or equal to 0")
+        return True
 
 
 class RoundrobinCreateForm(FlaskForm):
@@ -82,5 +84,6 @@ class RoundrobinCreateForm(FlaskForm):
     submit = SubmitField("Submit")
 
     def validate_number_of_matches(self, number_of_matches):
-        if number_of_matches.data < 1:
-            raise ValidationError("Number of matches must be at least 1")
+        if number_of_matches.data < 1 or 10000 < number_of_matches.data:
+            raise ValidationError("Number of matches must be within [1, 10000]")
+        return True

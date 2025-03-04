@@ -8,7 +8,7 @@
     <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
 </ul>
 
-<div id="ciSubplots" style="width: 100%; height: 400px;"></div>
+<div id="ciSubplots" style="width: 100%;"></div>
 
 <div class="button-container">
 <form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups_confidence_intervals') }}" target="_blank">
@@ -126,9 +126,12 @@
     }, 30000); // 30秒ごとに更新チェック
     */
 
+    //
+    // 95%信頼区間のエラーバーをPlotlyで描画
+    //
+
     var scoreInfo = {{ score_info | tojson }};
 
-    // 95%信頼区間のエラーバーをChart.jsで描画
     function plotConfidenceIntervals(filteredScoreList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
         const scoreList = filteredScoreList || scoreInfo;
@@ -168,7 +171,8 @@
                 width: 3
             },
             marker: { color: 'rgba(0,0,0,0)' },
-            showlegend: false
+            showlegend: false,
+            hoverinfo: 'x'
         };
 
         const leftMarkerTrace = {
@@ -226,7 +230,8 @@
                 width: 2
             },
             marker: { color: 'rgba(0,0,0,0)' },
-            showlegend: false
+            showlegend: false,
+            hoverinfo: 'x'
         };
 
         const rightMarkerTrace = {
@@ -261,6 +266,72 @@
         //     showlegend: false
         // };
 
+        // 各グループごとのヒストグラムを shapes で描画
+        // パラメータは適宜調整
+        const histWidth = 1.0;      // ヒストグラムの横幅（x軸単位）
+        const histYOffset = -0.01;    // 各グループの y軸位置からのオフセット
+        const barHeightMax = 0.5;  // 最大カウントに対するバーの高さ
+        const shapes = [];
+
+        // 左チームのヒストグラム（x軸: x1）
+        scoreList.forEach((stats, i) => {
+            const counts = stats.left_score_counts;
+            const bins = Object.keys(counts).map(Number).sort((a, b) => a - b);
+            if (bins.length === 0) return;
+            const maxCount = Math.max(...bins.map(score => counts[score]));
+            const barWidth = histWidth / bins.length;
+            bins.forEach((scoreValue, idx) => {
+                const count = counts[scoreValue];
+                const normalizedHeight = maxCount > 0 ? (count / maxCount) * barHeightMax : 0;
+                // const x0 = scoreValue + 0.5 - histWidth / 2;
+                const x0 = scoreValue - histWidth / 2 + 0.005;
+                const x1 = x0 + histWidth - 0.01;
+                const y0 = i + histYOffset;
+                const y1 = y0 - normalizedHeight;
+                shapes.push({
+                    type: 'rect',
+                    xref: 'x1',
+                    yref: 'y1',
+                    x0: x0,
+                    y0: y0,
+                    x1: x1,
+                    y1: y1,
+                    fillcolor: 'rgba(0, 0, 255, 0.2)',
+                    line: { width: 0 }
+                });
+            });
+        });
+
+        // 右チームのヒストグラム（x軸: x2）
+        scoreList.forEach((stats, i) => {
+            const counts = stats.right_score_counts;
+            const bins = Object.keys(counts).map(Number).sort((a, b) => a - b);
+            if (bins.length === 0) return;
+            const maxCount = Math.max(...bins.map(score => counts[score]));
+            const barWidth = histWidth / bins.length;
+            bins.forEach((scoreValue, idx) => {
+                const count = counts[scoreValue];
+                const normalizedHeight = maxCount > 0 ? (count / maxCount) * barHeightMax : 0;
+                // const x0 = scoreValue + 0.5 - histWidth / 2;
+                const x0 = scoreValue - histWidth / 2 + 0.005;
+                const x1 = x0 + histWidth - 0.01;
+                const y0 = i + histYOffset;
+                const y1 = y0 - normalizedHeight;
+                shapes.push({
+                    type: 'rect',
+                    xref: 'x2',
+                    yref: 'y1',
+                    x0: x0,
+                    y0: y0,
+                    x1: x1,
+                    y1: y1,
+                    fillcolor: 'rgba(255, 0, 0, 0.2)',
+                    line: { width: 0 }
+                });
+            });
+        });
+
+
         // 両サイドのトレースをひとまとめのデータ配列へ
         const data = [
             leftTrace, 
@@ -281,6 +352,7 @@
                 yref: 'y1',
                 text: leftMean[i].toFixed(3),
                 showarrow: false,
+                // xanchor: 'left',
                 yshift: 20  // この値を大きくすればさらに上にずらせます
             });
             annotations.push({
@@ -330,12 +402,22 @@
             });
         }
 
+        annotations.push({
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.5,
+            y: -0.35, // グラフ下部の位置。必要に応じて調整
+            text: 'Mean Score 95% Confidence Intervals',
+            showarrow: false,
+            font: { size: 16 }
+        });
+
         // 左チームの最小値（平均値－下側誤差）の最小値と最大値（平均値＋上側誤差）の最大値を計算
         // const leftMin = Math.min(...leftMean.map((m, i) => m - leftErrorLower[i]));
-        const leftMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i]));
+        const leftMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 1.5;
         // 右チームの最小値と最大値を計算
         // const rightMin = Math.min(...rightMean.map((m, i) => m - rightErrorLower[i]));
-        const rightMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i]));
+        const rightMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 1.5;
 
         // const bothMax = Math.max(leftMax, rightMax);
         // 各軸の範囲をそれぞれ広げる
@@ -344,6 +426,8 @@
 
         // レイアウト設定：グリッド機能を使って2列に分割し、同じ y 軸 (yaxis1) を共有
         const layout = {
+            height: 50 * groupLabels.length + 200,  // 適宜調整
+            margin: { t: 50, b: 50, l: 120, r: 20 },
             grid: { rows: 1, columns: 2, pattern: 'independent', xgap: 0.1 },
             // 第1カラムの x 軸の領域（左チーム）
             xaxis1: {
@@ -353,8 +437,10 @@
                     standoff: 10,  // 適宜調整
                     font: { size: 16, color: 'rgba(0, 0, 255, 1)' }
                 },
-                domain: [0, 0.5],
+                domain: [0, 0.495],
                 range: leftRange,
+                tick0: 0,
+                dtick: 1
             },
             // 第2カラムの x 軸の領域（右チーム）
             xaxis2: {
@@ -364,28 +450,21 @@
                     standoff: 10,  // 適宜調整
                     font: { size: 16, color: 'rgba(255, 0, 0, 1)' }
                 },
-                domain: [0.5, 1],
+                domain: [0.505, 1],
                 range: rightRange,
+                tick0: 0,
+                dtick: 1
             },
             // 共有の y 軸
             yaxis1: {
-                title: 'Group Name',
                 automargin: true,
                 autorange: 'reversed',  // 必要に応じて順序調整
                 showgrid: true,
+                ticklabelstandoff: 5,  // ティックラベルと軸との間隔を調整
             },
+            shapes: shapes,
             // title: 'Mean Score 95% Confidence Intervals',
-            annotations: annotations.concat([
-                {
-                    xref: 'paper',
-                    yref: 'paper',
-                    x: 0.5,
-                    y: -0.35, // グラフ下部の位置。必要に応じて調整
-                    text: 'Mean Score 95% Confidence Intervals',
-                    showarrow: false,
-                    font: { size: 16 }
-                }
-            ])
+            annotations: annotations,
         };
 
         Plotly.newPlot('ciSubplots', data, layout);

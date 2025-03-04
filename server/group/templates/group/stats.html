@@ -512,8 +512,17 @@
     });
 
     $(function () {
+        // ローカルストレージに保存されたソート状態を取得
+        let savedSort = localStorage.getItem('statsTableSort');
+        if (savedSort) {
+            savedSort = JSON.parse(savedSort);
+        } else {
+            // デフォルトのソート状態（例: 1列目 descending）
+            savedSort = [[0, 1]];
+        }
+
         $('#stats-table').tablesorter({
-            sortList: [[0, 1]], // sort by the first column in descending order
+            sortList: savedSort, // tablesorter初期化時に sortList オプションでソート状態を適用
             duplicateSpan : true, // default setting
 
             widgets: ['filter'],
@@ -525,6 +534,12 @@
                 filter_ignoreCase: true,
                 filter_saveFilters: true, // Use the $.tablesorter.storage utility to save the most recent filters
             }
+        })
+        // ソート変更時にローカルストレージへ保存
+        .on('sortEnd', function(event) {
+            // ソート状態をローカルストレージに保存
+            var sortList = $(this).data('tablesorter').sortList;
+            localStorage.setItem('statsTableSort', JSON.stringify(sortList));
         });
 
         $('#filtered-form').on('submit', function() {

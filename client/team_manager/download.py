@@ -4,6 +4,8 @@ import tarfile
 import zipfile
 # import shutil
 import logging
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from urllib.parse import urljoin
 from config import config
 
@@ -141,14 +143,26 @@ def download_team(team_name, version):
         "x-api-key": config.API_KEY
     }
 
-    response = requests.get(url, headers=headers, stream=True)
-    response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
+    with requests.Session() as session:
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504], allowed_methods=["GET"])
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        session.mount("http://", HTTPAdapter(max_retries=retries))
 
-    logger.info(f"Download status code: {response.status_code}")
-    if response.status_code != 200:
-        logger.error(f"Failed to download team {team_name} version {version}.")
-        __delete_directory(team_name, version)
-        return False
+        try:
+            response = session.get(url, headers=headers, stream=True)
+            response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"Failed to download team {team_name} version {version}. Error: {e}")
+            __delete_directory(team_name, version)
+            return False
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to download team {team_name} version {version}. Error: {e}")
+            __delete_directory(team_name, version)
+            return False
+        except Exception as e:
+            logger.error(f"An error occurred while downloading team {team_name} version {version}. Error: {e}")
+            __delete_directory(team_name, version)
+            return False
 
     # Save the downloaded team to the team directory
     content_disposition = response.headers.get("Content-Disposition")

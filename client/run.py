@@ -77,20 +77,21 @@ def check_download_teams(match):
         logger.error("(check_download_teams) No right team version.")
         return False
 
+    # check or download left team
     if not team_manager.exist_team(match.left_team_name, match.left_team_version):
         if not team_manager.download_team(match.left_team_name, match.left_team_version):
             return False
+        if not team_manager.exist_team(match.left_team_name, match.left_team_version):
+            logger.error("(check_download_teams) No left team.")
+            return False
+
+    # check or download right team
     if not team_manager.exist_team(match.right_team_name, match.right_team_version):
         if not team_manager.download_team(match.right_team_name, match.right_team_version):
             return False
-
-    if not team_manager.exist_team(match.left_team_name, match.left_team_version):
-        logger.error("(check_download_teams) No left team.")
-        return False
-
-    if not team_manager.exist_team(match.right_team_name, match.right_team_version):
-        logger.error("(check_download_teams) No right team.")
-        return False
+        if not team_manager.exist_team(match.right_team_name, match.right_team_version):
+            logger.error("(check_download_teams) No right team.")
+            return False
 
     return True
 

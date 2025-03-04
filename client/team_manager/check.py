@@ -19,7 +19,7 @@ def get_team_path(team_name, version):
 
     # Check if the team directory exists
     if not os.path.exists(team_dir) or not os.path.isdir(team_dir):
-        logger.error(f"Team directory not found: {team_dir}")
+        logger.info(f"Team directory not found: {team_dir}")
         return None
 
     # Check if the team directory contains a directory

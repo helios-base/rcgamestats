@@ -1,6 +1,8 @@
 import os
 import glob
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from urllib.parse import urljoin
 from .config import config
 
@@ -73,20 +75,26 @@ def __submit_result(group_id, result):
     print(f"Submitting result at {url}")
     print(f"Result data: {data}")
 
-    try:
-        response = requests.post(url, headers=headers, data=data, files=files)
-        response.raise_for_status()
-        print(f"Response content: {response.text}")
-        return True
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTPError: {e}")
-        print(f"Response content: {response.text}")
-        return False
-    except requests.exceptions.RequestException as e:
-        print(f"RequestException: {e}")
-        print(f"Response content: {response.text}")
-        return False
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        print(f"Response content: {response.text}")
-        return False
+    with requests.Session() as session:
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        session.mount("http://", HTTPAdapter(max_retries=retries))
+        try:
+            response = requests.post(url, headers=headers, data=data, files=files)
+            response.raise_for_status()
+            print(f"Response content: {response.text}")
+            return True
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTPError: {e}")
+            print(f"Response content: {response.text}")
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"RequestException: {e}")
+            print(f"Response content: {response.text}")
+            return False
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            print(f"Response content: {response.text}")
+            return False
+    
+    return False

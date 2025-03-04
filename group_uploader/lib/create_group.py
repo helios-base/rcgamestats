@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from urllib.parse import urljoin
 from .config import config
 
@@ -38,20 +40,27 @@ def create_group(results):
     print(f"Creating group at {url}")
     print(f"Group data: {data}")
 
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        print(f"Response content: {response.text}")
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTPError: {e}")
-        print(f"Response content: {response.text}")
-        return None
-    except requests.exceptions.RequestException as e:
-        print(f"RequestException: {e}")
-        print(f"Response content: {response.text}")
-        return None
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        print(f"Response content: {response.text}")
-        return None
+    with requests.Session() as session:
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        session.mount("http://", HTTPAdapter(max_retries=retries))
+        try:
+            # response = requests.post(url, headers=headers, json=data)
+            response = session.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            print(f"Response content: {response.text}")
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTPError: {e}")
+            print(f"Response content: {response.text}")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"RequestException: {e}")
+            print(f"Response content: {response.text}")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            print(f"Response content: {response.text}")
+            return None
+
+    return None

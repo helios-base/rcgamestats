@@ -331,7 +331,6 @@
             });
         });
 
-
         // 両サイドのトレースをひとまとめのデータ配列へ
         const data = [
             leftTrace, 
@@ -412,17 +411,35 @@
             font: { size: 16 }
         });
 
-        // 左チームの最小値（平均値－下側誤差）の最小値と最大値（平均値＋上側誤差）の最大値を計算
-        // const leftMin = Math.min(...leftMean.map((m, i) => m - leftErrorLower[i]));
-        const leftMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 1.5;
+        // 左チームの最大値（平均値＋上側誤差）の最大値を計算
+        //const leftMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 1.5;
+        // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
+        const leftErrorMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 0.5;
+        // 各グループで left_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
+        const leftScoreMax = Math.max(...scoreList.map(stats => {
+            const keys = Object.keys(stats.left_score_counts).map(Number);
+            const validKeys = keys.filter(score => stats.left_score_counts[score] > 0);
+            return validKeys.length ? Math.max(...validKeys) : 0;
+        })) + 0.5;
+        const leftMax = Math.max(leftErrorMax, leftScoreMax);
+
         // 右チームの最小値と最大値を計算
         // const rightMin = Math.min(...rightMean.map((m, i) => m - rightErrorLower[i]));
-        const rightMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 1.5;
+        // const rightMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 1.5;
+        // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
+        const rightErrorMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 0.5;
+        // 各グループで right_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
+        const rightScoreMax = Math.max(...scoreList.map(stats => {
+            const keys = Object.keys(stats.right_score_counts).map(Number);
+            const validKeys = keys.filter(score => stats.right_score_counts[score] > 0);
+            return validKeys.length ? Math.max(...validKeys) : 0;
+        })) + 0.5;
+        const rightMax = Math.max(rightErrorMax, rightScoreMax);
 
         // const bothMax = Math.max(leftMax, rightMax);
         // 各軸の範囲をそれぞれ広げる
-        const leftRange = [0, leftMax + 0.5];
-        const rightRange = [0, rightMax + 0.5];
+        const leftRange = [-0.5, leftMax];
+        const rightRange = [-0.5, rightMax];
 
         // レイアウト設定：グリッド機能を使って2列に分割し、同じ y 軸 (yaxis1) を共有
         const layout = {

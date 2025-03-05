@@ -35,33 +35,19 @@ def show_stats():
     group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
     stats_list = []
-    serializable_score_info = []
     for group in group_list:
         stats = group.stats
         if stats is None:
             stats = GroupStats(group.id)
             db.session.add(stats)
-            db.session.commit()
-        if stats.updated_at is None or group.updated_at > stats.updated_at:
+        elif stats.updated_at is None or group.updated_at > stats.updated_at:
             stats.update()
             current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
-            db.session.commit()
 
         stats_list.append(stats)
-        serializable_score_info.append({
-            "group_id": group.id,
-            "group_name": group.name,
-            "left_mean": stats.left_mean_score,
-            "right_mean": stats.right_mean_score,
-            "left_ci_lower": stats.left_score_confidence_interval_lower,
-            "left_ci_upper": stats.left_score_confidence_interval_upper,
-            "right_ci_lower": stats.right_score_confidence_interval_lower,
-            "right_ci_upper": stats.right_score_confidence_interval_upper,
-            "left_score_counts" : stats.left_score_counts,
-            "right_score_counts" : stats.right_score_counts,
-        })
 
-    return render_template("group/stats.html", stats_list=stats_list, score_info=serializable_score_info)
+    db.session.commit()
+    return render_template("group/stats.html", stats_list=stats_list)
 
 
 @group_bp.route("/archived/")

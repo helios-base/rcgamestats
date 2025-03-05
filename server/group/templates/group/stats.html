@@ -8,6 +8,14 @@
     <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
 </ul>
 
+<div class="plot-menu" style="margin-bottom:10px;">
+    <label for="plotType">Plot Type</label>
+    <select id="plotType">
+        <option value="confidence" selected>Conficence Intervals</option>
+        <option value="winRate">Win Rate</option>
+    </select>
+</div>
+
 <div id="plotArea" style="width: 100%;"></div>
 
 <div class="button-container">
@@ -131,14 +139,34 @@
     */
 
     //
-    // 95%信頼区間のエラーバーをPlotlyで描画
+    // グラフ描画用のデータ
     //
+    const statsList = [
+    {% for stat in stats_list %}
+        {
+            group_id: {{ stat.id }},
+            group_name: "{{ stat.group.name }}",
+            left_mean: {{ stat.left_mean_score }},
+            right_mean: {{ stat.right_mean_score }},
+            l_win_rate: {{ stat.left_win_rate }},
+            r_win_rate: {{ stat.right_win_rate }},
+            draw_rate: {{ stat.draw_rate }},
+            left_ci_lower: {{ stat.left_score_confidence_interval_lower }},
+            left_ci_upper: {{ stat.left_score_confidence_interval_upper }},
+            right_ci_lower: {{ stat.right_score_confidence_interval_lower }},
+            right_ci_upper: {{ stat.right_score_confidence_interval_upper }},
+            left_score_counts: {{ stat.left_score_counts|tojson }},
+            right_score_counts: {{ stat.right_score_counts|tojson }}
+        }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ];
 
-    const scoreInfo = {{ score_info | tojson }};
-
-    function plotConfidenceIntervals(filteredScoreList) {
+    //
+    // 95%信頼区間のエラーバー + 簡易ヒストグラムを描画
+    //
+    function plotConfidenceIntervals(filteredStatsList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
-        const scoreList = filteredScoreList || scoreInfo;
+        const scoreList = filteredStatsList || statsList;
         const groupLabels = scoreList.map(stats => {
             let label = stats.group_name;
             let firstIdx = label.indexOf('-');
@@ -335,7 +363,7 @@
             });
         });
 
-        // 両サイドのトレースをひとまとめのデータ配列へ
+        // トレースをひとまとめのデータ配列へ
         const data = [
             leftTrace, 
             leftMarkerTrace,
@@ -425,7 +453,7 @@
             const validKeys = keys.filter(score => stats.left_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
         })) + 0.5;
-        const leftMax = Math.max(leftErrorMax, leftScoreMax);
+        const leftMax = Math.max(leftErrorMax, leftScoreMax, 5);
 
         // 右チームの最小値と最大値を計算
         // const rightMin = Math.min(...rightMean.map((m, i) => m - rightErrorLower[i]));
@@ -438,7 +466,7 @@
             const validKeys = keys.filter(score => stats.right_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
         })) + 0.5;
-        const rightMax = Math.max(rightErrorMax, rightScoreMax);
+        const rightMax = Math.max(rightErrorMax, rightScoreMax, 5);
 
         // const bothMax = Math.max(leftMax, rightMax);
         // 各軸の範囲をそれぞれ広げる
@@ -491,6 +519,84 @@
         Plotly.newPlot('plotArea', data, layout);
     } // end of plotConfidenceIntervals
 
+    //
+    // Plot wining rate for each group
+    //
+    function plotWinRates(filteredStatsList) {
+        const scoreList = filteredStatsList || statsList;
+        const groupLabels = scoreList.map(stats => {
+            let label = stats.group_name;
+            let firstIdx = label.indexOf('-');
+            if (firstIdx !== -1) {
+                let secondIdx = label.indexOf('-', firstIdx + 1);
+                if (secondIdx !== -1) {
+                    // 2箇所目のハイフンを <br> に置換
+                    return label.substring(0, secondIdx) + '<br>' + label.substring(secondIdx + 1);
+                }
+            }
+            return label;
+        });
+
+        const lWinRate = scoreList.map(stats => stats.l_win_rate);
+        const rWinRate = scoreList.map(stats => stats.r_win_rate);
+        const drawRate = scoreList.map(stats => stats.draw_rate);
+
+        // 左チームの勝率の折れ線グラフ
+        const traceL = {
+            x: groupLabels,
+            y: lWinRate,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Left Win Rate',
+            line: { color: 'blue' }
+        };
+
+        // 右チームの勝率の折れ線グラフ
+        const traceR = {
+            x: groupLabels,
+            y: rWinRate,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Right Win Rate',
+            line: { color: 'red' }
+        };
+
+        // 引き分け率の折れ線グラフ
+        const traceD = {
+            x: groupLabels,
+            y: drawRate,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Draw Rate',
+            line: { color: 'green' }
+        };
+
+        const data = [ traceL, traceR, traceD ];
+
+        // グラフのレイアウト設定（横軸：グループ、縦軸：割合）
+        const layout = {
+            title: 'Win Rates per Group',
+            height: 400,
+            xaxis: {
+                title: 'Group',
+                tickangle: -90,
+                autorange: "reversed",
+             },
+            yaxis: {
+                title: 'Rate',
+                tickformat: ',.1%',
+                range: [0, 1]
+            },
+            margin: { t: 50, b: 150, l: 50, r: 50 },
+        };
+
+        const config = {
+            responsive: false  // 自動リサイズを無効化
+        };
+
+        Plotly.newPlot('plotArea', data, layout, config);
+    }
+
 
     // Plot the graph based on the selected type
     function plotSelectedGraph() {
@@ -499,15 +605,42 @@
             filteredIds.push($(this).data('id'));
         });
         
-        // filteredIds に含まれる group_id に対応する scoreInfo のオブジェクトを抽出
-        // let filteredScoreList = scoreInfo.filter(item => {
+        // filteredIds に含まれる group_id に対応する statsList のオブジェクトを抽出
+        // let filteredStatsList = statsList.filter(item => {
         //     return filteredIds.indexOf(item.group_id) !== -1;
         // });
-        // filteredIds の順番に沿って scoreInfo からオブジェクトを抽出
-        const filteredScoreList = filteredIds.map(id => scoreInfo.find(item => item.group_id === id));
 
-        plotConfidenceIntervals(filteredScoreList);
+        // filteredIds の順番に沿って statsList からオブジェクトを抽出
+        const filteredStatsList = filteredIds.map(id => statsList.find(item => item.group_id === id));
+
+        const selected = document.getElementById('plotType').value;
+        if (selected === 'confidence') {
+            plotConfidenceIntervals(filteredStatsList);
+        } else if (selected === 'winRate') {
+            plotWinRates(filteredStatsList);
+        }
     }
+
+    // Change the grapy type when the select box is changed
+    // document.getElementById('plotType').addEventListener('change', function() {
+    //     plotSelectedGraph();
+    // });
+    document.addEventListener("DOMContentLoaded", function(){
+        const select = document.getElementById('plotType');
+        // localStorage に保存されたグラフタイプを取得し、存在すれば値をセットする
+        const storedGraphType = localStorage.getItem('selectedGraphType');
+        if (storedGraphType) {
+            select.value = storedGraphType;
+        }
+        // ページ読み込み時に描画（保存されたグラフタイプに基づく）
+        plotSelectedGraph();
+
+        // ドロップダウン変更時に、選択値を localStorage に保存する
+        select.addEventListener("change", function(){
+            localStorage.setItem('selectedGraphType', this.value);
+            plotSelectedGraph();
+        });
+    });
 
     // Plot the graph using the result of the table when the table is filtered or sorted
     $('#stats-table').on('filterEnd sortEnd', function() {

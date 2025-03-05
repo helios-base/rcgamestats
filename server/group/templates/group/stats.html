@@ -553,7 +553,8 @@
             type: 'scatter',
             mode: 'lines+markers',
             name: 'Left Win Rate',
-            line: { color: 'blue' }
+            line: { color: 'blue', opacity: 0.5 },
+            marker: { symbol: 'circle-open', size: 10 }
         };
 
         // 右チームの勝率の折れ線グラフ
@@ -563,7 +564,8 @@
             type: 'scatter',
             mode: 'lines+markers',
             name: 'Right Win Rate',
-            line: { color: 'red' }
+            line: { color: 'red', opacity: 0.5 },
+            marker: { symbol: 'square-open', size: 10 }
         };
 
         // 引き分け率の折れ線グラフ
@@ -573,7 +575,8 @@
             type: 'scatter',
             mode: 'lines+markers',
             name: 'Draw Rate',
-            line: { color: 'green' }
+            line: { color: 'green', opacity: 0.5 },
+            marker: { symbol: 'square' }
         };
 
         const data = [ traceL, traceR, traceD ];

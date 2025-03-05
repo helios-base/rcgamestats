@@ -119,8 +119,8 @@ class GroupStats(db.Model):
         self.right_scored_games = 0
         self.left_scored_games_rate = 0.0
         self.right_scored_games_rate = 0.0
-        self.left_score_counts = {i: 0 for i in range(6)}
-        self.right_score_counts = {i: 0 for i in range(6)}
+        self.left_score_counts = {str(i): 0 for i in range(5)}
+        self.right_score_counts = {str(i): 0 for i in range(5)}
         self.left_mean_score = 0.0
         self.right_mean_score = 0.0
         self.left_score_confidence_interval_lower = 0.0
@@ -166,17 +166,19 @@ class GroupStats(db.Model):
         self.right_scored_games = int(np.sum(right_scores > 0))
         self.left_scored_games_rate = self.left_scored_games / self.completed_count
         self.right_scored_games_rate = self.right_scored_games / self.completed_count
-        self.left_score_counts = {i: int(count) for i, count in enumerate(np.bincount(left_scores, minlength=6))}
-        self.right_score_counts = {i: int(count) for i, count in enumerate(np.bincount(right_scores, minlength=6))}
-        self.left_mean_score = np.mean(left_scores)
-        self.right_mean_score = np.mean(right_scores)
-        # self.host_counts = Counter([match.host_name for match in matches if match.host_name is not None])
-        self.host_counts = Counter(f"{match.host_name} ({match.host_id})" for match in matches)
+        self.left_score_counts = {str(i): int(count) for i, count in enumerate(np.bincount(left_scores, minlength=6))}
+        self.right_score_counts = {str(i): int(count) for i, count in enumerate(np.bincount(right_scores, minlength=6))}
+        self.left_mean_score = float(np.mean(left_scores))
+        self.right_mean_score = float(np.mean(right_scores))
+        # self.host_counts = dict(Counter([match.host_name for match in matches if match.host_name is not None]))
+        self.host_counts = dict(Counter(f"{match.host_name} ({match.host_id})" for match in matches))
 
         if self.completed_count > 1:
-            self.left_score_confidence_interval_lower, self.left_score_confidence_interval_upper = self.__compute_confidence_interval(left_scores, self.left_mean_score)
-            self.left_score_confidence_interval_lower = max(0, self.left_score_confidence_interval_lower)
-            self.right_score_confidence_interval_lower, self.right_score_confidence_interval_upper = self.__compute_confidence_interval(right_scores, self.right_mean_score)
-            self.right_score_confidence_interval_lower = max(0, self.right_score_confidence_interval_lower)
+            ci_left = self.__compute_confidence_interval(left_scores, self.left_mean_score)
+            self.left_score_confidence_interval_lower = max(0, float(ci_left[0]))
+            self.left_score_confidence_interval_upper = float(ci_left[1])
+            ci_right = self.__compute_confidence_interval(right_scores, self.right_mean_score)
+            self.right_score_confidence_interval_lower = max(0, float(ci_right[0]))
+            self.right_score_confidence_interval_upper = float(ci_right[1])
 
         self.updated_at = datetime.now().replace(microsecond=0)

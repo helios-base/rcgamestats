@@ -87,8 +87,8 @@
     </tbody>
 </table>
 
-<h3>Scores Histgram and 95% Confidence Intervals</h3>
-<div id="matchScoreHistgram" style="border: 1px solid black; padding: 0px; margin-top: 0px;"></div>
+<h3>Scores Histogram and 95% Confidence Intervals</h3>
+<div id="matchScoreHistogram" style="border: 1px solid black; padding: 0px; margin-top: 0px;"></div>
 
 <h3>Host Counts</h3>
 <div id="hostsHistogram" style="border: 1px solid black; padding: 0px; margin-top: 0px;"></div>
@@ -478,7 +478,7 @@
 
         var data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
 
-        Plotly.newPlot('matchScoreHistgram', data, layout);
+        Plotly.newPlot('matchScoreHistogram', data, layout);
     }
 
     function plotHostHistogram() {

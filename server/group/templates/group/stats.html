@@ -8,7 +8,7 @@
     <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
 </ul>
 
-<div id="ciSubplots" style="width: 100%;"></div>
+<div id="plotArea" style="width: 100%;"></div>
 
 <div class="button-container">
 <form id="filtered-form" method="POST" action="{{ url_for('group.plot_groups_confidence_intervals') }}" target="_blank">
@@ -91,10 +91,14 @@
     }
 
     /*
+    //
+    // statsに更新があるかどうかを定期的にチェックし，更新があればリロード
+    // ただし，ユーザーが操作中の場合はチェックしない
+    //
     // 最終更新時間
-    let pageLoadAt = Date.now();
+    const pageLoadAt = Date.now();
     // ユーザー操作の最終時刻を記録する変数
-    let lastActivityTime = Date.now();
+    const lastActivityTime = Date.now();
     // 無操作とみなす閾値
     const idleThreshold = 10000; // 10,000ミリ秒 = 10秒
 
@@ -130,7 +134,7 @@
     // 95%信頼区間のエラーバーをPlotlyで描画
     //
 
-    var scoreInfo = {{ score_info | tojson }};
+    const scoreInfo = {{ score_info | tojson }};
 
     function plotConfidenceIntervals(filteredScoreList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
@@ -484,11 +488,13 @@
             annotations: annotations,
         };
 
-        Plotly.newPlot('ciSubplots', data, layout);
+        Plotly.newPlot('plotArea', data, layout);
     } // end of plotConfidenceIntervals
 
-    function plotFilteredConfidenceIntervals() {
-        let filteredIds = [];
+
+    // Plot the graph based on the selected type
+    function plotSelectedGraph() {
+        const filteredIds = [];
         $('#stats-table tbody tr:visible').each(function() {
             filteredIds.push($(this).data('id'));
         });
@@ -497,20 +503,21 @@
         // let filteredScoreList = scoreInfo.filter(item => {
         //     return filteredIds.indexOf(item.group_id) !== -1;
         // });
-
         // filteredIds の順番に沿って scoreInfo からオブジェクトを抽出
-        let filteredScoreList = filteredIds.map(id => scoreInfo.find(item => item.group_id === id));
+        const filteredScoreList = filteredIds.map(id => scoreInfo.find(item => item.group_id === id));
 
-        // 0.5秒後に再描画
-        setTimeout(function() {
-            plotConfidenceIntervals(filteredScoreList);
-        }, 500);
+        plotConfidenceIntervals(filteredScoreList);
     }
 
+    // Plot the graph using the result of the table when the table is filtered or sorted
     $('#stats-table').on('filterEnd sortEnd', function() {
-        plotFilteredConfidenceIntervals();
+        // Delay the plot to wait for the table to be updated
+        setTimeout(function() {
+            plotSelectedGraph();
+        }, 500);
     });
 
+    // Initialize tablesorter and plot the graph
     $(function () {
         // ローカルストレージに保存されたソート状態を取得
         let savedSort = localStorage.getItem('statsTableSort');
@@ -554,7 +561,7 @@
             $('#filtered-ids').val(filteredIds.join(','));
         });
 
-        plotConfidenceIntervals();
+        plotSelectedGraph();
     });
 </script>
 {% endblock %}

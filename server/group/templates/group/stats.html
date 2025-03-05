@@ -516,7 +516,12 @@
             annotations: annotations,
         };
 
-        Plotly.newPlot('plotArea', data, layout);
+        const config = {
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+            displaylogo: false,
+        };
+
+        Plotly.newPlot('plotArea', data, layout, config);
     } // end of plotConfidenceIntervals
 
     //
@@ -591,7 +596,9 @@
         };
 
         const config = {
-            responsive: false  // 自動リサイズを無効化
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+            displaylogo: false,
+            responsive: false,  // 自動リサイズを無効化
         };
 
         Plotly.newPlot('plotArea', data, layout, config);

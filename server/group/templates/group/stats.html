@@ -249,7 +249,6 @@
     function plotConfidenceIntervals(filteredStatsList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
         const currentStatsList = filteredStatsList || statsList;
-        console.log(currentStatsList);
         const groupLabels = currentStatsList.map(stats => {
             let label = stats.name;
             let firstIdx = label.indexOf('-');
@@ -718,8 +717,6 @@
             .then(response => response.json())
             .then(data => {
                 statsList = data.group_stats_list;
-                console.log("Active group stats loaded.");
-                console.log(statsList);
                 initializeStatsTable();
                 plotSelectedGraph();
             })
@@ -748,44 +745,52 @@
     // statsに更新があるかどうかを定期的にチェックし，更新があれば取り込む
     // ただし，ユーザーが操作中の場合はチェックしない
     //
-    // 最終読み込み時間
-    let lastLoadTime = Date.now();
-    // ユーザー操作の最終時刻を記録する変数
-    let lastActivityTime = Date.now();
-    // 無操作とみなす閾値
-    const idleThreshold = 10000; // 10,000ミリ秒 = 10秒
+    (function() { // IIFEによる即時実行を利用したカプセル化
+        let lastLoadTime = Date.now(); // 最終読み込み時間を記録する変数
+        let lastActivityTime = Date.now(); // ユーザー操作の最終時刻を記録する変数
+        const idleThreshold = 10000; // 無操作とみなす閾値 10,000ミリ秒 = 10秒
 
-    // ユーザー操作時に最終時刻を更新（必要なイベントを追加）
-    function updateActivity() {
-        lastActivityTime = Date.now();
-    }
-    document.addEventListener('mousemove', updateActivity);
-    document.addEventListener('keydown', updateActivity);
-    document.addEventListener('scroll', updateActivity);
-
-    setInterval(function() {
-        // ページが非表示またはウィンドウにフォーカスがない場合
-        // かつ、最終操作から閾値以上経過している場合
-        if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
-            // 更新チェック
-            fetch("{{ url_for('group.get_updated_stats') }}?last_load=" + lastLoadTime)
-                .then(response => response.json())
-                .then(data => {
-                    updatedStatsList = data.group_stats_list;
-                    if (updatedStatsList.length > 0) {
-                        console.log("Updated group stats loaded.");
-                        console.log(updatedStatsList);
-                        updateStatsTable(updatedStatsList);
-                        updateStatsList(updatedStatsList);
-                        lastLoadTime = Date.now();
-                        plotSelectedGraph();
-                    }
-                })
-                .catch(error => {
-                    console.error("Update check failed:", error);
-                });
+        // ユーザー操作時に最終時刻を更新（必要なイベントを追加）
+        function updateActivity() {
+            lastActivityTime = Date.now();
         }
-    }, 10000); // 30秒ごとに更新チェック
+        document.addEventListener('mousemove', updateActivity);
+        document.addEventListener('keydown', updateActivity);
+        document.addEventListener('scroll', updateActivity);
+
+        function checkForUpdate() {
+            // ページが非表示またはウィンドウにフォーカスがない場合
+            // かつ、最終操作から閾値以上経過している場合
+            if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
+                // 更新チェック
+                fetch("{{ url_for('group.get_updated_stats') }}?last_load=" + lastLoadTime)
+                    .then(response => response.json())
+                    .then(data => {
+                        updatedStatsList = data.group_stats_list;
+                        if (updatedStatsList.length > 0) {
+                            updateStatsTable(updatedStatsList);
+                            updateStatsList(updatedStatsList);
+                            lastLoadTime = Date.now();
+                            plotSelectedGraph();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Update check failed:", error);
+                    });
+            }
+        }
+
+        // setIntervalの代わりに再帰的なsetTimeoutを利用
+        function scheduleUpdate() {
+            setTimeout(function() {
+                checkForUpdate();
+                scheduleUpdate();
+            }, 30000); // 30秒ごとにチェック
+        }
+
+        // 初期化時に更新チェックを開始する
+        scheduleUpdate();
+    })();
 
     //
     // Initialize the varibles and plot the graph when the page is loaded

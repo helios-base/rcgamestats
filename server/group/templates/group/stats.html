@@ -227,15 +227,21 @@
         let tableBody = document.getElementById('stats-table-body');
         updatedStatsList.forEach(updatedStats => {
             let row = tableBody.querySelector(`tr[data-id="${updatedStats.group_id}"]`);
+            let newRow = createStatsTableRow(updatedStats);
             if (row) {
                 // Replace the rows with updated stats
-                let newRow = createStatsTableRow(updatedStats);
                 tableBody.replaceChild(newRow, row);
             }
             else {
                 // Add a new row if the group is not in the table
-                tableBody.appendChild(createStatsTableRow(updatedStats));
+                tableBody.appendChild(newRow);
             }
+
+            // Apply highlight effect to the updated row
+            newRow.classList.add('updated');
+            setTimeout(() => {
+                newRow.classList.remove('updated');
+            }, 3000); // Remove the highlight effect after 3 seconds
         });
 
         // Re-apply tablesorter and filter after updating the table

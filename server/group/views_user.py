@@ -298,6 +298,30 @@ def has_updates():
     return jsonify({"update": has_updates})
 
 
+@group_bp.route("/get_all_active_stats", methods=["GET"])
+@login_required
+def get_all_active_stats():
+    """
+    Get stats for all active groups.
+    """
+    print("get_all_active_stats")
+    group_list = Group.query.filter(Group.is_active == True).all()
+    group_stats_list = []
+    for group in group_list:
+        stats = group.stats
+        if stats is None:
+            stats = GroupStats(group.id)
+            db.session.add(stats)
+            db.session.commit()
+        if stats.updated_at is None or group.updated_at > stats.updated_at:
+            stats.update()
+            current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
+        group_stats_list.append(group.to_simple_json())
+    db.session.commit()
+
+    return jsonify(group_stats_list=group_stats_list)
+
+
 # @group_bp.route("/get_stats_updates", methods=["GET"])
 # @login_required
 # def get_stats_updates():

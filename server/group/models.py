@@ -39,7 +39,7 @@ class Group(db.Model):
         return {
             'group_id': self.id,
             'name': self.name,
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'status': self.status.value,
             'left_team': self.left_team.name,
             'right_team': self.right_team.name,

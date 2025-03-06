@@ -75,46 +75,6 @@
         document.getElementById("filtered-form").submit();
     }
 
-    /*
-    //
-    // statsに更新があるかどうかを定期的にチェックし，更新があればリロード
-    // ただし，ユーザーが操作中の場合はチェックしない
-    //
-    // 最終更新時間
-    const pageLoadAt = Date.now();
-    // ユーザー操作の最終時刻を記録する変数
-    const lastActivityTime = Date.now();
-    // 無操作とみなす閾値
-    const idleThreshold = 10000; // 10,000ミリ秒 = 10秒
-
-    // ユーザー操作時に最終時刻を更新（必要なイベントを追加）
-    function updateActivity() {
-        lastActivityTime = Date.now();
-    }
-    document.addEventListener('mousemove', updateActivity);
-    document.addEventListener('keydown', updateActivity);
-    document.addEventListener('scroll', updateActivity);
-
-    setInterval(function() {
-        // ページが非表示またはウィンドウにフォーカスがない場合
-        // かつ、最終操作から閾値以上経過している場合
-        if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
-            // 更新チェック
-            fetch("{{ url_for('group.has_updates') }}?page_load_at=" + pageLoadAt)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.update) {
-                        // 更新があれば全体リロード
-                        location.reload();
-                    }
-                })
-                .catch(error => {
-                    console.error("Update check failed:", error);
-                });
-        }
-    }, 30000); // 30秒ごとに更新チェック
-    */
-
     //
     // テーブル・プロット用のデータ．JavaScriptで動的に生成する．
     //
@@ -123,135 +83,159 @@
     //
     // Render the stats table
     //
-    function renderStatsTable() {
+    function createStatsTableRow(stats) {
+        let row = document.createElement('tr');
+        row.dataset.id = stats.group_id;
+        if (stats.status === 'approved') {
+            row.classList.add('approved');
+        } else if (stats.status === 'rejected') {
+            row.classList.add('rejected');
+        } else if (stats.status === 'under_review') {
+            row.classList.add('under_review');
+        }
+
+        let cell = document.createElement('td');
+        cell.classList.add('stats');
+        let link = document.createElement('a');
+        link.href = "{{ url_for('group.show_group_matches', group_name='') }}" + stats.name;
+        link.title = stats.name;
+        link.textContent = stats.created_at;
+        cell.appendChild(link);
+        // cell.textContent = stats.created_at;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_team;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_team;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.completed_count;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.left_win;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.draw;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_win;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = (stats.left_win_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = (stats.draw_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = (stats.right_win_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_sum_of
+        cell.textContent = stats.left_sum_of_scores;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_sum_of_scores;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_mean_score.toFixed(3);
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_mean_score.toFixed(3);
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_max_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_max_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_scored_games;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_scored_games;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = (stats.left_scored_games_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = (stats.right_scored_games_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        return row;
+    }
+
+    function initializeStatsTable() {
         let tableBody = document.getElementById('stats-table-body');
         tableBody.innerHTML = '';
         statsList.forEach(stats => {
-            let row = document.createElement('tr');
-            row.dataset.id = stats.group_id;
-            if (stats.status === 'approved') {
-                row.classList.add('approved');
-            } else if (stats.status === 'rejected') {
-                row.classList.add('rejected');
-            } else if (stats.status === 'under_review') {
-                row.classList.add('under_review');
+            tableBody.appendChild(createStatsTableRow(stats));
+        });
+
+        // Re-apply tablesorter and filter after updating the table
+        $('#stats-table').trigger('update');
+        $('#stats-table').trigger('search');
+    }
+
+    function updateStatsTable(updatedStatsList) {
+        let tableBody = document.getElementById('stats-table-body');
+        updatedStatsList.forEach(updatedStats => {
+            let row = tableBody.querySelector(`tr[data-id="${updatedStats.group_id}"]`);
+            if (row) {
+                // Replace the rows with updated stats
+                let newRow = createStatsTableRow(updatedStats);
+                tableBody.replaceChild(newRow, row);
             }
-
-            let cell = document.createElement('td');
-            cell.classList.add('stats');
-            let link = document.createElement('a');
-            link.href = "{{ url_for('group.show_group_matches', group_name='') }}" + stats.name;
-            link.title = stats.name;
-            link.textContent = stats.created_at;
-            cell.appendChild(link);
-            // cell.textContent = stats.created_at;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = stats.left_team;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.right_team;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = stats.completed_count;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.left_win;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.draw;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.right_win;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = (stats.left_win_rate * 100).toFixed(2) + ' %';
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = (stats.draw_rate * 100).toFixed(2) + ' %';
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = (stats.right_win_rate * 100).toFixed(2) + ' %';
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = stats.left_sum_of
-            cell.textContent = stats.left_sum_of_scores;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.right_sum_of_scores;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = stats.left_mean_score.toFixed(3);
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.right_mean_score.toFixed(3);
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = stats.left_max_score;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.right_max_score;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = stats.left_scored_games;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = stats.right_scored_games;
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.id = 'lborder';
-            cell.textContent = (stats.left_scored_games_rate * 100).toFixed(2) + ' %';
-            row.appendChild(cell);
-
-            cell = document.createElement('td');
-            cell.classList.add('stats');
-            cell.textContent = (stats.right_scored_games_rate * 100).toFixed(2) + ' %';
-            row.appendChild(cell);
-
-            tableBody.appendChild(row);
+            else {
+                // Add a new row if the group is not in the table
+                tableBody.appendChild(createStatsTableRow(updatedStats));
+            }
         });
 
         // Re-apply tablesorter and filter after updating the table
@@ -736,13 +720,72 @@
                 statsList = data.group_stats_list;
                 console.log("Active group stats loaded.");
                 console.log(statsList);
-                renderStatsTable();
+                initializeStatsTable();
                 plotSelectedGraph();
             })
             .catch(error => {
                 console.error("Failed to load active group stats:", error);
             });
     }
+
+    //
+    function updateStatsList(updatedStatsList) {
+        updatedStatsList.forEach(updatedStats => {
+            let stats = statsList.find(item => item.group_id === updatedStats.group_id);
+            if (stats) {
+                // Replace the stats with updated stats
+                Object.assign(stats, updatedStats);
+            }
+            else {
+                // Add a new stats if the group is not in the list
+                statsList.push(updatedStats);
+                statsList.sort((a, b) => a.group_id - b.group_id);
+            }
+        });
+    }
+
+    //
+    // statsに更新があるかどうかを定期的にチェックし，更新があれば取り込む
+    // ただし，ユーザーが操作中の場合はチェックしない
+    //
+    // 最終読み込み時間
+    let lastLoadTime = Date.now();
+    // ユーザー操作の最終時刻を記録する変数
+    let lastActivityTime = Date.now();
+    // 無操作とみなす閾値
+    const idleThreshold = 10000; // 10,000ミリ秒 = 10秒
+
+    // ユーザー操作時に最終時刻を更新（必要なイベントを追加）
+    function updateActivity() {
+        lastActivityTime = Date.now();
+    }
+    document.addEventListener('mousemove', updateActivity);
+    document.addEventListener('keydown', updateActivity);
+    document.addEventListener('scroll', updateActivity);
+
+    setInterval(function() {
+        // ページが非表示またはウィンドウにフォーカスがない場合
+        // かつ、最終操作から閾値以上経過している場合
+        if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
+            // 更新チェック
+            fetch("{{ url_for('group.get_updated_stats') }}?last_load=" + lastLoadTime)
+                .then(response => response.json())
+                .then(data => {
+                    updatedStatsList = data.group_stats_list;
+                    if (updatedStatsList.length > 0) {
+                        console.log("Updated group stats loaded.");
+                        console.log(updatedStatsList);
+                        updateStatsTable(updatedStatsList);
+                        updateStatsList(updatedStatsList);
+                        lastLoadTime = Date.now();
+                        plotSelectedGraph();
+                    }
+                })
+                .catch(error => {
+                    console.error("Update check failed:", error);
+                });
+        }
+    }, 10000); // 30秒ごとに更新チェック
 
     //
     // Initialize the varibles and plot the graph when the page is loaded

@@ -52,31 +52,8 @@
             <th class="stats">Right Score Rate</th>
         </tr>
     </thead>
-    <tbody>
-        {% for stats in group_stats_list %}
-        <tr data-id="{{ stats.group_id }}"{% if stats.status == 'approved' %} class="approved"{%elif stats.status == 'rejected' %} class="rejected"{% elif stats.status == 'under_review' %} class="under_review"{% endif %}>
-            <td class="stats"><a href="{{ url_for('group.show_group_matches', group_name=stats.name) }}" title="{{ stats.name }}">{{ stats.created_at }}</a></td>
-            <td class="stats" id="lborder">{{ stats.left_team }}</td>
-            <td class="stats">{{ stats.right_team }}</td>
-            <td class="stats" id="lborder">{{ stats.completed_count }}</td>
-            <td class="stats">{{ stats.left_win }}</td>
-            <td class="stats">{{ stats.draw }}</td>
-            <td class="stats">{{ stats.right_win }}</td>
-            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
-            <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
-            <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
-            <td class="stats" id="lborder">{{ stats.left_sum_of_scores }}</td>
-            <td class="stats">{{ stats.right_sum_of_scores }}</td>
-            <td class="stats" id="lborder">{{ stats.left_mean_score|round(3) }}</td>
-            <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
-            <td class="stats" id="lborder">{{ stats.left_max_score }}</td>
-            <td class="stats">{{ stats.right_max_score }}</td>
-            <td class="stats" id="lborder">{{ stats.left_scored_games }}</td>
-            <td class="stats">{{ stats.right_scored_games }}</td>
-            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
-            <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
-        </tr>
-        {% endfor %}
+    <tbody id="stats-table-body">
+        <!-- Table body will be filled by JavaScript -->
     </tbody>
 </table>
 {% endblock %}
@@ -139,9 +116,148 @@
     */
 
     //
-    // グラフ描画用のデータ
+    // テーブル・プロット用のデータ．JavaScriptで動的に生成する．
     //
     let statsList = [];
+
+    //
+    // Render the stats table
+    //
+    function renderStatsTable() {
+        let tableBody = document.getElementById('stats-table-body');
+        tableBody.innerHTML = '';
+        statsList.forEach(stats => {
+            let row = document.createElement('tr');
+            row.dataset.id = stats.group_id;
+            if (stats.status === 'approved') {
+                row.classList.add('approved');
+            } else if (stats.status === 'rejected') {
+                row.classList.add('rejected');
+            } else if (stats.status === 'under_review') {
+                row.classList.add('under_review');
+            }
+
+            let cell = document.createElement('td');
+            cell.classList.add('stats');
+            let link = document.createElement('a');
+            link.href = "{{ url_for('group.show_group_matches', group_name='') }}" + stats.name;
+            link.title = stats.name;
+            link.textContent = stats.created_at;
+            cell.appendChild(link);
+            // cell.textContent = stats.created_at;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = stats.left_team;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.right_team;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = stats.completed_count;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.left_win;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.draw;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.right_win;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = (stats.left_win_rate * 100).toFixed(2) + ' %';
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = (stats.draw_rate * 100).toFixed(2) + ' %';
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = (stats.right_win_rate * 100).toFixed(2) + ' %';
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = stats.left_sum_of
+            cell.textContent = stats.left_sum_of_scores;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.right_sum_of_scores;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = stats.left_mean_score.toFixed(3);
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.right_mean_score.toFixed(3);
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = stats.left_max_score;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.right_max_score;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = stats.left_scored_games;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = stats.right_scored_games;
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.id = 'lborder';
+            cell.textContent = (stats.left_scored_games_rate * 100).toFixed(2) + ' %';
+            row.appendChild(cell);
+
+            cell = document.createElement('td');
+            cell.classList.add('stats');
+            cell.textContent = (stats.right_scored_games_rate * 100).toFixed(2) + ' %';
+            row.appendChild(cell);
+
+            tableBody.appendChild(row);
+        });
+
+        // Re-apply tablesorter and filter after updating the table
+        $('#stats-table').trigger('update');
+        $('#stats-table').trigger('search');
+    }
 
     //
     // 95%信頼区間のエラーバー + 簡易ヒストグラムを描画
@@ -612,6 +728,7 @@
         }
     }
 
+    // Initialize group stats using fetch API
     function initializeGroupStats() {
         fetch("{{ url_for('group.get_updated_stats') }}" + "?last_load=0")
             .then(response => response.json())
@@ -619,6 +736,7 @@
                 statsList = data.group_stats_list;
                 console.log("Active group stats loaded.");
                 console.log(statsList);
+                renderStatsTable();
                 plotSelectedGraph();
             })
             .catch(error => {
@@ -626,12 +744,10 @@
             });
     }
 
-
+    //
     // Initialize the varibles and plot the graph when the page is loaded
+    //
     $(function () {
-        // Load active group stats using fetch API
-        initializeGroupStats();
-
         // ローカルストレージに保存されたソート状態を取得
         let savedSort = localStorage.getItem('statsTableSort');
         if (savedSort) {
@@ -694,6 +810,8 @@
             localStorage.setItem('selectedGraphType', this.value);
             plotSelectedGraph();
         });
+
+        initializeGroupStats();
     });
 </script>
 {% endblock %}

@@ -53,11 +53,11 @@
         </tr>
     </thead>
     <tbody>
-        {% for stats in stats_list %}
-        <tr data-id="{{ stats.group.id }}"{% if stats.group.status.value == 'approved' %} class="approved"{%elif stats.group.status.value == 'rejected' %} class="rejected"{% elif stats.group.status.value == 'under_review' %} class="under_review"{% endif %}>
-            <td class="stats"><a href="{{ url_for('group.show_group_matches', group_name=stats.group.name) }}" title="{{ stats.group.name }}">{{ stats.group.created_at }}</a></td>
-            <td class="stats" id="lborder">{{ stats.group.left_team.name }}</td>
-            <td class="stats">{{ stats.group.right_team.name }}</td>
+        {% for stats in group_stats_list %}
+        <tr data-id="{{ stats.group_id }}"{% if stats.status == 'approved' %} class="approved"{%elif stats.status == 'rejected' %} class="rejected"{% elif stats.status == 'under_review' %} class="under_review"{% endif %}>
+            <td class="stats"><a href="{{ url_for('group.show_group_matches', group_name=stats.name) }}" title="{{ stats.name }}">{{ stats.created_at }}</a></td>
+            <td class="stats" id="lborder">{{ stats.left_team }}</td>
+            <td class="stats">{{ stats.right_team }}</td>
             <td class="stats" id="lborder">{{ stats.completed_count }}</td>
             <td class="stats">{{ stats.left_win }}</td>
             <td class="stats">{{ stats.draw }}</td>
@@ -141,34 +141,16 @@
     //
     // グラフ描画用のデータ
     //
-    const statsList = [
-    {% for stat in stats_list %}
-        {
-            group_id: {{ stat.id }},
-            group_name: "{{ stat.group.name }}",
-            left_mean: {{ stat.left_mean_score }},
-            right_mean: {{ stat.right_mean_score }},
-            l_win_rate: {{ stat.left_win_rate }},
-            r_win_rate: {{ stat.right_win_rate }},
-            draw_rate: {{ stat.draw_rate }},
-            left_ci_lower: {{ stat.left_score_confidence_interval_lower }},
-            left_ci_upper: {{ stat.left_score_confidence_interval_upper }},
-            right_ci_lower: {{ stat.right_score_confidence_interval_lower }},
-            right_ci_upper: {{ stat.right_score_confidence_interval_upper }},
-            left_score_counts: {{ stat.left_score_counts|tojson }},
-            right_score_counts: {{ stat.right_score_counts|tojson }}
-        }{% if not loop.last %},{% endif %}
-    {% endfor %}
-    ];
+    let statsList = {{ group_stats_list | tojson }};
 
     //
     // 95%信頼区間のエラーバー + 簡易ヒストグラムを描画
     //
     function plotConfidenceIntervals(filteredStatsList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
-        const scoreList = filteredStatsList || statsList;
-        const groupLabels = scoreList.map(stats => {
-            let label = stats.group_name;
+        const currentStatsList = filteredStatsList || statsList;
+        const groupLabels = currentStatsList.map(stats => {
+            let label = stats.name;
             let firstIdx = label.indexOf('-');
             if (firstIdx !== -1) {
                 let secondIdx = label.indexOf('-', firstIdx + 1);
@@ -182,9 +164,9 @@
         // 左チームの場合、平均値とエラーバーの値を計算
         // error_x.array: 平均値から上方向の誤差 (upper - mean)
         // error_x.arrayminus: 平均値から下方向の誤差 (mean - lower)
-        const leftMean = scoreList.map(stats => stats.left_mean);
-        const leftErrorUpper = scoreList.map(stats => stats.left_ci_upper - stats.left_mean);
-        const leftErrorLower = scoreList.map(stats => stats.left_mean - stats.left_ci_lower);
+        const leftMean = currentStatsList.map(stats => stats.left_mean_score);
+        const leftErrorUpper = currentStatsList.map(stats => stats.left_score_ci[1] - stats.left_mean_score);
+        const leftErrorLower = currentStatsList.map(stats => stats.left_mean_score - stats.left_score_ci[0]);
         
         const leftTrace = {
             x: leftMean,
@@ -241,9 +223,9 @@
         // };
 
         // 右チームの場合、平均値とエラーバーの値を計算
-        const rightMean = scoreList.map(stats => stats.right_mean);
-        const rightErrorUpper = scoreList.map(stats => stats.right_ci_upper - stats.right_mean);
-        const rightErrorLower = scoreList.map(stats => stats.right_mean - stats.right_ci_lower);
+        const rightMean = currentStatsList.map(stats => stats.right_mean_score);
+        const rightErrorUpper = currentStatsList.map(stats => stats.right_score_ci[1] - stats.right_mean_score);
+        const rightErrorLower = currentStatsList.map(stats => stats.right_mean_score - stats.right_score_ci[0]);
 
         const rightTrace = {
             x: rightMean,
@@ -306,14 +288,13 @@
         const shapes = [];
 
         // 左チームのヒストグラム（x軸: x1）
-        scoreList.forEach((stats, i) => {
-            const counts = stats.left_score_counts;
-            const bins = Object.keys(counts).map(Number).sort((a, b) => a - b);
+        currentStatsList.forEach((stats, i) => {
+            const bins = Object.keys(stats.left_score_counts).map(Number).sort((a, b) => a - b);
             if (bins.length === 0) return;
-            const maxCount = Math.max(...bins.map(score => counts[score]));
+            const maxCount = Math.max(...bins.map(score => stats.left_score_counts[score]));
             const barWidth = histWidth / bins.length;
             bins.forEach((scoreValue, idx) => {
-                const count = counts[scoreValue];
+                const count = stats.left_score_counts[scoreValue];
                 const normalizedHeight = maxCount > 0 ? (count / maxCount) * barHeightMax : 0;
                 // const x0 = scoreValue + 0.5 - histWidth / 2;
                 const x0 = scoreValue - histWidth / 2 + 0.005;
@@ -335,14 +316,13 @@
         });
 
         // 右チームのヒストグラム（x軸: x2）
-        scoreList.forEach((stats, i) => {
-            const counts = stats.right_score_counts;
-            const bins = Object.keys(counts).map(Number).sort((a, b) => a - b);
+        currentStatsList.forEach((stats, i) => {
+            const bins = Object.keys(stats.right_score_counts).map(Number).sort((a, b) => a - b);
             if (bins.length === 0) return;
-            const maxCount = Math.max(...bins.map(score => counts[score]));
+            const maxCount = Math.max(...bins.map(score => stats.right_score_counts[score]));
             const barWidth = histWidth / bins.length;
             bins.forEach((scoreValue, idx) => {
-                const count = counts[scoreValue];
+                const count = stats.right_score_counts[scoreValue];
                 const normalizedHeight = maxCount > 0 ? (count / maxCount) * barHeightMax : 0;
                 // const x0 = scoreValue + 0.5 - histWidth / 2;
                 const x0 = scoreValue - histWidth / 2 + 0.005;
@@ -448,7 +428,7 @@
         // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
         const leftErrorMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 0.5;
         // 各グループで left_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
-        const leftScoreMax = Math.max(...scoreList.map(stats => {
+        const leftScoreMax = Math.max(...currentStatsList.map(stats => {
             const keys = Object.keys(stats.left_score_counts).map(Number);
             const validKeys = keys.filter(score => stats.left_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
@@ -461,7 +441,7 @@
         // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
         const rightErrorMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 0.5;
         // 各グループで right_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
-        const rightScoreMax = Math.max(...scoreList.map(stats => {
+        const rightScoreMax = Math.max(...currentStatsList.map(stats => {
             const keys = Object.keys(stats.right_score_counts).map(Number);
             const validKeys = keys.filter(score => stats.right_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
@@ -528,9 +508,9 @@
     // Plot wining rate for each group
     //
     function plotWinRates(filteredStatsList) {
-        const scoreList = filteredStatsList || statsList;
-        const groupLabels = scoreList.map(stats => {
-            let label = stats.group_name;
+        const currentStatsList = filteredStatsList || statsList;
+        const groupLabels = currentStatsList.map(stats => {
+            let label = stats.name;
             let firstIdx = label.indexOf('-');
             if (firstIdx !== -1) {
                 let secondIdx = label.indexOf('-', firstIdx + 1);
@@ -542,9 +522,9 @@
             return label;
         });
 
-        const lWinRate = scoreList.map(stats => stats.l_win_rate);
-        const rWinRate = scoreList.map(stats => stats.r_win_rate);
-        const drawRate = scoreList.map(stats => stats.draw_rate);
+        const lWinRate = currentStatsList.map(stats => stats.left_win_rate);
+        const rWinRate = currentStatsList.map(stats => stats.rright_win_rate);
+        const drawRate = currentStatsList.map(stats => stats.draw_rate);
 
         // 左チームの勝率の折れ線グラフ
         const traceL = {

@@ -34,20 +34,21 @@ def show_stats():
     """
     group_list = Group.query.filter_by(is_active=True).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    stats_list = []
+    group_stats_list = []
     for group in group_list:
         stats = group.stats
         if stats is None:
             stats = GroupStats(group.id)
             db.session.add(stats)
-        elif stats.updated_at is None or group.updated_at > stats.updated_at:
+            db.session.commit()
+        if stats.updated_at is None or group.updated_at > stats.updated_at:
             stats.update()
             current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
 
-        stats_list.append(stats)
+        group_stats_list.append(group.to_simple_json())
 
     db.session.commit()
-    return render_template("group/stats.html", stats_list=stats_list)
+    return render_template("group/stats.html", group_stats_list=group_stats_list)
 
 
 @group_bp.route("/archived/")
@@ -288,9 +289,45 @@ def has_updates():
     except ValueError:
         return jsonify({"error": "Invalid datetime format"}), 400
 
-    group_list = Group.query.filter(Group.updated_at > last_load_at_dt).all()
+    # group_list = Group.query.filter(Group.updated_at > last_load_at_dt).all()
+    group_list = Group.query.filter(Group.is_active == True, Group.updated_at > last_load_at_dt).all()
     has_updates = len(group_list) > 0
 
     # print(f"last_load_at_dt: {last_load_at_dt}")
     # print(f"has_updates: {has_updates}")
     return jsonify({"update": has_updates})
+
+
+# @group_bp.route("/get_stats_updates", methods=["GET"])
+# @login_required
+# def get_stats_updates():
+#     """
+#     Get stats updates for the groups.
+#     """
+#     last_update = request.args.get("last_update")
+#     if not last_update:
+#         return jsonify({"error": "last_update parameter is required"}), 400
+
+#     try:
+#         if last_update.isdigit():
+#             timestamp = int(last_update) / 1000.0
+#             last_update_dt = datetime.fromtimestamp(timestamp)
+#         else:
+#             last_update_dt = datetime.strptime(last_update, "%Y-%m-%d %H:%M:%S")
+#         # print(f"page_load_at: {last_load_at_dt}")
+#     except ValueError:
+#         return jsonify({"error": "Invalid datetime format"}), 400
+
+#     groups = Group.query.filter(Group.is_active == True, Group.updated_at > last_update_dt).all()
+#     stats_list = []
+#     for group in groups:
+#         stats = group.stats
+#         if stats is None:
+#             stats = GroupStats(group.id)
+#             db.session.add(stats)
+#             db.session.commit()
+#         if stats.updated_at is None or group.updated_at > stats.updated_at:
+#             stats.update()
+#             current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
+#             stats_list.append(stats)
+#     db.session.commit()

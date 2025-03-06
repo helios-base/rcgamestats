@@ -35,6 +35,37 @@ class Group(db.Model):
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
 
+    def to_simple_json(self):
+        return {
+            'group_id': self.id,
+            'name': self.name,
+            'created_at': self.created_at.isoformat(),
+            'status': self.status.value,
+            'left_team': self.left_team.name,
+            'right_team': self.right_team.name,
+            'completed_count': self.stats.completed_count if self.stats else 0,
+            'left_win': self.stats.left_win if self.stats else 0,
+            'right_win': self.stats.right_win if self.stats else 0,
+            'draw': self.stats.draw if self.stats else 0,
+            'left_win_rate': self.stats.left_win_rate if self.stats else 0,
+            'right_win_rate': self.stats.right_win_rate if self.stats else 0,
+            'draw_rate': self.stats.draw_rate if self.stats else 0,
+            'left_sum_of_scores': self.stats.left_sum_of_scores if self.stats else 0,
+            'right_sum_of_scores': self.stats.right_sum_of_scores if self.stats else 0,
+            'left_max_score': self.stats.left_max_score if self.stats else 0,
+            'right_max_score': self.stats.right_max_score if self.stats else 0,
+            'left_scored_games': self.stats.left_scored_games if self.stats else 0,
+            'right_scored_games': self.stats.right_scored_games if self.stats else 0,
+            'left_scored_games_rate': self.stats.left_scored_games_rate if self.stats else 0,
+            'right_scored_games_rate': self.stats.right_scored_games_rate if self.stats else 0,
+            'left_mean_score': self.stats.left_mean_score if self.stats else 0,
+            'right_mean_score': self.stats.right_mean_score if self.stats else 0,
+            'left_score_ci': [self.stats.left_score_confidence_interval_lower, self.stats.left_score_confidence_interval_upper] if self.stats else [0, 0],
+            'right_score_ci': [self.stats.right_score_confidence_interval_lower, self.stats.right_score_confidence_interval_upper] if self.stats else [0, 0],
+            'left_score_counts': self.stats.left_score_counts if self.stats else {"0": 0},
+            'right_score_counts': self.stats.right_score_counts if self.stats else {"0": 0},
+        }
+
 
 class Match(db.Model):
     __tablename__ = 'match'

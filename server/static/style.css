@@ -68,6 +68,12 @@ tr.under_review:hover { background-color: #eeff7c; }
 tr.rejected { background-color: #c00000; }
 tr.rejected:hover { background-color: #ff0000; }
 
+tr.updated { 
+    background-color: yellow;
+    border: 2px solid #000000;
+    transition: background-color 1s ease-out, border 1s ease-out;
+}
+
 td.host-name {
     white-space: nowrap;
     overflow: hidden;

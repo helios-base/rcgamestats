@@ -52,31 +52,8 @@
             <th class="stats">Right Score Rate</th>
         </tr>
     </thead>
-    <tbody>
-        {% for stats in stats_list %}
-        <tr data-id="{{ stats.group.id }}"{% if stats.group.status.value == 'approved' %} class="approved"{%elif stats.group.status.value == 'rejected' %} class="rejected"{% elif stats.group.status.value == 'under_review' %} class="under_review"{% endif %}>
-            <td class="stats"><a href="{{ url_for('group.show_group_matches', group_name=stats.group.name) }}" title="{{ stats.group.name }}">{{ stats.group.created_at }}</a></td>
-            <td class="stats" id="lborder">{{ stats.group.left_team.name }}</td>
-            <td class="stats">{{ stats.group.right_team.name }}</td>
-            <td class="stats" id="lborder">{{ stats.completed_count }}</td>
-            <td class="stats">{{ stats.left_win }}</td>
-            <td class="stats">{{ stats.draw }}</td>
-            <td class="stats">{{ stats.right_win }}</td>
-            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
-            <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
-            <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
-            <td class="stats" id="lborder">{{ stats.left_sum_of_scores }}</td>
-            <td class="stats">{{ stats.right_sum_of_scores }}</td>
-            <td class="stats" id="lborder">{{ stats.left_mean_score|round(3) }}</td>
-            <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
-            <td class="stats" id="lborder">{{ stats.left_max_score }}</td>
-            <td class="stats">{{ stats.right_max_score }}</td>
-            <td class="stats" id="lborder">{{ stats.left_scored_games }}</td>
-            <td class="stats">{{ stats.right_scored_games }}</td>
-            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
-            <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
-        </tr>
-        {% endfor %}
+    <tbody id="stats-table-body">
+        <!-- Table body will be filled by JavaScript -->
     </tbody>
 </table>
 {% endblock %}
@@ -98,77 +75,188 @@
         document.getElementById("filtered-form").submit();
     }
 
-    /*
     //
-    // statsに更新があるかどうかを定期的にチェックし，更新があればリロード
-    // ただし，ユーザーが操作中の場合はチェックしない
+    // テーブル・プロット用のデータ．JavaScriptで動的に生成する．
     //
-    // 最終更新時間
-    const pageLoadAt = Date.now();
-    // ユーザー操作の最終時刻を記録する変数
-    const lastActivityTime = Date.now();
-    // 無操作とみなす閾値
-    const idleThreshold = 10000; // 10,000ミリ秒 = 10秒
+    let statsList = [];
 
-    // ユーザー操作時に最終時刻を更新（必要なイベントを追加）
-    function updateActivity() {
-        lastActivityTime = Date.now();
-    }
-    document.addEventListener('mousemove', updateActivity);
-    document.addEventListener('keydown', updateActivity);
-    document.addEventListener('scroll', updateActivity);
-
-    setInterval(function() {
-        // ページが非表示またはウィンドウにフォーカスがない場合
-        // かつ、最終操作から閾値以上経過している場合
-        if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
-            // 更新チェック
-            fetch("{{ url_for('group.has_updates') }}?page_load_at=" + pageLoadAt)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.update) {
-                        // 更新があれば全体リロード
-                        location.reload();
-                    }
-                })
-                .catch(error => {
-                    console.error("Update check failed:", error);
-                });
+    //
+    // Render the stats table
+    //
+    function createStatsTableRow(stats) {
+        let row = document.createElement('tr');
+        row.dataset.id = stats.group_id;
+        if (stats.status === 'approved') {
+            row.classList.add('approved');
+        } else if (stats.status === 'rejected') {
+            row.classList.add('rejected');
+        } else if (stats.status === 'under_review') {
+            row.classList.add('under_review');
         }
-    }, 30000); // 30秒ごとに更新チェック
-    */
 
-    //
-    // グラフ描画用のデータ
-    //
-    const statsList = [
-    {% for stat in stats_list %}
-        {
-            group_id: {{ stat.id }},
-            group_name: "{{ stat.group.name }}",
-            left_mean: {{ stat.left_mean_score }},
-            right_mean: {{ stat.right_mean_score }},
-            l_win_rate: {{ stat.left_win_rate }},
-            r_win_rate: {{ stat.right_win_rate }},
-            draw_rate: {{ stat.draw_rate }},
-            left_ci_lower: {{ stat.left_score_confidence_interval_lower }},
-            left_ci_upper: {{ stat.left_score_confidence_interval_upper }},
-            right_ci_lower: {{ stat.right_score_confidence_interval_lower }},
-            right_ci_upper: {{ stat.right_score_confidence_interval_upper }},
-            left_score_counts: {{ stat.left_score_counts|tojson }},
-            right_score_counts: {{ stat.right_score_counts|tojson }}
-        }{% if not loop.last %},{% endif %}
-    {% endfor %}
-    ];
+        let cell = document.createElement('td');
+        cell.classList.add('stats');
+        let link = document.createElement('a');
+        link.href = "{{ url_for('group.show_group_matches', group_name='') }}" + stats.name;
+        link.title = stats.name;
+        link.textContent = stats.created_at;
+        cell.appendChild(link);
+        // cell.textContent = stats.created_at;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_team;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_team;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.completed_count;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.left_win;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.draw;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_win;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = (stats.left_win_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = (stats.draw_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = (stats.right_win_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_sum_of
+        cell.textContent = stats.left_sum_of_scores;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_sum_of_scores;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_mean_score.toFixed(3);
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_mean_score.toFixed(3);
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_max_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_max_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = stats.left_scored_games;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = stats.right_scored_games;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.id = 'lborder';
+        cell.textContent = (stats.left_scored_games_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = (stats.right_scored_games_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        return row;
+    }
+
+    function initializeStatsTable() {
+        let tableBody = document.getElementById('stats-table-body');
+        tableBody.innerHTML = '';
+        statsList.forEach(stats => {
+            tableBody.appendChild(createStatsTableRow(stats));
+        });
+
+        // Re-apply tablesorter and filter after updating the table
+        $('#stats-table').trigger('update');
+        $('#stats-table').trigger('search');
+    }
+
+    function updateStatsTable(updatedStatsList) {
+        let tableBody = document.getElementById('stats-table-body');
+        updatedStatsList.forEach(updatedStats => {
+            let row = tableBody.querySelector(`tr[data-id="${updatedStats.group_id}"]`);
+            let newRow = createStatsTableRow(updatedStats);
+            if (row) {
+                // Replace the rows with updated stats
+                tableBody.replaceChild(newRow, row);
+            }
+            else {
+                // Add a new row if the group is not in the table
+                tableBody.appendChild(newRow);
+            }
+
+            // Apply highlight effect to the updated row
+            newRow.classList.add('updated');
+            setTimeout(() => {
+                newRow.classList.remove('updated');
+            }, 3000); // Remove the highlight effect after 3 seconds
+        });
+
+        // Re-apply tablesorter and filter after updating the table
+        $('#stats-table').trigger('update');
+        $('#stats-table').trigger('search');
+    }
 
     //
     // 95%信頼区間のエラーバー + 簡易ヒストグラムを描画
     //
     function plotConfidenceIntervals(filteredStatsList) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
-        const scoreList = filteredStatsList || statsList;
-        const groupLabels = scoreList.map(stats => {
-            let label = stats.group_name;
+        const currentStatsList = filteredStatsList || statsList;
+        const groupLabels = currentStatsList.map(stats => {
+            let label = stats.name;
             let firstIdx = label.indexOf('-');
             if (firstIdx !== -1) {
                 let secondIdx = label.indexOf('-', firstIdx + 1);
@@ -182,9 +270,9 @@
         // 左チームの場合、平均値とエラーバーの値を計算
         // error_x.array: 平均値から上方向の誤差 (upper - mean)
         // error_x.arrayminus: 平均値から下方向の誤差 (mean - lower)
-        const leftMean = scoreList.map(stats => stats.left_mean);
-        const leftErrorUpper = scoreList.map(stats => stats.left_ci_upper - stats.left_mean);
-        const leftErrorLower = scoreList.map(stats => stats.left_mean - stats.left_ci_lower);
+        const leftMean = currentStatsList.map(stats => stats.left_mean_score);
+        const leftErrorUpper = currentStatsList.map(stats => stats.left_score_ci[1] - stats.left_mean_score);
+        const leftErrorLower = currentStatsList.map(stats => stats.left_mean_score - stats.left_score_ci[0]);
         
         const leftTrace = {
             x: leftMean,
@@ -241,9 +329,9 @@
         // };
 
         // 右チームの場合、平均値とエラーバーの値を計算
-        const rightMean = scoreList.map(stats => stats.right_mean);
-        const rightErrorUpper = scoreList.map(stats => stats.right_ci_upper - stats.right_mean);
-        const rightErrorLower = scoreList.map(stats => stats.right_mean - stats.right_ci_lower);
+        const rightMean = currentStatsList.map(stats => stats.right_mean_score);
+        const rightErrorUpper = currentStatsList.map(stats => stats.right_score_ci[1] - stats.right_mean_score);
+        const rightErrorLower = currentStatsList.map(stats => stats.right_mean_score - stats.right_score_ci[0]);
 
         const rightTrace = {
             x: rightMean,
@@ -306,14 +394,13 @@
         const shapes = [];
 
         // 左チームのヒストグラム（x軸: x1）
-        scoreList.forEach((stats, i) => {
-            const counts = stats.left_score_counts;
-            const bins = Object.keys(counts).map(Number).sort((a, b) => a - b);
+        currentStatsList.forEach((stats, i) => {
+            const bins = Object.keys(stats.left_score_counts).map(Number).sort((a, b) => a - b);
             if (bins.length === 0) return;
-            const maxCount = Math.max(...bins.map(score => counts[score]));
+            const maxCount = Math.max(...bins.map(score => stats.left_score_counts[score]));
             const barWidth = histWidth / bins.length;
             bins.forEach((scoreValue, idx) => {
-                const count = counts[scoreValue];
+                const count = stats.left_score_counts[scoreValue];
                 const normalizedHeight = maxCount > 0 ? (count / maxCount) * barHeightMax : 0;
                 // const x0 = scoreValue + 0.5 - histWidth / 2;
                 const x0 = scoreValue - histWidth / 2 + 0.005;
@@ -335,14 +422,13 @@
         });
 
         // 右チームのヒストグラム（x軸: x2）
-        scoreList.forEach((stats, i) => {
-            const counts = stats.right_score_counts;
-            const bins = Object.keys(counts).map(Number).sort((a, b) => a - b);
+        currentStatsList.forEach((stats, i) => {
+            const bins = Object.keys(stats.right_score_counts).map(Number).sort((a, b) => a - b);
             if (bins.length === 0) return;
-            const maxCount = Math.max(...bins.map(score => counts[score]));
+            const maxCount = Math.max(...bins.map(score => stats.right_score_counts[score]));
             const barWidth = histWidth / bins.length;
             bins.forEach((scoreValue, idx) => {
-                const count = counts[scoreValue];
+                const count = stats.right_score_counts[scoreValue];
                 const normalizedHeight = maxCount > 0 ? (count / maxCount) * barHeightMax : 0;
                 // const x0 = scoreValue + 0.5 - histWidth / 2;
                 const x0 = scoreValue - histWidth / 2 + 0.005;
@@ -448,7 +534,7 @@
         // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
         const leftErrorMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 0.5;
         // 各グループで left_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
-        const leftScoreMax = Math.max(...scoreList.map(stats => {
+        const leftScoreMax = Math.max(...currentStatsList.map(stats => {
             const keys = Object.keys(stats.left_score_counts).map(Number);
             const validKeys = keys.filter(score => stats.left_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
@@ -461,7 +547,7 @@
         // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
         const rightErrorMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 0.5;
         // 各グループで right_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
-        const rightScoreMax = Math.max(...scoreList.map(stats => {
+        const rightScoreMax = Math.max(...currentStatsList.map(stats => {
             const keys = Object.keys(stats.right_score_counts).map(Number);
             const validKeys = keys.filter(score => stats.right_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
@@ -528,9 +614,9 @@
     // Plot wining rate for each group
     //
     function plotWinRates(filteredStatsList) {
-        const scoreList = filteredStatsList || statsList;
-        const groupLabels = scoreList.map(stats => {
-            let label = stats.group_name;
+        const currentStatsList = filteredStatsList || statsList;
+        const groupLabels = currentStatsList.map(stats => {
+            let label = stats.name;
             let firstIdx = label.indexOf('-');
             if (firstIdx !== -1) {
                 let secondIdx = label.indexOf('-', firstIdx + 1);
@@ -542,9 +628,9 @@
             return label;
         });
 
-        const lWinRate = scoreList.map(stats => stats.l_win_rate);
-        const rWinRate = scoreList.map(stats => stats.r_win_rate);
-        const drawRate = scoreList.map(stats => stats.draw_rate);
+        const lWinRate = currentStatsList.map(stats => stats.left_win_rate);
+        const rWinRate = currentStatsList.map(stats => stats.right_win_rate);
+        const drawRate = currentStatsList.map(stats => stats.draw_rate);
 
         // 左チームの勝率の折れ線グラフ
         const traceL = {
@@ -631,36 +717,90 @@
         }
     }
 
-    // Change the grapy type when the select box is changed
-    // document.getElementById('plotType').addEventListener('change', function() {
-    //     plotSelectedGraph();
-    // });
-    document.addEventListener("DOMContentLoaded", function(){
-        const select = document.getElementById('plotType');
-        // localStorage に保存されたグラフタイプを取得し、存在すれば値をセットする
-        const storedGraphType = localStorage.getItem('selectedGraphType');
-        if (storedGraphType) {
-            select.value = storedGraphType;
-        }
-        // ページ読み込み時に描画（保存されたグラフタイプに基づく）
-        plotSelectedGraph();
+    // Initialize group stats using fetch API
+    function initializeGroupStats() {
+        fetch("{{ url_for('group.get_updated_stats') }}" + "?last_load=0")
+            .then(response => response.json())
+            .then(data => {
+                statsList = data.group_stats_list;
+                initializeStatsTable();
+                plotSelectedGraph();
+            })
+            .catch(error => {
+                console.error("Failed to load active group stats:", error);
+            });
+    }
 
-        // ドロップダウン変更時に、選択値を localStorage に保存する
-        select.addEventListener("change", function(){
-            localStorage.setItem('selectedGraphType', this.value);
-            plotSelectedGraph();
+    //
+    function updateStatsList(updatedStatsList) {
+        updatedStatsList.forEach(updatedStats => {
+            let stats = statsList.find(item => item.group_id === updatedStats.group_id);
+            if (stats) {
+                // Replace the stats with updated stats
+                Object.assign(stats, updatedStats);
+            }
+            else {
+                // Add a new stats if the group is not in the list
+                statsList.push(updatedStats);
+                statsList.sort((a, b) => a.group_id - b.group_id);
+            }
         });
-    });
+    }
 
-    // Plot the graph using the result of the table when the table is filtered or sorted
-    $('#stats-table').on('filterEnd sortEnd', function() {
-        // Delay the plot to wait for the table to be updated
-        setTimeout(function() {
-            plotSelectedGraph();
-        }, 500);
-    });
+    //
+    // statsに更新があるかどうかを定期的にチェックし，更新があれば取り込む
+    // ただし，ユーザーが操作中の場合はチェックしない
+    //
+    (function() { // IIFEによる即時実行を利用したカプセル化
+        let lastLoadTime = Date.now(); // 最終読み込み時間を記録する変数
+        let lastActivityTime = Date.now(); // ユーザー操作の最終時刻を記録する変数
+        const idleThreshold = 10000; // 無操作とみなす閾値 10,000ミリ秒 = 10秒
 
-    // Initialize tablesorter and plot the graph
+        // ユーザー操作時に最終時刻を更新（必要なイベントを追加）
+        function updateActivity() {
+            lastActivityTime = Date.now();
+        }
+        document.addEventListener('mousemove', updateActivity);
+        document.addEventListener('keydown', updateActivity);
+        document.addEventListener('scroll', updateActivity);
+
+        function checkForUpdate() {
+            // ページが非表示またはウィンドウにフォーカスがない場合
+            // かつ、最終操作から閾値以上経過している場合
+            if (document.hidden || !document.hasFocus() || Date.now() - lastActivityTime > idleThreshold) {
+                // 更新チェック
+                fetch("{{ url_for('group.get_updated_stats') }}?last_load=" + lastLoadTime)
+                    .then(response => response.json())
+                    .then(data => {
+                        updatedStatsList = data.group_stats_list;
+                        if (updatedStatsList.length > 0) {
+                            updateStatsTable(updatedStatsList);
+                            updateStatsList(updatedStatsList);
+                            lastLoadTime = Date.now();
+                            plotSelectedGraph();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Update check failed:", error);
+                    });
+            }
+        }
+
+        // setIntervalの代わりに再帰的なsetTimeoutを利用
+        function scheduleUpdate() {
+            setTimeout(function() {
+                checkForUpdate();
+                scheduleUpdate();
+            }, 30000); // 30秒ごとにチェック
+        }
+
+        // 初期化時に更新チェックを開始する
+        scheduleUpdate();
+    })();
+
+    //
+    // Initialize the varibles and plot the graph when the page is loaded
+    //
     $(function () {
         // ローカルストレージに保存されたソート状態を取得
         let savedSort = localStorage.getItem('statsTableSort');
@@ -684,12 +824,21 @@
                 filter_ignoreCase: true,
                 filter_saveFilters: true, // Use the $.tablesorter.storage utility to save the most recent filters
             }
-        })
+        });
+
         // ソート変更時にローカルストレージへ保存
-        .on('sortEnd', function(event) {
+        $('#stats-table').on('sortEnd', function(event) {
             // ソート状態をローカルストレージに保存
             var sortList = $(this).data('tablesorter').sortList;
             localStorage.setItem('statsTableSort', JSON.stringify(sortList));
+        });
+
+        // Plot the graph using the result of the table when the table is filtered or sorted
+        $('#stats-table').on('filterEnd sortEnd', function() {
+            // Delay the plot to wait for the table to be updated
+            setTimeout(function() {
+                plotSelectedGraph();
+            }, 500);
         });
 
         $('#filtered-form').on('submit', function() {
@@ -704,7 +853,19 @@
             $('#filtered-ids').val(filteredIds.join(','));
         });
 
-        plotSelectedGraph();
+        // localStorage に保存されたグラフタイプを取得し、存在すれば値をセットする
+        const select = document.getElementById('plotType');
+        const storedGraphType = localStorage.getItem('selectedGraphType');
+        if (storedGraphType) {
+            select.value = storedGraphType;
+        }
+        // ドロップダウン変更時に、選択値を localStorage に保存するように設定
+        select.addEventListener("change", function(){
+            localStorage.setItem('selectedGraphType', this.value);
+            plotSelectedGraph();
+        });
+
+        initializeGroupStats();
     });
 </script>
 {% endblock %}

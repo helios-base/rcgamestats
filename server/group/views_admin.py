@@ -56,6 +56,7 @@ def create():
         group = Group(
             name=group_name,
             created_at=now,
+            updated_at=now,
             left_team_id=team_left_id,
             right_team_id=team_right_id,
             description=form.description.data,

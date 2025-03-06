@@ -612,8 +612,8 @@
         }
     }
 
-    function loadActiveGroupStats() {
-        fetch("{{ url_for('group.get_all_active_stats') }}")
+    function initializeGroupStats() {
+        fetch("{{ url_for('group.get_updated_stats') }}" + "?last_load=0")
             .then(response => response.json())
             .then(data => {
                 statsList = data.group_stats_list;
@@ -630,7 +630,7 @@
     // Initialize the varibles and plot the graph when the page is loaded
     $(function () {
         // Load active group stats using fetch API
-        loadActiveGroupStats();
+        initializeGroupStats();
 
         // ローカルストレージに保存されたソート状態を取得
         let savedSort = localStorage.getItem('statsTableSort');
@@ -640,14 +640,6 @@
             // デフォルトのソート状態（例: 1列目 descending）
             savedSort = [[0, 1]];
         }
-
-        const select = document.getElementById('plotType');
-        // localStorage に保存されたグラフタイプを取得し、存在すれば値をセットする
-        const storedGraphType = localStorage.getItem('selectedGraphType');
-        if (storedGraphType) {
-            select.value = storedGraphType;
-        }
-
 
         $('#stats-table').tablesorter({
             sortList: savedSort, // tablesorter初期化時に sortList オプションでソート状態を適用
@@ -691,6 +683,12 @@
             $('#filtered-ids').val(filteredIds.join(','));
         });
 
+        // localStorage に保存されたグラフタイプを取得し、存在すれば値をセットする
+        const select = document.getElementById('plotType');
+        const storedGraphType = localStorage.getItem('selectedGraphType');
+        if (storedGraphType) {
+            select.value = storedGraphType;
+        }
         // ドロップダウン変更時に、選択値を localStorage に保存するように設定
         select.addEventListener("change", function(){
             localStorage.setItem('selectedGraphType', this.value);

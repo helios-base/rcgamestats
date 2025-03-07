@@ -264,7 +264,7 @@ def upload():
     return render_template("team/upload.html", form=form)
 
 
-@team.route("/download/<string:name>/<string:version>", methods=["GET"])
+@team.route("/<string:name>/<string:version>", methods=["GET"])
 @login_required
 def download(name, version):
     """

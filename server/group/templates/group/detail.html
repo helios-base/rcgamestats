@@ -567,7 +567,11 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.textContent = `${match.host_name} (${match.host_id})`;
+        if (match.host_id === null) {
+            cell.textContent = '';
+        } else {
+            cell.textContent = `${match.host_name} (${match.host_id})`;
+        }
         row.appendChild(cell);
 
         cell = document.createElement('td');
@@ -583,7 +587,7 @@
             };
             cell.appendChild(link);
         } else {
-            cell.textContent = match.processed.value;
+            cell.textContent = match.status;
         }
         row.appendChild(cell);
 

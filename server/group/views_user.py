@@ -359,7 +359,7 @@ def get_match_records(group_id):
             "end_time": match.end_time.strftime("%Y-%m-%d %H:%M:%S") if match.end_time else "",
             "left_score": match.left_score,
             "right_score": match.right_score,
-            "host_name": match.host_name,
+            "host_name": match.host_name if match.host_name else "",
             "host_id": match.host_id,
             "status": match.processed.value,
             "log_url": url_for("group.show_match_log", group_name=group.name, index=match.index),

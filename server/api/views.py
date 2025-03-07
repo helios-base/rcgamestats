@@ -423,12 +423,12 @@ def download(name, version):
 #
 
 
-@api.route("/admin/create_group", methods=["POST"])
+@api.route("/admin/submit_group", methods=["POST"])
 @csrf.exempt
 @admin_api_key_required
-def admin_create_group():
+def admin_submit_group():
     """
-    Create a group.
+    Create a group from the submitted data to register existing matches.
     """
     data = request.get_json()
 
@@ -476,7 +476,6 @@ def admin_create_group():
             return jsonify({"error": "Right team not found."}), 404
 
     now = datetime.now().replace(microsecond=0)
-    # group_name = create_group_name(now, left_team, right_team)
 
     group = Group(
         name=group_name,

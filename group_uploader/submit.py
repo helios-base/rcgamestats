@@ -1,18 +1,18 @@
 import argparse
 from lib.config import config
 from lib.read_group import get_results
-from lib.create_group import create_group
+from lib.submit_group import submit_group
 from lib.submit_results import submit_results
 
 # Example usage:
-# python run.py --server-url http://127.0.0.1:5000 \
+# python submit.py --server-url http://127.0.0.1:5000 \
 #  --api-key xxxxx \
 #  --group-dir ./log/20250220-183344-helios2024-cyrus2024 \
 #  --group-name 20250220-183344-helios2024-cyrus2024 \
 #  --left-team-name helios2024 --left-team-version v1 \
 #  --right-team-name cyrus2024 --right-team-version v1
 
-# python run.py -u http://127.0.0.1:5000 
+# python submit.py -u http://127.0.0.1:5000 
 # -a xxxxx
 # -g ~/rcgamestats/log/20250220-173721-helios2024-cyrus2024 
 # -n 20250220-173721-helios2024-cyrus2024 
@@ -48,7 +48,7 @@ if not results or len(results) == 0:
 #
 # create group
 #
-group_data = create_group(results)
+group_data = submit_group(results)
 if group_data is None:
     print("Failed to create group")
     exit(1)

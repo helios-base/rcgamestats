@@ -46,4 +46,4 @@ opt="$opt -n $group_name"
 opt="$opt -l $left_team"
 opt="$opt -r $right_team"
 
-python run.py $opt
+python submit.py $opt

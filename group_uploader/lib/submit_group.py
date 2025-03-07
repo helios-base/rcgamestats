@@ -5,13 +5,7 @@ from urllib.parse import urljoin
 from .config import config
 
 
-def __get_create_group_url():
-    endpoint = "api/admin/create_group"
-    url = urljoin(config.SERVER_URL + '/', endpoint)
-    return url
-
-
-def create_group(results):
+def submit_group(results):
     """
     Create a group with the given filenames
     Args:
@@ -21,7 +15,8 @@ def create_group(results):
         print(f"No group files found in {config.GROUP_DIR}")
         return None
 
-    url = __get_create_group_url()
+    endpoint = "api/admin/submit_group"
+    url = urljoin(config.SERVER_URL + '/', endpoint)
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",

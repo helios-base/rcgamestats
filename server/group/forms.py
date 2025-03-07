@@ -69,13 +69,15 @@ class RoundrobinCreateForm(FlaskForm):
         "Left Teams",
         choices=[],
         coerce=int,
-        validators=[DataRequired("Please select at least one team for the left column")]
+        validators=[DataRequired("Please select at least one team for the left column")],
+        render_kw={"style": "padding-right: 10px;"}
     )
     right_teams = SelectMultipleField(
         "Right Teams",
         choices=[],
         coerce=int,
-        validators=[DataRequired("Please select at least one team for the right column")]
+        validators=[DataRequired("Please select at least one team for the right column")],
+        render_kw={"style": "padding-right: 10px;"}
     )
     number_of_matches = IntegerField(
         "# of Matches for Each Pair",

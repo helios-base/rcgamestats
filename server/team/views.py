@@ -201,11 +201,9 @@ def upload():
     """
     form = TeamUploadForm()
 
-    ative_teams = Team.query.filter_by(is_active=True).all()
-    teams_by_name = [""]
-    for t in ative_teams:
-        if t.name not in teams_by_name:
-            teams_by_name.append(t.name)
+    active_teams = Team.query.filter_by(is_active=True).all()
+    unique_team_names = {t.name for t in active_teams if t.name}
+    teams_by_name = [""] + sorted(unique_team_names)
     form.existing_team_name.choices = teams_by_name
 
     if form.validate_on_submit():
@@ -266,7 +264,7 @@ def upload():
     return render_template("team/upload.html", form=form)
 
 
-@team.route("/download/<string:name>/<string:version>", methods=["GET"])
+@team.route("/<string:name>/<string:version>", methods=["GET"])
 @login_required
 def download(name, version):
     """

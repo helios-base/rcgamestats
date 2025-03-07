@@ -75,7 +75,6 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
-
 @auth.route("/change_password", methods=["GET", "POST"])
 @login_required
 def change_password():

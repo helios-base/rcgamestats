@@ -51,6 +51,45 @@ def show_stats():
     return render_template("group/stats.html", group_stats_list=group_stats_list)
 
 
+@group_bp.route("/stats/updates", methods=["GET"])
+@login_required
+def get_updated_stats():
+    """
+    Ajax request.
+    Returns updated stats of all groups since the last load.
+    """
+    last_load = request.args.get("last_load")
+    if not last_load:
+        return jsonify({"error": "last_load parameter is required"}), 400
+
+    try:
+        if last_load.isdigit():
+            timestamp = int(last_load) / 1000.0
+            last_load_dt = datetime.fromtimestamp(timestamp)
+        else:
+            last_load_dt = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return jsonify({"error": "Invalid datetime format"}), 400
+
+    groups = Group.query.filter(Group.is_active == True, Group.updated_at > last_load_dt).all()
+    group_stats_list = []
+    for group in groups:
+        stats = group.stats
+        if stats is None:
+            stats = GroupStats(group.id)
+            stats.update()
+            current_app.logger.info(f'Group {group.name} stats created at {stats.updated_at}')
+            db.session.add(stats)
+            db.session.commit()
+        if stats.updated_at is None or group.updated_at > stats.updated_at:
+            stats.update()
+            current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
+            db.session.commit()
+        group_stats_list.append(group.to_simple_json())
+
+    return jsonify(group_stats_list=group_stats_list)
+
+
 @group_bp.route("/archived/")
 @login_required
 def show_archived_groups():
@@ -76,7 +115,7 @@ def show_archived_groups():
 
 @group_bp.route("/<string:group_name>/")
 @login_required
-def show_group_matches(group_name):
+def show_group_detail(group_name):
     """
     Show all matches associated with a group.
     """
@@ -111,52 +150,39 @@ def show_group_matches(group_name):
     )
 
 
-@group_bp.route("/download/<path:dir_name>/<path:file_name>", methods=["GET"])
+@group_bp.route("/<int:group_id>/records", methods=["GET"])
 @login_required
-def download_file(dir_name, file_name):
+def get_match_records(group_id):
     """
-    Download a file.
+    Ajax request.
+    Get match table records for a group.
     """
-    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
-    # print(f"log_dir=[{log_dir}]")
-    # print(f"filename=[{file_name}]")
-    try:
-        response = send_from_directory(log_dir, file_name, as_attachment=True)
-        response.headers["Content-Encoding"] = "identity"
-        return response
-    except FileNotFoundError:
-        return jsonify({"error": "File not found."}), 404
+    print(f"get_match_records: group_id={group_id}")
+    offset = request.args.get("offset", 0, type=int)
+    limit = request.args.get("limit", 10, type=int)
 
-
-@group_bp.route("/<int:group_id>/logs/", methods=["GET"])
-@login_required
-def show_group_logs_by_id(group_id):
-    """
-    Show log files for a group.
-    """
     group = Group.query.get(group_id)
     if group is None:
-        flash(f"Group ID {group_id} not found.", "error")
-        return redirect(url_for("group.index"))
+        return jsonify({"error": "Group not found"}), 404
 
-    dir_name = group.name
-    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
-    if not os.path.exists(log_dir):
-        flash(f"Log directory for group [{group.name}] not found.", "error")
-        return redirect(url_for("group.index"))
+    matches = Match.query.filter_by(group_id=group_id).order_by(Match.index.asc()).offset(offset).limit(limit).all()
+    match_records = []
+    for match in matches:
+        record = {
+            "id": match.id,
+            "index": match.index,
+            "start_time": match.start_time.strftime("%Y-%m-%d %H:%M:%S") if match.start_time else "",
+            "end_time": match.end_time.strftime("%Y-%m-%d %H:%M:%S") if match.end_time else "",
+            "left_score": match.left_score,
+            "right_score": match.right_score,
+            "host_name": match.host_name if match.host_name else "",
+            "host_id": match.host_id,
+            "status": match.processed.value,
+            "log_url": url_for("group.show_match_log", group_name=group.name, index=match.index),
+        }
+        match_records.append(record)
 
-    matches_in_group = Match.query.filter_by(group_id=group_id).all()
-    log_file_paths = []
-    for match in matches_in_group:
-        log_file_paths.extend(
-            glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
-        )
-    file_names = [os.path.basename(file_path) for file_path in log_file_paths]
-    file_names.sort()
-
-    return render_template(
-        "group/log_files.html", dir_name=dir_name, file_names=file_names
-    )
+    return jsonify(match_records=match_records)
 
 
 @group_bp.route("/<string:group_name>/logs/", methods=["GET"])
@@ -170,12 +196,11 @@ def show_group_logs(group_name):
         flash(f"Group {group_name} not found.", "error")
         return redirect(url_for("group.index"))
 
-    dir_name = group_name
-    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
+    log_dir = os.path.join(current_app.static_folder, "logs", group_name)
     # if not os.path.exists(log_dir):
     #     flash(f"Log directory for group [{group_name}] not found.", "error")
     #     #return redirect(url_for("group.index"))
-    #     return redirect(url_for("group.show_group_matches", group_name=group_name))
+    #     return redirect(url_for("group.show_group_detail", group_name=group_name))
 
     matches_in_group = Match.query.filter_by(group_id=group.id).all()
     log_file_paths = []
@@ -187,11 +212,11 @@ def show_group_logs(group_name):
     file_names.sort()
 
     return render_template(
-        "group/log_files.html", dir_name=dir_name, file_names=file_names
+        "group/log_files.html", group_name=group_name, file_names=file_names
     )
 
 
-@group_bp.route("/<string:group_name>/<int:index>/log/", methods=["GET"])
+@group_bp.route("/<string:group_name>/<int:index>/", methods=["GET"])
 @login_required
 def show_match_log(group_name, index):
     """
@@ -209,8 +234,7 @@ def show_match_log(group_name, index):
     if match.log_file_name is None:
         return jsonify({"error": "Log file name not found"}), 404
 
-    dir_name = group_name
-    log_dir = os.path.join(current_app.static_folder, "logs", dir_name)
+    log_dir = os.path.join(current_app.static_folder, "logs", group_name)
 
     if not os.path.exists(log_dir):
         return jsonify({"error": "Log directory [{log_dir}] not found"}), 404
@@ -223,8 +247,22 @@ def show_match_log(group_name, index):
     file_names.sort()
 
     return render_template(
-        "group/log_files.html", dir_name=dir_name, file_names=file_names
+        "group/log_files.html", group_name=group_name, file_names=file_names
     )
+
+@group_bp.route("/<string:group_name>/logs/<path:file_name>", methods=["GET"])
+@login_required
+def download_log(group_name, file_name):
+    """
+    Download a log file.
+    """
+    log_dir = os.path.join(current_app.static_folder, "logs", group_name)
+    try:
+        response = send_from_directory(log_dir, file_name, as_attachment=True)
+        response.headers["Content-Encoding"] = "identity"
+        return response
+    except FileNotFoundError:
+        return jsonify({"error": "File not found."}), 404
 
 
 @group_bp.route("/plot_confidence_intervals", methods=["POST"])
@@ -267,104 +305,31 @@ def plot_groups_confidence_intervals():
     return send_file(buf, mimetype="image/png")
 
 
-@group_bp.route("/has_updates", methods=["GET"])
-@login_required
-def has_updates():
-    """
-    Check if there are any updates to the groups.
-    """
-    last_load_at = request.args.get("page_load_at")
-    # print(f"page_load_at: {last_load_at}")
-    # If last_load_at is None, return True as there are updates.
-    if last_load_at is None:
-        return jsonify({"update": True})
+# @group_bp.route("/has_updates", methods=["GET"])
+# @login_required
+# def has_updates():
+#     """
+#     Check if there are any updates to the groups.
+#     """
+#     last_load_at = request.args.get("page_load_at")
+#     # print(f"page_load_at: {last_load_at}")
+#     # If last_load_at is None, return True as there are updates.
+#     if last_load_at is None:
+#         return jsonify({"update": True})
 
-    try:
-        if last_load_at.isdigit():
-            timestamp = int(last_load_at) / 1000.0
-            last_load_at_dt = datetime.fromtimestamp(timestamp)
-        else:
-            last_load_at_dt = datetime.strptime(last_load_at, "%Y-%m-%d %H:%M:%S")
-        # print(f"page_load_at: {last_load_at_dt}")
-    except ValueError:
-        return jsonify({"error": "Invalid datetime format"}), 400
+#     try:
+#         if last_load_at.isdigit():
+#             timestamp = int(last_load_at) / 1000.0
+#             last_load_at_dt = datetime.fromtimestamp(timestamp)
+#         else:
+#             last_load_at_dt = datetime.strptime(last_load_at, "%Y-%m-%d %H:%M:%S")
+#         # print(f"page_load_at: {last_load_at_dt}")
+#     except ValueError:
+#         return jsonify({"error": "Invalid datetime format"}), 400
 
-    # group_list = Group.query.filter(Group.updated_at > last_load_at_dt).all()
-    group_list = Group.query.filter(Group.is_active == True, Group.updated_at > last_load_at_dt).all()
-    has_updates = len(group_list) > 0
+#     group_list = Group.query.filter(Group.is_active == True, Group.updated_at > last_load_at_dt).all()
+#     has_updates = len(group_list) > 0
 
-    # print(f"last_load_at_dt: {last_load_at_dt}")
-    # print(f"has_updates: {has_updates}")
-    return jsonify({"update": has_updates})
-
-
-@group_bp.route("/get_updated_stats", methods=["GET"])
-@login_required
-def get_updated_stats():
-    """
-    Get stats updates for the groups.
-    """
-    last_load = request.args.get("last_load")
-    if not last_load:
-        return jsonify({"error": "last_load parameter is required"}), 400
-
-    try:
-        if last_load.isdigit():
-            timestamp = int(last_load) / 1000.0
-            last_load_dt = datetime.fromtimestamp(timestamp)
-        else:
-            last_load_dt = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S")
-    except ValueError:
-        return jsonify({"error": "Invalid datetime format"}), 400
-
-    groups = Group.query.filter(Group.is_active == True, Group.updated_at > last_load_dt).all()
-    group_stats_list = []
-    for group in groups:
-        stats = group.stats
-        if stats is None:
-            stats = GroupStats(group.id)
-            stats.update()
-            current_app.logger.info(f'Group {group.name} stats created at {stats.updated_at}')
-            db.session.add(stats)
-            db.session.commit()
-        if stats.updated_at is None or group.updated_at > stats.updated_at:
-            stats.update()
-            current_app.logger.info(f'Group {group.name} stats updated at {stats.updated_at}')
-            db.session.commit()
-        group_stats_list.append(group.to_simple_json())
-
-    return jsonify(group_stats_list=group_stats_list)
-
-
-@group_bp.route("/<int:group_id>/get_match_records", methods=["GET"])
-@login_required
-def get_match_records(group_id):
-    """
-    Get match table records for a group.
-    """
-    print(f"get_match_records: group_id={group_id}")
-    offset = request.args.get("offset", 0, type=int)
-    limit = request.args.get("limit", 10, type=int)
-
-    group = Group.query.get(group_id)
-    if group is None:
-        return jsonify({"error": "Group not found"}), 404
-
-    matches = Match.query.filter_by(group_id=group_id).order_by(Match.index.desc()).offset(offset).limit(limit).all()
-    match_records = []
-    for match in matches:
-        record = {
-            "id": match.id,
-            "index": match.index,
-            "start_time": match.start_time.strftime("%Y-%m-%d %H:%M:%S") if match.start_time else "",
-            "end_time": match.end_time.strftime("%Y-%m-%d %H:%M:%S") if match.end_time else "",
-            "left_score": match.left_score,
-            "right_score": match.right_score,
-            "host_name": match.host_name if match.host_name else "",
-            "host_id": match.host_id,
-            "status": match.processed.value,
-            "log_url": url_for("group.show_match_log", group_name=group.name, index=match.index),
-        }
-        match_records.append(record)
-
-    return jsonify(match_records=match_records)
+#     # print(f"last_load_at_dt: {last_load_at_dt}")
+#     # print(f"has_updates: {has_updates}")
+#     return jsonify({"update": has_updates})

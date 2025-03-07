@@ -40,7 +40,7 @@ echo "Right team: $right_team"
 
 opt=""
 opt="$opt -u $URL"
-opt="$opt -a $KEY"
+opt="$opt -k $KEY"
 opt="$opt -g $dir_path"
 opt="$opt -n $group_name"
 opt="$opt -l $left_team"

@@ -21,7 +21,7 @@ from lib.submit_results import submit_results
 parser = argparse.ArgumentParser(description="Group uploader")
 parser.add_argument("-u", "--server-url", required=True, help="The URL of the server", default="http://127.0.0.1:5000")
 parser.add_argument("-H", "--host-name", required=False, help="The name of the host", default="localhost")
-parser.add_argument("-a", "--api-key", required=True, help="The API key")
+parser.add_argument("-k", "--api-key", required=True, help="The API key")
 parser.add_argument("-g", "--group-dir", required=True, help="The directory containing the group files")
 parser.add_argument("-n", "--group-name", required=True, help="The name of the group")
 parser.add_argument("-l", "--left-team-name", required=True, help="The name of the team on the left")

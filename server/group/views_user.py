@@ -334,3 +334,37 @@ def get_updated_stats():
         group_stats_list.append(group.to_simple_json())
 
     return jsonify(group_stats_list=group_stats_list)
+
+
+@group_bp.route("/<int:group_id>/get_match_records", methods=["GET"])
+@login_required
+def get_match_records(group_id):
+    """
+    Get match table records for a group.
+    """
+    print(f"get_match_records: group_id={group_id}")
+    offset = request.args.get("offset", 0, type=int)
+    limit = request.args.get("limit", 10, type=int)
+
+    group = Group.query.get(group_id)
+    if group is None:
+        return jsonify({"error": "Group not found"}), 404
+
+    matches = Match.query.filter_by(group_id=group_id).order_by(Match.index.desc()).offset(offset).limit(limit).all()
+    match_records = []
+    for match in matches:
+        record = {
+            "id": match.id,
+            "index": match.index,
+            "start_time": match.start_time.strftime("%Y-%m-%d %H:%M:%S") if match.start_time else "",
+            "end_time": match.end_time.strftime("%Y-%m-%d %H:%M:%S") if match.end_time else "",
+            "left_score": match.left_score,
+            "right_score": match.right_score,
+            "host_name": match.host_name if match.host_name else "",
+            "host_id": match.host_id,
+            "status": match.processed.value,
+            "log_url": url_for("group.show_match_log", group_name=group.name, index=match.index),
+        }
+        match_records.append(record)
+
+    return jsonify(match_records=match_records)

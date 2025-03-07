@@ -119,27 +119,15 @@
             <th>Index</th>
             <th>Start At</th>
             <th>End At</th>
-            <th>Left Score</th>
-            <th>Right Score</th>
+            <th style="width:100px">Left Score</th>
+            <th style="width:100px">Right Score</th>
             <th>Host Name (ID)</th>
             <th>Status</th>
             <th>Log File</th>
         </tr>
     </thead>
-    <tbody>
-        {% for match in matches %}<tr>
-            <td>{{ match.index }}</td>
-            <td>{{ match.start_time }}</td>
-            <td>{{ match.end_time }}</td>
-            <td>{{ match.left_score }}</td>
-            <td>{{ match.right_score }}</td>
-            <td>{{ match.host_name }} ({{ match.host_id }})</td>
-            <td>{% if match.processed.value == 'in progress' or match.processed.value == 'completed' %}
-                <a href="#" onclick="event.preventDefault(); if (confirm('Really reset?')) { resetMatch('{{ match.id }}'); }">{{ match.processed.value }}</a>
-            {% else %}{{ match.processed.value }}{% endif %}</td>
-            <td>{%if match.processed.value == 'completed' %}<a href="{{ url_for('group.show_match_log', group_name=group.name, index=match.index) }}">Log</a>{% endif %}</td>
-        </tr>
-        {% endfor %}
+    <tbody id="match-table-body">
+        <!-- Match data will be loaded by JavaScript -->
     </tbody>
 </table>
 {% endblock %}
@@ -154,47 +142,47 @@
 
     function plotScoreHistogramWithCI() {
         // prepare data for histograms
-        var leftScoreCounts = {{ stats.left_score_counts | tojson }};
-        var rightScoreCounts = {{ stats.right_score_counts | tojson }};
+        const leftScoreCounts = {{ stats.left_score_counts | tojson }};
+        const rightScoreCounts = {{ stats.right_score_counts | tojson }};
         
-        //var scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
-        var scoreLabels = Array.from(
+        //const scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
+        const scoreLabels = Array.from(
             new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])
         ).sort(function(a, b) {
             return parseInt(a, 10) - parseInt(b, 10);
         });
 
         // 各ラベルごとに左＆右のカウントを抽出（存在しない場合は 0）
-        var leftData = scoreLabels.map(function(label) {
+        const leftData = scoreLabels.map(function(label) {
             return leftScoreCounts[label] || 0;
         });
-        var rightData = scoreLabels.map(function(label) {
+        const rightData = scoreLabels.map(function(label) {
             return rightScoreCounts[label] || 0;
         });
 
         // x軸は左右対称となるように、ゼロライン中心に設定
-        var xMax = Math.max(Math.max.apply(null, leftData), Math.max.apply(null, rightData)) + 1;
+        const xMax = Math.max(Math.max.apply(null, leftData), Math.max.apply(null, rightData)) + 1;
 
         // 左側は負の値として表示するため変換（※ツールチップには元の数値を表示するなどの調整は可能）
-        var leftTransformed = leftData.map(function(value) {
+        const leftTransformed = leftData.map(function(value) {
             return -value;
         });
 
         // 全体の合計値を算出（％表示に利用）
-        var leftTotal = leftData.reduce(function(acc, cur) { return acc + cur; }, 0);
-        var rightTotal = rightData.reduce(function(acc, cur) { return acc + cur; }, 0);
+        const leftTotal = leftData.reduce(function(acc, cur) { return acc + cur; }, 0);
+        const rightTotal = rightData.reduce(function(acc, cur) { return acc + cur; }, 0);
 
         // 区間推定結果を合わせて描画
         // 信頼区間の値はサーバで計算済みの変数から取得
-        var leftMean = {{ stats.left_mean_score }};
-        var leftCI_lower = {{ stats.left_score_confidence_interval_lower }};
-        var leftCI_upper = {{ stats.left_score_confidence_interval_upper }};
-        var rightMean = {{ stats.right_mean_score }};
-        var rightCI_lower = {{ stats.right_score_confidence_interval_lower }};
-        var rightCI_upper = {{ stats.right_score_confidence_interval_upper }};
+        const leftMean = {{ stats.left_mean_score }};
+        const leftCI_lower = {{ stats.left_score_confidence_interval_lower }};
+        const leftCI_upper = {{ stats.left_score_confidence_interval_upper }};
+        const rightMean = {{ stats.right_mean_score }};
+        const rightCI_lower = {{ stats.right_score_confidence_interval_lower }};
+        const rightCI_upper = {{ stats.right_score_confidence_interval_upper }};
 
         // 左右のバー trace の定義
-        var traceLeft = {
+        const traceLeft = {
             type: 'bar',
             orientation: 'h',
             x: leftTransformed,
@@ -218,7 +206,7 @@
             hoverinfo: 'x+y'
         };
 
-        var traceRight = {
+        const traceRight = {
             type: 'bar',
             orientation: 'h',
             x: rightData,
@@ -243,11 +231,11 @@
         };
 
         // エラーバー描画位置
-        var leftErrorBarPosition = -xMax / 3.7;
-        var rightErrorBarPosition = xMax / 3.7;
+        const leftErrorBarPosition = -xMax / 3.7;
+        const rightErrorBarPosition = xMax / 3.7;
 
         // 左チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
-        var traceLeftCI = {
+        const traceLeftCI = {
             x: [leftErrorBarPosition],
             y: [leftMean],  // y 軸はスコア
             mode: 'markers',
@@ -269,7 +257,7 @@
         };
 
         // 右チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
-        var traceRightCI = {
+        const traceRightCI = {
             x: [rightErrorBarPosition],
             y: [rightMean],
             mode: 'markers',
@@ -293,7 +281,7 @@
         //
         // annotations の設定
         //
-        var annotations = [];
+        const annotations = [];
 
         // グラフ下部にタイトルを追加
         annotations.push({
@@ -309,8 +297,8 @@
         // 各バーの根元( x = 0 付近 )にカウントと割合を表示するための annotations を生成
         scoreLabels.forEach(function(label, i) {
             // 左チーム用（bar の値は leftData[i]）
-            var lCount = leftData[i] || 0;
-            var lPercent = (leftTotal > 0) ? ((lCount / leftTotal) * 100).toFixed(1) + '%' : '0%';
+            const lCount = leftData[i] || 0;
+            const lPercent = (leftTotal > 0) ? ((lCount / leftTotal) * 100).toFixed(1) + '%' : '0%';
             if(lCount > 0){
                 annotations.push({
                     x: 0,
@@ -323,8 +311,8 @@
                 });
             }
             // 右チーム用（bar の値は rightData[i]）
-            var rCount = rightData[i] || 0;
-            var rPercent = (rightTotal > 0) ? ((rCount / rightTotal) * 100).toFixed(1) + '%' : '0%';
+            const rCount = rightData[i] || 0;
+            const rPercent = (rightTotal > 0) ? ((rCount / rightTotal) * 100).toFixed(1) + '%' : '0%';
             if(rCount > 0){
                 annotations.push({
                     x: 0,
@@ -428,15 +416,15 @@
         //
         // レイアウトの設定
         //
-        var tickVals = [];
+        const tickVals = [];
         for (var i = -xMax; i <= xMax; i++) {
             tickVals.push(i);
         }
-        var tickText = tickVals.map(function(val) {
+        const tickText = tickVals.map(function(val) {
             return Math.abs(val);
         });
 
-        var layout = {
+        const layout = {
             // title: 'Match Scores Histogram',
             title: '',
             height: 400,
@@ -476,18 +464,18 @@
             margin: { l: 10, r: 10, t: 10, b: 65 },
         };
 
-        var data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
+        const data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
 
         Plotly.newPlot('matchScoreHistogram', data, layout);
     }
 
     function plotHostHistogram() {
         // draw hosts histogram
-        var hosts = {{ stats.host_counts | tojson }};
-        var hostLabels = Object.keys(hosts).sort();
-        var hostData = hostLabels.map(label => hosts[label]);
+        const hosts = {{ stats.host_counts | tojson }};
+        const hostLabels = Object.keys(hosts).sort();
+        const hostData = hostLabels.map(label => hosts[label]);
 
-        var trace = {
+        const trace = {
             x: hostLabels,
             y: hostData,
             type: 'bar',
@@ -500,11 +488,11 @@
             }
         };
 
-        // var modifiedHostLabels = hostLabels.map(function(label) {
+        // const modifiedHostLabels = hostLabels.map(function(label) {
         //     return label.replace(' ', '<br>');
         // });
 
-        var layout = {
+        const layout = {
             title: '',
             height: 300,
             barmode: 'overlay',
@@ -549,6 +537,107 @@
         Plotly.newPlot('hostsHistogram', [trace], layout);
     }
 
+    //
+    // Load match table using Ajax
+    //
+    let tableOffset = 0;
+    const batchSize = 1000;
+
+    function createMatchTableRow(match) {
+        let row = document.createElement('tr');
+
+        let cell = document.createElement('td');
+        cell.textContent = match.index;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.start_time;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.end_time;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.left_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.right_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        if (match.host_id === null) {
+            cell.textContent = '';
+        } else {
+            cell.textContent = `${match.host_name} (${match.host_id})`;
+        }
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        if (match.status === 'in progress' || match.status === 'completed') {
+            let link = document.createElement('a');
+            link.href = '#';
+            link.textContent = match.status;
+            link.onclick = function (event) {
+                event.preventDefault();
+                if (confirm('Really reset?')) {
+                    resetMatch(match.id);
+                }
+            };
+            cell.appendChild(link);
+        } else {
+            cell.textContent = match.status;
+        }
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        if (match.status === 'completed') {
+            let link = document.createElement('a');
+            link.href = match.log_url;
+            link.textContent = 'Log';
+            cell.appendChild(link);
+        }
+        else {
+            cell.textContent = '';
+        }
+        row.appendChild(cell);
+
+        return row;
+    }
+
+    function loadMatchTableBatch() {
+        fetch("{{ url_for('group.get_match_records', group_id=group.id) }}"
+              +  "?offset=" + tableOffset + "&limit=" + batchSize)
+            .then(response => response.json())
+            .then(data => {
+                const matches = data.match_records;
+                if ( matches && matches.length > 0 ) {
+                    let tableBody = document.getElementById('match-table-body');
+                    matches.forEach(match => {
+                        tableBody.appendChild(createMatchTableRow(match));
+                    });
+                    tableOffset += matches.length;
+
+                    // If the number of matches is equal to the batch size, load the next batch
+                    if (matches.length === batchSize) {
+                        loadMatchTableBatch();
+                        return; // Exit early to avoid re-applying tablesorter and filter
+                    }
+                }
+
+                // Re-apply tablesorter and filter after updating the table
+                $('#match-table').trigger('update');
+                $('#match-table').trigger('search');
+            })
+            .catch(error => {
+                console.error('Error: loading batch:', error);
+            });
+    }
+
+    //
+    // Initialization after document is ready
+    //
     $(function () {
         $('#match-table').tablesorter(
             {
@@ -574,6 +663,8 @@
 
         plotScoreHistogramWithCI();
         plotHostHistogram();
+
+        loadMatchTableBatch();
     });
 </script>
 {% endblock %}

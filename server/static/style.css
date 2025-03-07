@@ -67,11 +67,31 @@ tr.under_review { background-color: #e7bb7c; }
 tr.under_review:hover { background-color: #eeff7c; }
 tr.rejected { background-color: #c00000; }
 tr.rejected:hover { background-color: #ff0000; }
-
+/* 
 tr.updated { 
     background-color: yellow;
     border: 2px solid #000000;
-    transition: background-color 1s ease-out, border 1s ease-out;
+    transition: background-color 2s ease-out, border 2s ease-out;
+}
+*/
+/* 強調時のアニメーション定義 */
+@keyframes pulseHighlight {
+    0% {
+        background-color: yellow;
+        box-shadow: 0 0 0px yellow;
+    }
+    50% {
+        background-color: yellow;
+        box-shadow: 0 0 10px orange;
+    }
+    100% {
+        background-color: white; /* 通常の背景色に戻す */
+        box-shadow: none;
+    }
+}
+/* 更新された行にアニメーションを適用 */
+tr.updated {
+    animation: pulseHighlight 2s ease-out forwards;
 }
 
 td.host-name {

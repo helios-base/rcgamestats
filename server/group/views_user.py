@@ -354,6 +354,7 @@ def get_match_records(group_id):
     match_records = []
     for match in matches:
         record = {
+            "id": match.id,
             "index": match.index,
             "start_time": match.start_time.strftime("%Y-%m-%d %H:%M:%S") if match.start_time else "",
             "end_time": match.end_time.strftime("%Y-%m-%d %H:%M:%S") if match.end_time else "",

@@ -4,11 +4,7 @@
 {% endblock %}
 
 {% block content %}
-<ul class="submenu">
-    <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
-</ul>
-
-<div class="plot-menu" style="margin-bottom:10px;">
+<div class="plot-menu" style="margin-top:10px; margin-bottom:10px;">
     <label for="plotType">Plot Type</label>
     <select id="plotType">
         <option value="confidence" selected>Conficence Intervals</option>
@@ -97,7 +93,7 @@
         let cell = document.createElement('td');
         cell.classList.add('stats');
         let link = document.createElement('a');
-        link.href = "{{ url_for('group.show_group_matches', group_name='') }}" + stats.name;
+        link.href = "{{ url_for('group.show_group_detail', group_name='') }}" + stats.name;
         link.title = stats.name;
         link.textContent = stats.created_at;
         cell.appendChild(link);

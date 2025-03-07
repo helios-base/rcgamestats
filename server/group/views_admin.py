@@ -447,7 +447,7 @@ def upload_group_results_to_google_sheet(group_id):
         flash("Failed to upload the group results to the Google Spreadsheet.", "error")
         current_app.logger.error("Failed to upload the group results to the Google Spreadsheet.")
 
-    return redirect(url_for("group.show_group_matches", group_name=group.name))
+    return redirect(url_for("group.show_group_detail", group_name=group.name))
 
 
 #
@@ -479,14 +479,14 @@ def reset_match(group_id):
     if match is None:
         flash(f"Match ID {match_id} not found.", "error")
         current_app.logger.error(f"reset_match: Match ID {match_id} not found.")
-        return redirect(url_for("group.show_group_matches", group_name=group.name))
+        return redirect(url_for("group.show_group_detail", group_name=group.name))
 
     group_name = match.group.name
     if match.processed == MatchStatus.COMPLETED:
         if match.left_team.version == "" or match.right_team.version == "":
             flash("The match which has no team version cannot be reset.", "error")
             current_app.logger.error("reset_match: The match which has no team version cannot be reset.")
-            return redirect(url_for("group.show_group_matches", group_name=group.name))
+            return redirect(url_for("group.show_group_detail", group_name=group.name))
 
         log_dir = os.path.join(current_app.static_folder, "logs", match.group.name)
         log_file_paths = glob.glob(os.path.join(log_dir, f"{match.log_file_name}*"))
@@ -512,4 +512,4 @@ def reset_match(group_id):
         flash("Match not found or not in progress or completed.", "error")
         current_app.logger.error("reset_match: Match not found or not in progress or completed.", "error")
 
-    return redirect(url_for("group.show_group_matches", group_name=group_name))
+    return redirect(url_for("group.show_group_detail", group_name=group_name))

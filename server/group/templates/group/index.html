@@ -11,9 +11,6 @@
 <ul class="submenu">
     <li><a href="{{ url_for('group.show_archived_groups') }}">Show Archived Groups</a></li>
 </ul>
-<ul class="submenu">
-    <li><a href="{{ url_for('group.show_stats') }}">Show Stats</a></li>
-</ul>
 
 <form action="{{ url_for('group.bulk_action') }}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -45,7 +42,7 @@
             <tr{% if group.status.value == 'approved' %} class="approved"{%elif group.status.value == 'rejected' %} class="rejected"{% elif group.status.value == 'under_review' %} class="under_review"{% endif %}>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td><a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a></td>
-                <td class="group-name"><a href="{{ url_for('group.show_group_matches', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
+                <td class="group-name"><a href="{{ url_for('group.show_group_detail', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
                 <td class="time">{{ group.created_at }}</td>
                 <td>{% if group.left_team %}{{ group.left_team.name }}, {{ group.left_team.version }}{% else %}<span class="error">Not found</span>{% endif %}</td>
                 <td>{% if group.right_team %}{{ group.right_team.name }}, {{ group.right_team.version }}{% else %}<span class="error">Not found</span>{% endif %}</td>

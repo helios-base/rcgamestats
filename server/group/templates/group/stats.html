@@ -31,24 +31,24 @@
     <thead>
         <tr>
             <th class="stats">Created At</th>
-            <th class="stats" id="lborder">Left</th>
+            <th class="stats lborder">Left</th>
             <th class="stats">Right</th>
-            <th class="stats" id="lborder">Total</th>
-            <th class="stats">Left Win</th>
+            <th class="stats lborder">Total</th>
+            <th class="stats lborder">Left Win</th>
             <th class="stats">Draw</th>
             <th class="stats">Right Win</th>
-            <th class="stats" id="lborder">Left Win Rate</th>
+            <th class="stats lborder">Left Win Rate</th>
             <th class="stats">Draw Rate</th>
             <th class="stats">Right Win Rate</th>
-            <th class="stats" id="lborder">Left Goal</th>
+            <th class="stats lborder">Left Goal</th>
             <th class="stats">Right Goal</th>
-            <th class="stats" id="lborder">Left Ave. Goal</th>
+            <th class="stats lborder">Left Ave. Goal</th>
             <th class="stats">Right Ave. Goal</th>
-            <th class="stats" id="lborder">Left Max Goal</th>
+            <th class="stats lborder">Left Max Goal</th>
             <th class="stats">Right Max Goal</th>
-            <th class="stats" id="lborder">Left Scored</th>
+            <th class="stats lborder">Left Scored</th>
             <th class="stats">Right Scored</th>
-            <th class="stats" id="lborder">Left Score Rate</th>
+            <th class="stats lborder">Left Score Rate</th>
             <th class="stats">Right Score Rate</th>
         </tr>
     </thead>
@@ -105,8 +105,7 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = stats.left_team;
         row.appendChild(cell);
 
@@ -116,13 +115,12 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = stats.completed_count;
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
+        cell.classList.add('stats', 'lborder');
         cell.textContent = stats.left_win;
         row.appendChild(cell);
 
@@ -137,8 +135,7 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = (stats.left_win_rate * 100).toFixed(2) + ' %';
         row.appendChild(cell);
 
@@ -153,8 +150,7 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = stats.left_sum_of
         cell.textContent = stats.left_sum_of_scores;
         row.appendChild(cell);
@@ -165,8 +161,7 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = stats.left_mean_score.toFixed(3);
         row.appendChild(cell);
 
@@ -176,8 +171,7 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = stats.left_max_score;
         row.appendChild(cell);
 
@@ -187,8 +181,7 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = stats.left_scored_games;
         row.appendChild(cell);
 
@@ -198,8 +191,7 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        cell.classList.add('stats');
-        cell.id = 'lborder';
+        cell.classList.add('stats', 'lborder');
         cell.textContent = (stats.left_scored_games_rate * 100).toFixed(2) + ' %';
         row.appendChild(cell);
 

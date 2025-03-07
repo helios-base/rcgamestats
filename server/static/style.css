@@ -135,7 +135,7 @@ td.stats {
     max-width: 20ch; /* 最大幅を設定 */
 }
 /* 特定のカラムの境界線を強調する */
-#lborder{
+th.lborder, td.lborder {
     border-left: 3px solid #000; /* 左側の境界線を太くする */
 }
 

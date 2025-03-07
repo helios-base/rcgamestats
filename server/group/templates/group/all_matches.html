@@ -14,24 +14,24 @@
     <thead>
         <tr>
             <th class="stats">Created At</th>
-            <th class="stats" id="lborder">Left</th>
+            <th class="stats lborder">Left</th>
             <th class="stats">Right</th>
-            <th class="stats" id="lborder">Total</th>
+            <th class="stats lborder">Total</th>
             <th class="stats">Left Win</th>
             <th class="stats">Draw</th>
             <th class="stats">Right Win</th>
-            <th class="stats" id="lborder">Left Win Rate</th>
+            <th class="stats lborder">Left Win Rate</th>
             <th class="stats">Draw Rate</th>
             <th class="stats">Right Win Rate</th>
-            <th class="stats" id="lborder">Left Goal</th>
+            <th class="stats lborder">Left Goal</th>
             <th class="stats">Right Goal</th>
-            <th class="stats" id="lborder">Left Ave. Goal</th>
+            <th class="stats lborder">Left Ave. Goal</th>
             <th class="stats">Right Ave. Goal</th>
-            <th class="stats" id="lborder">Left Max Goal</th>
+            <th class="stats lborder">Left Max Goal</th>
             <th class="stats">Right Max Goal</th>
-            <th class="stats" id="lborder">Left Scored</th>
+            <th class="stats lborder">Left Scored</th>
             <th class="stats">Right Scored</th>
-            <th class="stats" id="lborder">Left Score Rate</th>
+            <th class="stats lborder">Left Score Rate</th>
             <th class="stats">Right Score Rate</th>
         </tr>
     </thead>
@@ -39,24 +39,24 @@
         {% for stats in stats_list %}
         <tr>
             <td class="stats">{{ stats.group.created_at }}</a></td>
-            <td class="stats" id="lborder">{{ stats.group.left_team.name }}</td>
+            <td class="stats lborder">{{ stats.group.left_team.name }}</td>
             <td class="stats">{{ stats.group.right_team.name }}</td>
-            <td class="stats" id="lborder">{{ stats.completed_count }}</td>
+            <td class="stats lborder">{{ stats.completed_count }}</td>
             <td class="stats">{{ stats.left_win }}</td>
             <td class="stats">{{ stats.draw }}</td>
             <td class="stats">{{ stats.right_win }}</td>
-            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
+            <td class="stats lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
             <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
             <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
-            <td class="stats" id="lborder">{{ stats.left_sum_of_scores }}</td>
+            <td class="stats lborder">{{ stats.left_sum_of_scores }}</td>
             <td class="stats">{{ stats.right_sum_of_scores }}</td>
-            <td class="stats" id="lborder">{{ stats.left_mean_score|round(3) }}</td>
+            <td class="stats lborder">{{ stats.left_mean_score|round(3) }}</td>
             <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
-            <td class="stats" id="lborder">{{ stats.left_max_score }}</td>
+            <td class="stats lborder">{{ stats.left_max_score }}</td>
             <td class="stats">{{ stats.right_max_score }}</td>
-            <td class="stats" id="lborder">{{ stats.left_scored_games }}</td>
+            <td class="stats lborder">{{ stats.left_scored_games }}</td>
             <td class="stats">{{ stats.right_scored_games }}</td>
-            <td class="stats" id="lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
+            <td class="stats lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
             <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
         </tr>
         {% endfor %}

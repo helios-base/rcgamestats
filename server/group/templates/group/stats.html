@@ -34,7 +34,7 @@
             <th class="stats" id="lborder">Left</th>
             <th class="stats">Right</th>
             <th class="stats" id="lborder">Total</th>
-            <th class="stats">Left Win</th>
+            <th class="stats" id="lborder">Left Win</th>
             <th class="stats">Draw</th>
             <th class="stats">Right Win</th>
             <th class="stats" id="lborder">Left Win Rate</th>
@@ -123,6 +123,7 @@
 
         cell = document.createElement('td');
         cell.classList.add('stats');
+        cell.id = 'lborder';
         cell.textContent = stats.left_win;
         row.appendChild(cell);
 

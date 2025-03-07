@@ -13,7 +13,7 @@ from lib.submit_results import submit_results
 #  --right-team-name cyrus2024 --right-team-version v1
 
 # python run.py -u http://127.0.0.1:5000 
-# -a xchuqnjxcnauhnjnxpzsjdiwjksa 
+# -a xxxxx
 # -g ~/rcgamestats/log/20250220-173721-helios2024-cyrus2024 
 # -n 20250220-173721-helios2024-cyrus2024 
 # -l helios2024 -L v1 -r cyrus2024 -R v1

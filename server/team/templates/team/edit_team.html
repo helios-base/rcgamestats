@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>{% block title %}Team{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<h2>Team: {{ team.name }}</h2>
+<ul class="submenu">
+    <li><a href="{{ url_for('team.show_team', team_id=team.id) }}">Back</a></li>
+</ul>
+<ul>
+    <li>Review Status: {{ team.review_status.value }}</li>
+    <li>Version: {{ team.version }}</li>
+    <li>Uploaded At: {{ team.uploaded_at }}</li>
+    <li>Synch Mode: {{ team.synch_mode }}</li>
+    <li>Archive File: <a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></li>
+    <li>Description:
+        <p style="text-indent: 1em; margin-top: 0px;">{{ team.description }}</p>    
+    </li>    
+</ul>
+
+{% if current_user.is_admin %}
+{% from "_formhelpers.html" import render_field %}
+<form method="POST" action="{{ url_for('team.show_team', team_id=team.id) }}" novalidate>
+    {{ form.csrf_token }}
+    {{ form.hidden_tag() }}
+    {{ render_field(form.description) }}
+    <br />
+    {{ form.submit }}
+</form>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

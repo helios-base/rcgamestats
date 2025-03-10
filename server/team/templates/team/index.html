@@ -22,6 +22,7 @@
             <tr>
                 <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
                 <th>Team Name</th>
+                <th>Review Status</th>
                 <th>Version</th>
                 <th>Uploaded At</th>
                 <th>Synch Mode</th>
@@ -31,9 +32,10 @@
         </thead>
         <tbody>
             {% for team in teams %}
-            <tr>
+            <tr class="{% if team.review_status.value == 'approved' %}approved{% elif team.review_status.value == 'rejected' %}rejected{% elif team.review_status.value == 'under_review' %}under_review{% endif %}">
                 <td><input type="checkbox" name="team_ids" value="{{ team.id }}" onclick="checkCheckboxes()"></td>
                 <td><a href="{{ url_for('team.show_team', team_id=team.id) }}">{{ team.name }}</a></td>
+                <td>{{ team.review_status.value }}</td>
                 <td>{{ team.version }}</td>
                 <td class="time">{{ team.uploaded_at }}</td>
                 <td class="{% if team.synch_mode %}bg-true{% else %}bg-false{% endif %}">{{ team.synch_mode }}</td>

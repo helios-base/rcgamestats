@@ -10,7 +10,7 @@ from ..app import db
 from ..auth.decorators import admin_required
 from ..group.models import Group
 from .forms import TeamUploadForm, TeamEditForm
-from .models import Team, current_datetime_str
+from .models import TeamReviewStatus, Team, current_datetime_str
 
 
 team = Blueprint("team", __name__, template_folder="templates", url_prefix="/team")
@@ -48,6 +48,20 @@ def show_team(team_id):
         flash(f"Team {team_id} not found.", "error")
         return redirect(url_for("team.index"))
 
+    return render_template("team/show_team.html", team=team)
+
+
+@team.route("/<int:team_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_team(team_id):
+    """
+    Show a team.
+    """
+    team = Team.query.get(team_id)
+    if team is None:
+        flash(f"Team {team_id} not found.", "error")
+        return redirect(url_for("team.index"))
+
     form = TeamEditForm(obj=team)
     if form.validate_on_submit():
         team = Team.query.get(team_id)
@@ -61,7 +75,45 @@ def show_team(team_id):
         current_app.logger.info(f"Team {team.name},{team.version} updated.")
         return redirect(url_for("team.show_team", team_id=team_id))
 
-    return render_template("team/detail.html", form=form, team=team)
+    return render_template("team/edit_team.html", form=form, team=team)
+
+
+@team.route("/<int:team_id>/review", methods=["POST"])
+@login_required
+@admin_required
+def set_review_status(team_id):
+    """
+    Review a team.
+    """
+    team = Team.query.get(team_id)
+    if team is None:
+        flash(f"Team {team_id} not found.", "error")
+        return redirect(url_for("team.index"))
+
+    action = request.form.get("action")
+    if action == "reset_status":
+        team.review_status = TeamReviewStatus.NORMAL
+        flash(f"Team {team.name} ({team.version}) review status reset.", "success")
+        current_app.logger.info(f"Team {team.name},{team.version} review status reset.")
+    elif action == "reject":
+        team.review_status = TeamReviewStatus.REJECTED
+        flash(f"Team {team.name} ({team.version}) rejected.", "success")
+        current_app.logger.info(f"Team {team.name},{team.version} rejected.")
+    elif action == "under_review":
+        team.review_status = TeamReviewStatus.UNDER_REVIEW
+        flash(f"Team {team.name} ({team.version}) under review.", "success")
+        current_app.logger.info(f"Team {team.name},{team.version} under review.")
+    elif action == "approve":
+        team.review_status = TeamReviewStatus.APPROVED
+        flash(f"Team {team.name} ({team.version}) approved.", "success")
+        current_app.logger.info(f"Team {team.name},{team.version} approved.")
+    else:
+        flash("Invalid action.", "error")
+        current_app.logger.error("Invalid action.")
+    db.session.commit()
+
+    return redirect(url_for("team.show_team", team_id=team_id))
+
 
 
 @team.route("/<int:team_id>/toggle_active", methods=["POST"])
@@ -86,6 +138,61 @@ def toggle_active(team_id):
     flash(f"Team {team.name} ({team.version}) is {'activated' if team.is_active else 'archived'}.", "success")
     current_app.logger.info(f"Toggled {team.name} ({team.version}), is_active={team.is_active}")
     return redirect(url_for("team.index"))
+
+
+@team.route("/<int:team_id>/activate", methods=["POST"])
+@login_required
+@admin_required
+def activate_team(team_id):
+    """
+    Activate a team.
+    """
+    team = Team.query.get(team_id)
+    if team is None:
+        flash(f"Team {team_id} not found.", "error")
+        return redirect(url_for("team.index"))
+
+    if team.version == "":
+        flash(f"Team {team.name} has no version. Activation is not allowed.", "error")
+        current_app.logger.error(f"activate_team: Team {team.name} has no version.")
+        return redirect(url_for("team.show_team", team_id=team_id))
+
+    if team.is_active:
+        flash(f"Team {team.name} ({team.version}) is already active.", "error")
+        current_app.logger.error(f"activate_team: Team {team.name} ({team.version}) is already active.")
+        return redirect(url_for("team.show_team", team_id=team_id))
+
+    team.is_active = True
+    db.session.commit()
+
+    flash(f"Team {team.name} ({team.version}) activated.", "success")
+    current_app.logger.info(f"Activated {team.name} ({team.version})")
+    return redirect(url_for("team.show_team", team_id=team_id))
+
+
+@team.route("/<int:team_id>/deactivate", methods=["POST"])
+@login_required
+@admin_required
+def deactivate_team(team_id):
+    """
+    Deactivate a team.
+    """
+    team = Team.query.get(team_id)
+    if team is None:
+        flash(f"Team {team_id} not found.", "error")
+        return redirect(url_for("team.index"))
+
+    if not team.is_active:
+        flash(f"Team {team.name} ({team.version}) is already archived.", "error")
+        current_app.logger.error(f"deactivate_team: Team {team.name} ({team.version}) is already archived.")
+        return redirect(url_for("team.show_team", team_id=team_id))
+
+    team.is_active = False
+    db.session.commit()
+
+    flash(f"Team {team.name} ({team.version}) archived.", "success")
+    current_app.logger.info(f"Archived {team.name} ({team.version})")
+    return redirect(url_for("team.show_team", team_id=team_id))
 
 
 @team.route("/<int:team_id>/delete", methods=["POST"])

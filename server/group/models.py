@@ -41,6 +41,8 @@ class Group(db.Model):
             'name': self.name,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'status': self.status.value,
+            'left_team_id': self.left_team.id,
+            'right_team_id': self.right_team.id,
             'left_team': self.left_team.name,
             'right_team': self.right_team.name,
             'completed_count': self.stats.completed_count if self.stats else 0,

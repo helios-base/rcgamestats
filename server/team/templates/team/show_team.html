@@ -5,7 +5,7 @@
 
 {% block content %}
 
-<h2>Team: {{ team.name }}</h2>
+<h2>Team: {{ team.name }}, {{ team.version }}</h2>
 {% if current_user.is_admin %}
 <form action="{{ url_for('team.set_review_status', team_id=team.id) }}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -22,7 +22,6 @@
 {% endif %}
 <ul>
     <li>Review Status: <span class={% if team.review_status == TeamReviewStatus.APPROVED %}"approved"{% elif team.review_status == TeamReviewStatus.REJECTED %}"rejected"{% elif team.review_status == TeamReviewStatus.UNDER_REVIEW %}"under_review"{% endif %}>{{ team.review_status.value }}</span></li>
-    <li>Version: {{ team.version }}</li>
     <li>Uploaded At: {{ team.uploaded_at }}</li>
     <li>Synch Mode: {{ team.synch_mode }}</li>
     <li>Archive File: <a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></li>

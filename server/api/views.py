@@ -725,7 +725,7 @@ def admin_upload_team():
         current_app.logger.error("admin_upload_team: Missing team name.")
         return jsonify({"error": "Missing team name."}), 400
 
-    if team_version is None:
+    if team_version is None or team_version == "":
         team_version = current_datetime_str()
 
     team_name = secure_filename(team_name)

@@ -1,11 +1,19 @@
 import os
+import socket
+from pathlib import Path
+from dotenv import load_dotenv
+
+
+# load .env file in the parent directory
+parent_dir = Path(__file__).resolve().parent.parent
+load_dotenv(parent_dir / ".env")
 
 
 class Config:
     def __init__(self):
-        self.SERVER_URL = os.getenv("SERVER_URL", "http://127.0.0.1:5000")
-        self.HOST_NAME = os.getenv("HOST_NAME", "localhost")
-        self.API_KEY = os.getenv("API_KEY", "unknown")
+        self.SERVER_URL = os.getenv("SERVER_URL", None)
+        self.HOST_NAME = os.getenv("HOST_NAME") or socket.gethostname()
+        self.API_KEY = os.getenv("API_KEY", None)
         self.GROUP_DIR = os.getenv("GROUP_DIR", "unknown")
         self.GROUP_NAME = os.getenv("GROUP_NAME", "unknown")
         self.LEFT_TEAM_NAME = os.getenv("LEFT_TEAM_NAME", "unknown")

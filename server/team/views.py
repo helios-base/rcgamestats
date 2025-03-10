@@ -81,11 +81,12 @@ def delete_team(team_id):
             return redirect(url_for("team.index"))
 
         # Delete the archive file
-        abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
-        if os.path.exists(abs_path):
-            # print(f"Delete {abs_path}")
-            current_app.logger.info(f"detele_team: Delete {abs_path}")
-            shutil.rmtree(abs_path)
+        if team.archive_path is not None and team.archive_path != "":
+            abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
+            if os.path.exists(abs_path):
+                # print(f"Delete {abs_path}")
+                current_app.logger.info(f"detele_team: Delete {abs_path}")
+                shutil.rmtree(abs_path)
 
     db.session.delete(team)
     db.session.commit()

@@ -82,3 +82,19 @@ class TeamUploadForm(FlaskForm):
             raise ValidationError(
                 "Invalid file extension. Please upload an archived file."
             )
+
+
+class TeamEditForm(FlaskForm):
+    """
+    Team edit form input class
+    """
+    description = TextAreaField(
+        "Edit Team Description: ",
+        validators=[Length(0, 512, "description must be less than 512 characters")],
+    )
+    submit = SubmitField("Submit")
+
+    def validate_description(self, description):
+        if len(description.data) > 512:
+            raise ValidationError("Description must be less than 512 characters")
+        return True

@@ -33,7 +33,7 @@
             {% for team in teams %}
             <tr>
                 <td><input type="checkbox" name="team_ids" value="{{ team.id }}" onclick="checkCheckboxes()"></td>
-                <td>{{ team.name }}</td>
+                <td><a href="{{ url_for('team.show_team', team_id=team.id) }}">{{ team.name }}</a></td>
                 <td>{{ team.version }}</td>
                 <td class="time">{{ team.uploaded_at }}</td>
                 <td class="{% if team.synch_mode %}bg-true{% else %}bg-false{% endif %}">{{ team.synch_mode }}</td>

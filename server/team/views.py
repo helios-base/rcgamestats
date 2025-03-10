@@ -3,13 +3,13 @@ import shutil
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
 from flask import send_file, abort, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from ..app import db
 from ..auth.decorators import admin_required
 from ..group.models import Group
-from .forms import TeamUploadForm
+from .forms import TeamUploadForm, TeamEditForm
 from .models import Team, current_datetime_str
 
 
@@ -35,6 +35,33 @@ def show_archived():
     """
     teams = Team.query.filter_by(is_active=False).all()
     return render_template("team/archived.html", teams=teams)
+
+
+@team.route("/<int:team_id>", methods=["GET", "POST"])
+@login_required
+def show_team(team_id):
+    """
+    Show a team.
+    """
+    team = Team.query.get(team_id)
+    if team is None:
+        flash(f"Team {team_id} not found.", "error")
+        return redirect(url_for("team.index"))
+
+    form = TeamEditForm(obj=team)
+    if form.validate_on_submit():
+        team = Team.query.get(team_id)
+        if team is None:
+            flash(f"Team {team_id} not found.", "error")
+            return redirect(url_for("team.index"))
+
+        team.description = form.description.data
+        db.session.commit()
+        flash(f"Team {team.name} updated.", "success")
+        current_app.logger.info(f"Team {team.name},{team.version} updated.")
+        return redirect(url_for("team.show_team", team_id=team_id))
+
+    return render_template("team/detail.html", form=form, team=team)
 
 
 @team.route("/<int:team_id>/toggle_active", methods=["POST"])

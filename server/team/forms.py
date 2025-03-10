@@ -31,7 +31,7 @@ class TeamUploadForm(FlaskForm):
             Optional(),
             Length(4, 32, "team name must be between 4 and 32 characters"),
             Regexp(
-                r"^[a-zA-Z0-9][a-zA-Z0-9+]*$", message="team name must start with an alphanumeric and be alphanumeric and +"
+                r"^[a-zA-Z0-9][a-zA-Z0-9+_]*$", message="team name must start with an alphanumeric and be alphanumeric and + or _"
             ),
         ],
     )

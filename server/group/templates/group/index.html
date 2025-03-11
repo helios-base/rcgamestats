@@ -17,17 +17,10 @@
     <div class="button-container">
         <button type="submit" name="action" id="bulk-archive-button" value="archive" disabled>Archive</button>
     </div>
-    <div class="button-container">
-        <button type="submit" name="action" id="approve-button" value="approve" disabled>Approve</button>
-        <button type="submit" name="action" id="reject-button" value="reject" disabled>Reject</button>
-        <button type="submit" name="action" id="under-review-button" value="under_review" disabled>Under Review</button>
-        <button type="submit" name="action" id="reset-status-button" value="reset_status" disabled>Reset Status</button>
-    </div>
     <table id="group-table" class="tablesorter">
         <thead>
             <tr>
                 <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
-                <th></th>
                 <th>Name</th>
                 <th>Created At</th>
                 <th>Left Team</th>
@@ -41,7 +34,6 @@
         <tbody>{% for group in groups if group.is_active %}{% set scheduled_count = group.matches.count() %}{% set completed_count = completed_counts.get(group.id, 0) %}
             <tr{% if group.is_approved() %} class="approved"{%elif group.is_rejected() %} class="rejected"{% elif group.is_under_review() %} class="under_review"{% endif %}>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
-                <td><a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_detail', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
                 <td class="time">{{ group.created_at }}</td>
                 <td>{% if group.left_team %}<a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}">{{ group.left_team.name }}, {{ group.left_team.version }}</a>{% else %}<span class="error">Not found</span>{% endif %}</td>
@@ -62,9 +54,8 @@
         $('#group-table').tablesorter({
             headers: {
                 0: { sorter: false, filter: false },
-                1: { sorter: false, filter: false },
-                8: { sorter: false },
-                9: { sorter: false, filter: false }
+                7: { sorter: false },
+                8: { sorter: false, filter: false }
             },
             sortList: [[2, 1]], // sort by the third column in descending order
             widgets: ['filter'],
@@ -90,13 +81,6 @@
 
     function checkCheckboxes() {
         var checkboxes = document.getElementsByName('group_ids');
-        var buttons = [
-            document.getElementById('bulk-archive-button'),
-            document.getElementById('approve-button'),
-            document.getElementById('reject-button'),
-            document.getElementById('under-review-button'),
-            document.getElementById('reset-status-button')
-        ];
         var anyChecked = false;
         for (var i = 0; i < checkboxes.length; i++) {
             if (checkboxes[i].checked) {
@@ -104,9 +88,7 @@
                 break;
             }
         }
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].disabled = !anyChecked;
-        }
+        document.getElementById('bulk-archive-button').disabled = !anyChecked;
     }
 
     document.addEventListener('DOMContentLoaded', function () {

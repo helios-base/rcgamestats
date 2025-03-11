@@ -257,22 +257,6 @@ def archive_group(group_id):
     return redirect(url_for("group.index"))
 
 
-def set_status_groups(group_ids, status):
-    """
-    Bulk approve groups.
-    """
-    for group_id in group_ids:
-        group = Group.query.get(group_id)
-        if group is None:
-            return "error", f"Group ID {group_id} not found."
-
-        group.status = status
-        db.session.commit()
-        current_app.logger.info(f"Set {group.name} to [{status.value}].")
-
-    return "success", f"Set {len(group_ids)} groups to [{status.value}]."
-
-
 def archive_groups(group_ids):
     """
     Bulk archive groups.
@@ -312,14 +296,6 @@ def bulk_action():
     message = ""
     if action == "archive":
         result, message = archive_groups(group_ids)
-    elif action == "approve":
-        result, message = set_status_groups(group_ids, GroupStatus.APPROVED)
-    elif action == "reject":
-        result, message = set_status_groups(group_ids, GroupStatus.REJECTED)
-    elif action == "under_review":
-        result, message = set_status_groups(group_ids, GroupStatus.UNDER_REVIEW)
-    elif action == "reset_status":
-        result, message = set_status_groups(group_ids, GroupStatus.NORMAL)
     else:
         message = f"Unknown action [{action}]."
 

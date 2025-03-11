@@ -31,7 +31,6 @@ class Group(db.Model):
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    status = db.Column(db.Enum(GroupStatus), name="group_status_enum", default=GroupStatus.NORMAL)
 
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])

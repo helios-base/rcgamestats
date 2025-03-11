@@ -61,12 +61,12 @@ th { background-color: #f2f2f2; text-align: left; }
 tr:nth-child(even) { background-color: #f7f5f5; }
 tr:hover { background-color: #ddd; }
 
-.approved { background-color: #5cb167; }
-.approved:hover { background-color: #00ff00; }
-.under_review { background-color: #e7bb7c; }
-.under_review:hover { background-color: #eeff7c; }
-.rejected { background-color: #c00000; }
-.rejected:hover { background-color: #ff0000; }
+.approved { background-color: greenyellow; }
+.approved:hover { background-color: lime; }
+.under_review { background-color: gold; }
+.under_review:hover { background-color: orange; }
+.rejected { background-color: coral; }
+.rejected:hover { background-color: red; }
 /* 
 tr.updated { 
     background-color: yellow;

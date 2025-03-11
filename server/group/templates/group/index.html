@@ -39,7 +39,7 @@
             </tr>
         </thead>
         <tbody>{% for group in groups if group.is_active %}{% set scheduled_count = group.matches.count() %}{% set completed_count = completed_counts.get(group.id, 0) %}
-            <tr{% if group.status.value == 'approved' %} class="approved"{%elif group.status.value == 'rejected' %} class="rejected"{% elif group.status.value == 'under_review' %} class="under_review"{% endif %}>
+            <tr{% if group.is_approved() %} class="approved"{%elif group.is_rejected() %} class="rejected"{% elif group.is_under_review() %} class="under_review"{% endif %}>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td><a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_detail', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>

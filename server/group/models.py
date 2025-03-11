@@ -35,21 +35,11 @@ class Group(db.Model):
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
 
-    def is_approved(self):
-        return self.left_team.review_status == TeamReviewStatus.APPROVED or self.right_team.review_status == TeamReviewStatus.APPROVED
-
-    def is_rejected(self):
-        return self.left_team.review_status == TeamReviewStatus.REJECTED or self.right_team.review_status == TeamReviewStatus.REJECTED
-
-    def is_under_review(self):
-        return self.left_team.review_status == TeamReviewStatus.UNDER_REVIEW or self.right_team.review_status == TeamReviewStatus.UNDER_REVIEW
-
     def to_simple_json(self):
-        return {
+        json = {
             'group_id': self.id,
             'name': self.name,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'status': "approved" if self.is_approved() else "rejected" if self.is_rejected() else "under_review" if self.is_under_review() else "normal",
             'left_team_id': self.left_team.id,
             'right_team_id': self.right_team.id,
             'left_team': self.left_team.name,
@@ -77,6 +67,11 @@ class Group(db.Model):
             'right_score_counts': self.stats.right_score_counts if self.stats else {"0": 0},
         }
 
+        if self.left_team.review_status != TeamReviewStatus.NORMAL:
+            json['left_status'] = self.left_team.review_status.value
+        if self.right_team.review_status != TeamReviewStatus.NORMAL:
+            json['right_status'] = self.right_team.review_status.value
+        return json
 
 class Match(db.Model):
     __tablename__ = 'match'

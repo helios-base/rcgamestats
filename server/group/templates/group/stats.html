@@ -79,6 +79,7 @@
     //
     // Render the stats table
     //
+    const teamShowUrlTemplate = "{{ url_for('team.show_team', team_id=0) }}";
     function createStatsTableRow(stats) {
         let row = document.createElement('tr');
         row.dataset.id = stats.group_id;
@@ -102,12 +103,18 @@
 
         cell = document.createElement('td');
         cell.classList.add('stats', 'lborder');
-        cell.textContent = stats.left_team;
+        link = document.createElement('a');
+        link.href = teamShowUrlTemplate.replace("0", stats.left_team_id);
+        link.textContent = stats.left_team;
+        cell.appendChild(link);
         row.appendChild(cell);
 
         cell = document.createElement('td');
         cell.classList.add('stats');
-        cell.textContent = stats.right_team;
+        link = document.createElement('a');
+        link.href = teamShowUrlTemplate.replace("0", stats.right_team_id);
+        link.textContent = stats.right_team;
+        cell.appendChild(link);
         row.appendChild(cell);
 
         cell = document.createElement('td');

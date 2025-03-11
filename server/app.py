@@ -124,9 +124,11 @@ def create_app(test_config=None):
     from .auth.models import UserType
     from .group.models import GroupStatus
     from .group.models import MatchStatus
+    from .team.models import TeamReviewStatus
     app.jinja_env.globals['UserType'] = UserType
     app.jinja_env.globals['GroupStatus'] = GroupStatus
     app.jinja_env.globals['MatchStatus'] = MatchStatus
+    app.jinja_env.globals['TeamReviewStatus'] = TeamReviewStatus
 
     @app.route('/')
     @login_required

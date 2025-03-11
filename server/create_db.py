@@ -100,7 +100,7 @@ def init_db():
 
     admin_username = config.ADMIN_USERNAME
     admin_email = config.ADMIN_EMAIL
-    initial_password = secrets.token_urlsafe(8)
+    initial_password = config.ADMIN_PASSWORD if config.ADMIN_PASSWORD else secrets.token_urlsafe(8)
 
     admin = User(username=admin_username, type=UserType.MASTER)
     admin.email = admin_email

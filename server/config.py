@@ -19,6 +19,7 @@ class Config:
 
     ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "example@example.com")
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
     ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 
     GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")

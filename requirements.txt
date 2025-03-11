@@ -1,5 +1,5 @@
 python-dotenv
-flask
+flask >= 3.1
 flask-migrate
 flask-login
 flask-wtf
@@ -9,5 +9,5 @@ scipy
 numpy
 pandas
 matplotlib
-authlib
-pyuwsgi
+authlib >= 1.5
+pyuwsgi >= 2.0

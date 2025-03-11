@@ -21,7 +21,7 @@
 </ul>
 {% endif %}
 <ul>
-    <li>Review Status: <span class={% if team.review_status == TeamReviewStatus.APPROVED %}"approved"{% elif team.review_status == TeamReviewStatus.REJECTED %}"rejected"{% elif team.review_status == TeamReviewStatus.UNDER_REVIEW %}"under_review"{% endif %}>{{ team.review_status.value }}</span></li>
+    <li>Review Status: <span style="padding: 2px 2px;" class={% if team.review_status == TeamReviewStatus.APPROVED %}"approved"{% elif team.review_status == TeamReviewStatus.REJECTED %}"rejected"{% elif team.review_status == TeamReviewStatus.UNDER_REVIEW %}"under_review"{% endif %}>{{ team.review_status.value }}</span></li>
     <li>Uploaded At: {{ team.uploaded_at }}</li>
     <li>Synch Mode: {{ team.synch_mode }}</li>
     <li>Archive File: <a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></li>

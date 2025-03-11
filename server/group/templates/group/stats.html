@@ -83,13 +83,13 @@
     function createStatsTableRow(stats) {
         let row = document.createElement('tr');
         row.dataset.id = stats.group_id;
-        if (stats.status === 'approved') {
-            row.classList.add('approved');
-        } else if (stats.status === 'rejected') {
-            row.classList.add('rejected');
-        } else if (stats.status === 'under_review') {
-            row.classList.add('under_review');
-        }
+        // if (stats.status === 'approved') {
+        //     row.classList.add('approved');
+        // } else if (stats.status === 'rejected') {
+        //     row.classList.add('rejected');
+        // } else if (stats.status === 'under_review') {
+        //     row.classList.add('under_review');
+        // }
 
         let cell = document.createElement('td');
         cell.classList.add('stats');
@@ -103,6 +103,13 @@
 
         cell = document.createElement('td');
         cell.classList.add('stats', 'lborder');
+        if (stats.left_status === 'approved') {
+            cell.classList.add('approved');
+        } else if (stats.left_status === 'rejected') {
+            cell.classList.add('rejected');
+        } else if (stats.left_status === 'under_review') {
+            cell.classList.add('under_review');
+        }
         link = document.createElement('a');
         link.href = teamShowUrlTemplate.replace("0", stats.left_team_id);
         link.textContent = stats.left_team;
@@ -111,6 +118,13 @@
 
         cell = document.createElement('td');
         cell.classList.add('stats');
+        if (stats.right_status === 'approved') {
+            cell.classList.add('approved');
+        } else if (stats.right_status === 'rejected') {
+            cell.classList.add('rejected');
+        } else if (stats.right_status === 'under_review') {
+            cell.classList.add('under_review');
+        }
         link = document.createElement('a');
         link.href = teamShowUrlTemplate.replace("0", stats.right_team_id);
         link.textContent = stats.right_team;

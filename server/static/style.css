@@ -133,6 +133,13 @@ td.group-name {
     vertical-align: middle;
     max-width: 20ch;
 }
+td.team-name {
+    word-wrap: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
 td.description {
     white-space: nowrap;
     overflow: hidden;

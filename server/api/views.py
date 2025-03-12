@@ -488,6 +488,7 @@ def admin_create_group():
     group = Group(
         name=group_name,
         created_at=now,
+        updated_at=now,
         left_team_id=left_team.id,
         right_team_id=right_team.id,
         description=description,

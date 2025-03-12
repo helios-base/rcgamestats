@@ -3,13 +3,13 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}{% endblock %} - RCgame</title>
+  <title>{% block title %}{% endblock %} - rcgamestats</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">  
 </head>
 
 <body>
 <nav>
-  <h1>RCgame</h1>
+  <h1>RCGameStats</h1>
   <ul>
     {% if current_user.is_authenticated %}
       <li><a href="{{ url_for('index') }}">Top</a></li>

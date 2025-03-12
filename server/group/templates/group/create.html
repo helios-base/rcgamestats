@@ -9,7 +9,6 @@
 </ul>
     {% from "_formhelpers.html" import render_field %}
     <form method="POST" action="{{ url_for('group.create') }}" novalidate>
-        {{ form.csrf_token }}
         {{ form.hidden_tag() }}
         {{ render_field(form.team_left) }}
         {{ render_field(form.team_right) }}

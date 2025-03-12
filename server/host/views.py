@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for
 from flask import flash
 from flask_login import login_required
 from ..app import db
@@ -21,7 +21,7 @@ def get_host_status(host):
     Return the status of the host.
     """
     match = Match.query.get(host.assigned_match_id)
-    if match and match.processed == MatchStatus.IN_PROGRESS:
+    if match and match.status == MatchStatus.IN_PROGRESS:
         threshold = timedelta(minutes=15)
         if match.left_team.synch_mode and match.right_team.synch_mode:
             threshold = timedelta(minutes=5)

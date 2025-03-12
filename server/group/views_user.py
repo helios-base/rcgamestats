@@ -22,8 +22,7 @@ def index():
     group_list.sort(key=lambda x: x.created_at, reverse=True)
     # for group in group_list:
     #     print(f"Group: {group.name}, {group.created_at}, {group.left_team}, {group.right_team}")
-    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed=MatchStatus.COMPLETED).count() for group in group_list}
-    return render_template("group/index.html", groups=group_list, completed_counts=completed_counts)
+    return render_template("group/index.html", groups=group_list)
 
 
 @group_bp.route("/stats/")
@@ -98,8 +97,7 @@ def show_archived_groups():
     """
     group_list = Group.query.filter_by(is_active=False).all()
     group_list.sort(key=lambda x: x.created_at, reverse=True)
-    completed_counts = {group.id: Match.query.filter_by(group_id=group.id, processed=MatchStatus.COMPLETED).count() for group in group_list}
-    return render_template("group/archived_groups.html", groups=group_list, completed_counts=completed_counts)
+    return render_template("group/archived_groups.html", groups=group_list)
 
 
 # @group_bp.route("/all", methods=["GET"])
@@ -177,7 +175,7 @@ def get_match_records(group_id):
             "right_score": match.right_score,
             "host_name": match.host_name if match.host_name else "",
             "host_id": match.host_id,
-            "status": match.processed.value,
+            "status": match.status.value,
             "log_url": url_for("group.show_match_log", group_name=group.name, index=match.index),
         }
         match_records.append(record)

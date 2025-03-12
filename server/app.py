@@ -125,6 +125,8 @@ def create_app(test_config=None):
     from .group.models import GroupStatus
     from .group.models import MatchStatus
     from .team.models import TeamReviewStatus
+    app.jinja_env.trim_blocks = True    # Remove whitespace at the beginning and end of a line
+    app.jinja_env.lstrip_blocks = True  # Remove leading whitespace from a block
     app.jinja_env.globals['UserType'] = UserType
     app.jinja_env.globals['GroupStatus'] = GroupStatus
     app.jinja_env.globals['MatchStatus'] = MatchStatus

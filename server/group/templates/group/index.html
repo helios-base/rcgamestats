@@ -31,13 +31,28 @@
                 <th>Log Files</th>
             </tr>
         </thead>
-        <tbody>{% for group in groups if group.is_active %}{% set scheduled_count = group.matches.count() %}{% set completed_count = completed_counts.get(group.id, 0) %}
+        <tbody>
+            {% for group in groups if group.is_active %}
+            {% set scheduled_count = group.matches.count() %}
+            {% set completed_count = group.completed_count() %}
             <tr>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_detail', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
                 <td class="time">{{ group.created_at }}</td>
-                <td class="{{ group.left_team.review_status.value if group.left_team else ''}}">{% if group.left_team %}<a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}">{{ group.left_team.name }}, {{ group.left_team.version }}</a>{% else %}<span class="error">Not found</span>{% endif %}</td>
-                <td class="{{ group.right_team.review_status.value if group.right_team else '' }}">{% if group.right_team %}<a href="{{ url_for('team.show_team', team_id=group.right_team.id) }}">{{ group.right_team.name }}, {{ group.right_team.version }}</a>{% else %}<span class="error">Not found</span>{% endif %}</td>
+                <td class="{{ group.left_team.review_status.value if group.left_team else ''}}">
+                    {% if group.left_team %}
+                    <a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}">{{ group.left_team.name }}, {{ group.left_team.version }}</a>
+                    {% else %}
+                    <span class="error">Not found</span>
+                    {% endif %}
+                </td>
+                <td class="{{ group.right_team.review_status.value if group.right_team else '' }}">
+                    {% if group.right_team %}
+                    <a href="{{ url_for('team.show_team', team_id=group.right_team.id) }}">{{ group.right_team.name }}, {{ group.right_team.version }}</a>
+                    {% else %}
+                    <span class="error">Not found</span>
+                    {% endif %}
+                </td>
                 <td>{{ scheduled_count}}</td>
                 <td>{% if completed_count == scheduled_count %}<span class="success">{{ completed_count }}</span>{% else %}<span class="error">{{ completed_count }}</span>{% endif %}</td>
                 <td class="description">{{ group.description }}</td>

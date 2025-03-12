@@ -9,6 +9,7 @@ from wtforms import (
     SelectField,
 )
 from wtforms.validators import DataRequired, Optional, Regexp, Length, ValidationError
+from flask_wtf.file import FileRequired, FileAllowed
 
 
 class TeamUploadForm(FlaskForm):
@@ -25,6 +26,7 @@ class TeamUploadForm(FlaskForm):
         choices=[],
         validators=[Optional()],
     )
+
     new_team_name = StringField(
         "New Team Name: ",
         validators=[
@@ -35,6 +37,7 @@ class TeamUploadForm(FlaskForm):
             ),
         ],
     )
+
     version = StringField(
         "Version: (Empty for auto-generated with timestamp)",
         validators=[
@@ -46,14 +49,22 @@ class TeamUploadForm(FlaskForm):
             ),
         ],
     )
+
     synch_mode = BooleanField("Support synch_mode: ", default=True, validators=[])
+
     archive_file = FileField(
-        "Archive File(*): ", validators=[DataRequired("team archive is required")]
+        "Archive File(*): ",
+        validators=[
+            FileRequired("team archive is required"),
+            FileAllowed(["tar.gz", "tgz", "tar.xz", "txz", "zip"], "Invalid file extension. Please upload an archived file."),
+        ]
     )
+
     description = TextAreaField(
         "Description: ",
         validators=[Length(0, 512, "description must be less than 512 characters")],
     )
+
     submit = SubmitField("Submit")
 
     def valiate(self):

@@ -1,6 +1,6 @@
 # Documentation
 
 - [Server Setup Instruction](setup/README.md)
-- [How to use client](usage_client.md)
-- [Group Uploader](usage_group_uploader.md)
-- [Team Uploader](usage_team_uploader.md)
+- [How to use client](usage/client.md)
+- [Group Uploader](usage/group_uploader.md)
+- [Team Uploader](usage/team_uploader.md)

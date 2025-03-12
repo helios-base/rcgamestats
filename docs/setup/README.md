@@ -1,4 +1,4 @@
-[Top](README.md)
+[Top](../README.md)
 # Setup Instruction
 
 1. [サーバを起動するまで](01_server_setup.md)

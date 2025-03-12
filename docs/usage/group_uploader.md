@@ -1,13 +1,11 @@
-[Top](README.md)
+[Top](../README.md)
 # How to use group_uploader
 
 clientの使用方法を説明します．
 
 ## group_uploaderとは
 
-試合ログ一式を用いてグループを後から追加することができるコンソールツールです。
-rcgamestatsの機能で実行していない試合ログからでも登録できます。
-ただし、チーム登録はバージョン無しで行われます。
+試合ログ一式を用いてグループを後から追加することができるコンソールツールです。rcgamestatsの機能で実行していない試合ログからでも登録できます。ただし、チーム登録はバージョン無しで行われます。
 
 
 ## 使用方法
@@ -16,7 +14,7 @@ rcgamestatsの機能で実行していない試合ログからでも登録でき
 ```bash
 ./submit.sh LOG_DIR
 ```
-ただし，接続先アドレスなどはsubmit.shの先頭付近にある変数の値を変更しなければならない。
+ただし，接続先アドレスなどはsubmit.shの先頭付近にある変数の値を変更しなければなりません。
 
 例:
 ```bash
@@ -42,4 +40,4 @@ python submit.py --server-url http://127.0.0.1:5000 \
  --right-team-name cyrus2024 --right-team-version v1
 ```
 
-または、 .env.example を参考にして .envファイル を作成しておいても良い。
+または、 group_uploader/.env ファイルを作成しておくと、その内容が参照されます。使用できる変数は group_uploader/.env.example を参考にしてください。

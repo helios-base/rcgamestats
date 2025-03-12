@@ -35,6 +35,9 @@ class Group(db.Model):
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
 
+    def completed_count(self):
+        return Match.query.filter_by(group_id=self.id, processed=MatchStatus.COMPLETED).count()
+
     def to_simple_json(self):
         json = {
             'group_id': self.id,

@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{% block head %}
+  <link href="{{ url_for('static', filename='filepond.min.css') }}" rel="stylesheet">
+{% endblock %}
 
 {% block header %}
 <h1>{% block title %}Team Upload{% endblock %}</h1>
@@ -31,4 +34,21 @@
     {% endfor %}
     {{ form.submit }}
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='filepond.min.js') }}"></script>
+<script>
+  // const inputElement = document.querySelector('input[type="file"]');
+  const inputElement = document.querySelector('input[name="archive_file"]'); 　
+  FilePond.create(inputElement, {
+      allowMultiple: false, // restrict to single file
+      instantUpload: false, // disable immediate upload
+      storeAsFile: true, // store file as file object
+      // restrict file type
+      acceptedFileTypes: [".tar.gz", ".tgz", ".tar.xz", ".txz", ".zip"],
+      labelIdle: 'Drag & Drop your files or <span class="filepond--label-action">Browse</span>',
+
+  });
+</script>
 {% endblock %}

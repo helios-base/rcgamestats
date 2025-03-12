@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}{% endblock %} - rcgamestats</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">  
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
 </head>
 
 <body>

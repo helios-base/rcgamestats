@@ -96,16 +96,16 @@ def check_download_teams(match):
     return True
 
 
-def check_teams(match):
-    max_retries = 3
-    retry_delay = 5
-    for i in range(max_retries):
-        if check_download_teams(match):
-            return True
-        logger.warning("Failed to download teams.")
-        logger.info(f"Sleep for {retry_delay} seconds before retrying to download teams.")
-        time.sleep(retry_delay)
-    return False
+# def check_teams(match):
+#     max_retries = 3
+#     retry_delay = 5
+#     for i in range(max_retries):
+#         if check_download_teams(match):
+#             return True
+#         logger.warning("Failed to download teams.")
+#         logger.info(f"Sleep for {retry_delay} seconds before retrying to download teams.")
+#         time.sleep(retry_delay)
+#     return False
 
 
 def check_or_register_host():
@@ -145,7 +145,7 @@ def main():
             logger.info(f">>>> Received {match.group_name}/{match.index}")
             remove_temporal_files()
 
-            if check_teams(match):
+            if check_download_teams(match):
                 if match.run():
                     match_manager.submit_result(match)
                 else:

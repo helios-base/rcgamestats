@@ -35,6 +35,7 @@ def get_team_path(team_name, version):
                 and os.access(start_script, os.X_OK)
             ):
                 return entry_path
+            logger.error(f"Invalid start script: {start_script}")
 
     return None
 

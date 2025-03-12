@@ -25,6 +25,15 @@ def __move_log_files(file_paths, log_dir):
             os.rename(file_path, new_file_path)
 
 
+def __delete_log_files(file_paths):
+    """
+    Delete log files.
+    """
+    for file_path in file_paths:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
 def submit_result(match):
     """
     Submit the result to the server.
@@ -67,7 +76,7 @@ def submit_result(match):
 
     # logger.info(f"Submit result: {match_data}")
     logger.info(f"Submitting result {match.group_name}/{match.index}, {match.left_score} - {match.right_score}")
-
+    delete_logs = False
     with requests.Session() as session:
         retries = Retry(total=3, backoff_factor=0.3, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
         session.mount("https://", HTTPAdapter(max_retries=retries))
@@ -77,6 +86,7 @@ def submit_result(match):
             response = session.post(url, headers=headers, data=match_data, files=files, timeout=(3, 10))
             response.raise_for_status()
             logger.info(f"SubmitResponse: {response.json()}")
+            delete_logs = True
         except requests.exceptions.HTTPError as e:
             try:
                 response_data = response.json()
@@ -102,7 +112,10 @@ def submit_result(match):
             for f in files:
                 f[1].close()
 
-    __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+    if delete_logs:
+        __delete_log_files(file_paths)
+    else:
+        __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
 
     # max_retries = 3
     # retry_delay = 5  # seconds

@@ -10,8 +10,4 @@ rcgamestats is a web application that enables running a large number of RoboCup 
 
 ## Documentation
 
-- [Server Setup Instruction](docs/setup/README.md)
-- Client
-- Team Uploader
-- Group Uploader
-
+See [docs](docs/README.md)

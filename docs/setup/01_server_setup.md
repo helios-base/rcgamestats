@@ -1,3 +1,4 @@
+[Index](README.md)
 # Server Setup Instruction
 
 このドキュメントでは、Ubuntu 22.04 での環境構築手順について説明します。

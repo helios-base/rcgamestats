@@ -1,3 +1,4 @@
+[Index](README.md)
 # 外部公開する場合の設定
 
 外部公開 (プロダクション環境) の場合、Apache や Nginx を利用したリバースプロキシの設定が必要です。ここではuWSGIを用いた WSGI サーバ との連携設定について説明します。外部公開する場合は、セキュリティの観点から HTTPS（SSL/TLS）の設定を行い、適切な証明書を導入することも推奨します。
@@ -125,7 +126,7 @@ apacheの設定ファイルを修正する。
 ## 5. (本番用)uWSGIをデーモンとして動作させる
 
 本番運用時はsystemdでuWSGIをデーモンとして動作させます。以下は /etc/systemd/system/rcgamestats_uwsgi.service として登録する場合の例です。"path-to"を自分の環境に合わせて編集してください。
-uwsgiディレクトリ以下にサンプルファイルを置いています。
+[uwsgiディレクトリ](./uwsgi/)以下にサンプルファイルを置いています。
 ```ini
 [Unit]
 Description=uWSGI instance to serve rcgamestats Flask app

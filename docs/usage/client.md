@@ -1,4 +1,4 @@
-[Top](README.md)
+[Top](../README.md)
 # How to use client
 
 clientの設定手順・使用方法を説明します．

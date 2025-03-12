@@ -32,11 +32,11 @@
         </thead>
         <tbody>
             {% for group in groups if not group.is_active %}
-            <tr{% if group.is_approved() %} class="approved"{%elif group.is_rejected() %} class="rejected"{% elif group.is_under_review() %} class="under_review"{% endif %}>
+            <tr>
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_detail', group_name=group.name) }}">{{ group.name }}</a></td>
                 <td class="time">{{ group.created_at }}</td>
-                <td>
+                <td class="{{ group.left_team.review_status.value if group.left_team else '' }}">
                     {% if group.left_team %}
                     <a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}">
                     {{ group.left_team.name }}, {{ group.left_team.version }}
@@ -45,7 +45,7 @@
                     <span class="error">Not found</span>
                     {% endif %}
                 </td>
-                <td>
+                <td class="{{ group.right_team.review_status.value if group.right_team else '' }}">
                     {% if group.right_team %}
                     <a href="{{ url_for('team.show_team', team_id=group.right_team.id) }}">
                     {{ group.right_team.name }}, {{ group.right_team.version }}

@@ -2,7 +2,7 @@ import os
 import socket
 from pathlib import Path
 from dotenv import load_dotenv
-
+from distutils.util import strtobool
 
 def get_env_int(var_name, default_value):
     """
@@ -33,6 +33,9 @@ class Config:
     STOP_FILE_PATH = os.path.expanduser(os.getenv("STOP_FILE_PATH", "~/rcgamestats/stop.txt"))
     TEMPORAL_DIR = os.path.expanduser(os.getenv("TEMPORAL_DIR", "~/rcgamestats/tmp"))
     LOG_DIR = os.path.expanduser(os.getenv("LOG_DIR", "~/rcgamestats/log"))
+    USE_RCG2CSV = bool(strtobool(os.getenv("USE_RCG2CSV", "false")))
+    USE_RCG2DATA = bool(strtobool(os.getenv("USE_RCG2DATA", "false")))
+    CHANGE_CPUFREQ = bool(strtobool(os.getenv("CHANGE_CPUFREQ", "true")))
     SLEEP_TIME = get_env_int("SLEEP_TIME", 5)
     MAX_SLEEP_TIME = min(get_env_int("MAX_SLEEP_TIME", 60), 60)
 

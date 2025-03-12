@@ -154,31 +154,33 @@ class MatchRunner:
         selected_file = max(matching_files, key=os.path.getctime)
         # logger.info(f"Selected rcg file: {selected_file}")
 
-        if shutil.which("rcg2csv"):
-            try:
-                subprocess.run(["rcg2csv", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                # result = subprocess.run(["rcg2csv", selected_file])
-                tracking_csv = os.path.join(self.log_dir, f"{self.log_name}.tracking.csv")
-                if os.path.exists(tracking_csv):
-                    subprocess.run(["gzip", "-f", tracking_csv])
-                logger.info(f"rcg2csv completed. {self.log_name}")
-            except subprocess.CalledProcessError:
-                logger.error("rcg2csv failed.")
-        else:
-            logger.warning("rcg2csv not found.")
+        if config.USE_RCG2CSV:
+            if shutil.which("rcg2csv"):
+                try:
+                    subprocess.run(["rcg2csv", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                    # result = subprocess.run(["rcg2csv", selected_file])
+                    tracking_csv = os.path.join(self.log_dir, f"{self.log_name}.tracking.csv")
+                    if os.path.exists(tracking_csv):
+                        subprocess.run(["gzip", "-f", tracking_csv])
+                    logger.info(f"rcg2csv completed. {self.log_name}")
+                except subprocess.CalledProcessError:
+                    logger.error("rcg2csv failed.")
+            else:
+                logger.warning("rcg2csv not found.")
 
-        if shutil.which("rcg2data"):
-            try:
-                subprocess.run(["rcg2data", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                # result = subprocess.run(["rcg2data", selected_file])
-                event_csv = os.path.join(self.log_dir, f"{self.log_name}.event.csv")
-                if os.path.exists(event_csv):
-                    subprocess.run(["gzip", "-f", event_csv])
-                logger.info(f"rcg2data completed. {self.log_name}")
-            except subprocess.CalledProcessError:
-                logger.error("rcg2data failed.")
-        else:
-            logger.warning("rcg2data not found.")
+        if config.USE_RCG2DATA:
+            if shutil.which("rcg2data"):
+                try:
+                    subprocess.run(["rcg2data", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                    # result = subprocess.run(["rcg2data", selected_file])
+                    event_csv = os.path.join(self.log_dir, f"{self.log_name}.event.csv")
+                    if os.path.exists(event_csv):
+                        subprocess.run(["gzip", "-f", event_csv])
+                    logger.info(f"rcg2data completed. {self.log_name}")
+                except subprocess.CalledProcessError:
+                    logger.error("rcg2data failed.")
+            else:
+                logger.warning("rcg2data not found.")
 
     def move_csv_files(self):
         """
@@ -265,6 +267,9 @@ class MatchRunner:
         """
         Change the CPU frequency governor.
         """
+        if not config.CHANGE_CPUFREQ:
+            return
+
         if not self.check_cpufreq_info_available():
             return
 

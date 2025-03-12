@@ -155,7 +155,6 @@ def get_match_records(group_id):
     Ajax request.
     Get match table records for a group.
     """
-    print(f"get_match_records: group_id={group_id}")
     offset = request.args.get("offset", 0, type=int)
     limit = request.args.get("limit", 10, type=int)
 

@@ -151,6 +151,14 @@ td.score {
     text-align: right;
     padding-right: 10px;
 }
+td.team-archive {
+    font-size: x-small;
+    word-wrap: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
 
 th.stats {
     font-size: 8pt;

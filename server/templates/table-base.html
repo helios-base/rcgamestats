@@ -43,23 +43,6 @@
   {% endwith %}
 {% block content %}{% endblock %}
 </section>
-
-<!-- floating menu as footer -->
-{% if request.path not in ['/', '/auth/login', '/auth/register', '/auth/logout'] %}
-<footer>
-  <div class="footer-nav">
-    <a href="{{ url_for('index') }}">Menu</a>
-    <a href="{{ url_for('group.create') }}">Create a new group</a>
-    <a href="{{ url_for('group.create_roundrobin') }}">Create roundrobin</a>
-    <a href="{{ url_for('group.index') }}">Groups</a>
-    <a href="{{ url_for('group.show_stats') }}">Stats</a>
-    <a href="{{ url_for('team.index') }}">Teams</a>
-    <a href="{{ url_for('host.index') }}">Hosts</a>
-  </div>
-</footer>
-{% endif %}
-
 {% block scripts %}{% endblock %}
 </body>
-
 </html>

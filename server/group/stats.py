@@ -1,6 +1,6 @@
-import os
 import io
 import numpy as np
+
 
 def __plot_confidence_interval(ax, mean_scores, ci_scores, y, color):
     """

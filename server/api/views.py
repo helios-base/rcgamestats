@@ -435,7 +435,6 @@ def admin_create_group():
     data = request.get_json()
 
     try:
-        group_name = data.get("group_name")
         left_team_name = data.get("left_team_name")
         left_team_version = data.get("left_team_version")
         right_team_name = data.get("right_team_name")
@@ -445,17 +444,23 @@ def admin_create_group():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+    current_app.logger.info(f"Creating group left={left_team_name} ({left_team_version}) right={right_team_name} ({right_team_version}) matches={number_of_matches}")
+
     if left_team_name is None or right_team_name is None:
+        current_app.logger.error("Missing team names.")
         return jsonify({"error": "Missing team names."}), 400
 
     if left_team_version is None or right_team_version is None:
+        current_app.logger.error("Missing team versions.")
         return jsonify({"error": "Missing team versions."}), 400
 
     if number_of_matches is None or number_of_matches <= 0:
+        current_app.logger.error("Invalid number of matches.")
         return jsonify({"error": "Invalid number of matches."}), 400
 
     if number_of_matches > 10000:
-        return jsonify({"error": "Too many matches."}), 400
+        current_app.logger.error("Too many matches.")
+        return jsonify({"error": f"Too many matches {number_of_matches}"}), 400
 
     if left_team_version == "":
         # If the version is not specified, use the latest version.
@@ -463,7 +468,8 @@ def admin_create_group():
     else:
         left_team = Team.query.filter_by(name=left_team_name, version=left_team_version).first()
     if left_team is None:
-        return jsonify({"error": "Left team not found."}), 404
+        current_app.logger.error(f"Left team not found: {left_team_name} ({left_team_version})")
+        return jsonify({"error": f"Left team not found. {left_team_name} ({left_team_version})"}), 404
 
     if right_team_version == "":
         # If the version is not specified, use the latest version.
@@ -471,7 +477,8 @@ def admin_create_group():
     else:
         right_team = Team.query.filter_by(name=right_team_name, version=right_team_version).first()
     if right_team is None:
-        return jsonify({"error": "Right team not found."}),
+        current_app.logger.error(f"Right team not found: {right_team_name} ({right_team_version})")
+        return jsonify({"error": f"Right team not found. {right_team_name} ({right_team_version})"}), 404
 
     now = datetime.now().replace(microsecond=0)
 
@@ -490,6 +497,7 @@ def admin_create_group():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
+        current_app.logger.error(f"Group [{group_name}] cannot be created.")
         return jsonify({"error": f"Group [{group_name}] cannot be created."}), 400
 
     group_stats = GroupStats(group.id)

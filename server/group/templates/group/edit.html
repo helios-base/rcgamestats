@@ -32,7 +32,6 @@
 
   {% from "_formhelpers.html" import render_field %}
   <form method="POST" action="{{ url_for('group.edit_group', group_id=group.id) }}" novalidate>
-      {{ form.csrf_token }}
       {{ form.hidden_tag() }}
       <input type="" name="group_id" value="{{ group.id }}" style="display: none;">
       {{ render_field(form.additional_matches) }}

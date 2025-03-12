@@ -12,7 +12,6 @@
 {% from "_formhelpers.html" import render_field %}
 <div style="border: 1px solid black; padding: 10px; width: 400px;">
 <form method="POST" action="{{ url_for('auth.show_users') }}" novalidate>
-    {{ form.csrf_token }}
     {{ form.hidden_tag() }}
     {{ render_field(form.username) }}
     {{ render_field(form.email) }}

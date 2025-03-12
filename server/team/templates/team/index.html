@@ -39,7 +39,7 @@
                 <td>{{ team.version }}</td>
                 <td class="time">{{ team.uploaded_at }}</td>
                 <td class="{% if team.synch_mode %}bg-true{% else %}bg-false{% endif %}">{{ team.synch_mode }}</td>
-                <td><a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></td>
+                <td class="team-archive"><a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></td>
                 <td>{{ team.description }}</td>
             </tr>
             {% endfor %}

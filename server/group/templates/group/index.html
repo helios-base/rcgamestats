@@ -39,16 +39,16 @@
                 <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
                 <td class="group-name"><a href="{{ url_for('group.show_group_detail', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
                 <td class="time">{{ group.created_at }}</td>
-                <td class="{{ group.left_team.review_status.value if group.left_team else ''}}">
+                <td class="team-name {{ group.left_team.review_status.value if group.left_team else ''}}">
                     {% if group.left_team %}
-                    <a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}">{{ group.left_team.name }}, {{ group.left_team.version }}</a>
+                    <a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}" title="{{ group.left_team.version }}">{{ group.left_team.name }} <span style="font-size:xx-small;">({{ group.left_team.version }})</span></a>
                     {% else %}
                     <span class="error">Not found</span>
                     {% endif %}
                 </td>
-                <td class="{{ group.right_team.review_status.value if group.right_team else '' }}">
+                <td class="team-name {{ group.right_team.review_status.value if group.right_team else '' }}">
                     {% if group.right_team %}
-                    <a href="{{ url_for('team.show_team', team_id=group.right_team.id) }}">{{ group.right_team.name }}, {{ group.right_team.version }}</a>
+                    <a href="{{ url_for('team.show_team', team_id=group.right_team.id) }}" title="{{ group.right_team.version }}">{{ group.right_team.name }} <span style="font-size:xx-small;">({{ group.right_team.version }})</span></a>
                     {% else %}
                     <span class="error">Not found</span>
                     {% endif %}

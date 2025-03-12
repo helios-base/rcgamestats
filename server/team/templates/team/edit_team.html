@@ -4,11 +4,11 @@
 {% endblock %}
 
 {% block content %}
-
+<div class="submenu">
+    <a href="{{ url_for('team.show_team', team_id=team.id) }}">Back</a>
+</div>
 <h2>Team: {{ team.name }}, {{ team.version }}</h2>
-<ul class="submenu">
-    <li><a href="{{ url_for('team.show_team', team_id=team.id) }}">Back</a></li>
-</ul>
+
 <ul>
     <li>Review Status: {{ team.review_status.value }}</li>
     <li>Uploaded At: {{ team.uploaded_at }}</li>

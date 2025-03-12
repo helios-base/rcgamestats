@@ -175,7 +175,7 @@ def get_match_records(group_id):
             "right_score": match.right_score,
             "host_name": match.host_name if match.host_name else "",
             "host_id": match.host_id,
-            "status": match.processed.value,
+            "status": match.status.value,
             "log_url": url_for("group.show_match_log", group_name=group.name, index=match.index),
         }
         match_records.append(record)

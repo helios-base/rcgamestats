@@ -247,8 +247,8 @@ def archive_group(group_id):
 
     matches_in_group = Match.query.filter_by(group_id=group_id).all()
     for match in matches_in_group:
-        if match.processed == MatchStatus.IN_PROGRESS or match.processed == MatchStatus.UNEXECUTED:
-            match.processed = MatchStatus.ARCHIVED
+        if match.status == MatchStatus.IN_PROGRESS or match.status == MatchStatus.UNEXECUTED:
+            match.status = MatchStatus.ARCHIVED
 
     db.session.commit()
 
@@ -270,8 +270,8 @@ def archive_groups(group_ids):
 
         matches_in_group = Match.query.filter_by(group_id=group_id).all()
         for match in matches_in_group:
-            if match.processed == MatchStatus.IN_PROGRESS or match.processed == MatchStatus.UNEXECUTED:
-                match.processed = MatchStatus.ARCHIVED
+            if match.status == MatchStatus.IN_PROGRESS or match.status == MatchStatus.UNEXECUTED:
+                match.status = MatchStatus.ARCHIVED
 
         db.session.commit()
         current_app.logger.info(f"Archived {group.name}.")
@@ -323,8 +323,8 @@ def unarchive_groups():
             group.is_active = True
             matches_in_group = Match.query.filter_by(group_id=group_id).all()
             for match in matches_in_group:
-                if match.processed == MatchStatus.ARCHIVED:
-                    match.processed = MatchStatus.UNEXECUTED
+                if match.status == MatchStatus.ARCHIVED:
+                    match.status = MatchStatus.UNEXECUTED
             current_app.logger.info(f"Unarchived {group.name}")
 
     db.session.commit()
@@ -458,7 +458,7 @@ def reset_match(group_id):
         return redirect(url_for("group.show_group_detail", group_name=group.name))
 
     group_name = match.group.name
-    if match.processed == MatchStatus.COMPLETED:
+    if match.status == MatchStatus.COMPLETED:
         if match.left_team.version == "" or match.right_team.version == "":
             flash("The match which has no team version cannot be reset.", "error")
             current_app.logger.error("reset_match: The match which has no team version cannot be reset.")
@@ -475,7 +475,7 @@ def reset_match(group_id):
         db.session.commit()
         flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")
-    elif match.processed == MatchStatus.IN_PROGRESS:
+    elif match.status == MatchStatus.IN_PROGRESS:
         if match.host:
             match.host.assigned_match_id = None
             match.host.reset_count += 1

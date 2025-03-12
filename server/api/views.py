@@ -129,12 +129,12 @@ def request_match():
 
     if host.assigned_match_id is not None:
         match = Match.query.filter_by(id=host.assigned_match_id).first()
-        if match and match.processed == MatchStatus.IN_PROGRESS:
+        if match and match.status == MatchStatus.IN_PROGRESS:
             current_app.logger.warning(f"@{host_name} Already assigned a match.")
             return jsonify({"error": "Already assigned a match."}), 200
 
     # Find an unexecuted match
-    match = Match.query.filter_by(processed=MatchStatus.UNEXECUTED).first()
+    match = Match.query.filter_by(status=MatchStatus.UNEXECUTED).first()
     if match is None:
         return jsonify({"message": "No scheduled matches."}), 200
     if match.group is None:
@@ -148,7 +148,7 @@ def request_match():
     match.host_id = host.id
     match.host_name = host_name
     match.start_time = start_time
-    match.processed = MatchStatus.IN_PROGRESS
+    match.status = MatchStatus.IN_PROGRESS
     match.log_file_name = f"{str(match.index).zfill(5)}-{match.left_team.name}-{match.right_team.name}-{host_name}"
     match.token = secrets.token_hex(16)
     host.assigned_match_id = match.id
@@ -230,7 +230,7 @@ def validate_match(match, params):
         return "Group not found.", 404
     if match.left_team is None or match.right_team is None:
         return "Teams not found.", 404
-    if match.processed != MatchStatus.IN_PROGRESS:
+    if match.status != MatchStatus.IN_PROGRESS:
         return "Match is not in progress.", 410  # Gone
     if match.token != params["match_token"]:
         return "Token does not match.", 401  # Unauthorized
@@ -272,7 +272,7 @@ def update_match_result(match, params, end_time):
     match.end_time = end_time
     match.left_score = params["left_score"]
     match.right_score = params["right_score"]
-    match.processed = MatchStatus.COMPLETED
+    match.status = MatchStatus.COMPLETED
 
 
 def update_host_by_submit(match, end_time):
@@ -603,7 +603,7 @@ def admin_submit_group():
             group_id=group.id,
             left_team_id=left_team.id,
             right_team_id=right_team.id,
-            processed=MatchStatus.IN_PROGRESS,
+            status=MatchStatus.IN_PROGRESS,
         )
         db.session.add(match)
 
@@ -665,7 +665,7 @@ def admin_submit_result():
         Match.group_id == group.id,
         Match.left_team_id == left_team.id,
         Match.right_team_id == right_team.id,
-        Match.processed != MatchStatus.COMPLETED
+        Match.status != MatchStatus.COMPLETED
     ).first()
 
     if match is None:
@@ -694,7 +694,7 @@ def admin_submit_result():
     match.left_score = left_score
     match.right_score = right_score
     match.log_file_name = log_file_name
-    match.processed = MatchStatus.COMPLETED
+    match.status = MatchStatus.COMPLETED
 
     group.updated_at = end_time
     try:

@@ -36,7 +36,7 @@ class Group(db.Model):
     right_team = db.relationship('Team', foreign_keys=[right_team_id])
 
     def completed_count(self):
-        return Match.query.filter_by(group_id=self.id, processed=MatchStatus.COMPLETED).count()
+        return Match.query.filter_by(group_id=self.id, status=MatchStatus.COMPLETED).count()
 
     def to_simple_json(self):
         json = {
@@ -89,7 +89,7 @@ class Match(db.Model):
     right_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     left_score = db.Column(db.Integer)
     right_score = db.Column(db.Integer)
-    processed = db.Column(db.Enum(MatchStatus), name="match_status_enum", default=MatchStatus.UNEXECUTED)
+    status = db.Column(db.Enum(MatchStatus), name="match_status_enum", default=MatchStatus.UNEXECUTED)
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(16))
 
@@ -105,7 +105,7 @@ class Match(db.Model):
         self.end_time = None
         self.left_score = None
         self.right_score = None
-        self.processed = MatchStatus.UNEXECUTED
+        self.status = MatchStatus.UNEXECUTED
         self.log_file_name = None
         self.token = None
 
@@ -183,7 +183,7 @@ class GroupStats(db.Model):
         """
         Calculate the statistics of the group.
         """
-        matches = Match.query.filter_by(group_id=self.group_id, processed=MatchStatus.COMPLETED).all()
+        matches = Match.query.filter_by(group_id=self.group_id, status=MatchStatus.COMPLETED).all()
         self.completed_count = len(matches)
 
         if self.completed_count == 0:

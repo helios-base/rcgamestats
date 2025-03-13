@@ -1,14 +1,14 @@
 #!/bin/sh
 
 cd `dirname $0`
+. "./config"
 
-echo "Reset hosts file"
-sort -u all_hosts.tmpl > all_hosts
+sort -u $HOSTS > tmp_hosts
 
-for host in `cat all_hosts`; do
+for host in `cat tmp_hosts`; do
     echo "Running client on $host"
-    ssh $host "./rcgamestats/client/run.sh"
+    ssh $host "${REMOTE_CLIENT_DIR}/run.sh"
     echo "Done"
 done
 
-rm all_hosts
+rm tmp_hosts

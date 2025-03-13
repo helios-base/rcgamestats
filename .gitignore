@@ -1,3 +1,4 @@
+*.code-workspace
 .env
 __pycache__
 instance
@@ -5,3 +6,5 @@ migrations
 images
 logs
 teams
+venv
+

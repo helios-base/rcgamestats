@@ -10,7 +10,7 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
-sort -u $HOSTS > tmp_hosts
+sort -u $HOST_LIST > tmp_hosts
 
 for i in `cat tmp_hosts`; do
 	echo "=========="

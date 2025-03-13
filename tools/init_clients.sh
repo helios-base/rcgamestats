@@ -5,7 +5,7 @@
 cd `dirname $0`
 . "./config"
 
-sort -u $HOSTS > tmp_hosts
+sort -u $HOST_LIST > tmp_hosts
 
 for host in `cat tmp_hosts`; do
     echo "=========="

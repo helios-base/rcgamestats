@@ -7,14 +7,13 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
+echo "Reset hosts file"
+sort -u all_hosts.tmpl > all_hosts
 
-echo "reset $all_hosts"
-sort -u ${all_hosts}.tmpl > ${all_hosts}.command
-
-for i in `cat ${all_hosts}.command`; do
+for i in `cat all_hosts`; do
 	echo "=========="
 	echo "$i: \"$*\""
 	ssh $i "$*"
 done
 
-rm ${all_hosts}.command
+rm all_hosts

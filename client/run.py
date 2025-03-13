@@ -16,6 +16,8 @@ logger = logging.getLogger("client")
 def init_logging():
     logger.setLevel(logging.INFO)
 
+    if not os.path.exists(config.LOG_DIR):
+        os.makedirs(config.LOG_DIR)
     log_file = os.path.join(config.LOG_DIR, "client.log")
     handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
     # formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s in %(filename)s:%(lineno)d")

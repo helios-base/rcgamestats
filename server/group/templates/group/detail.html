@@ -115,7 +115,7 @@
             <th>End At</th>
             <th style="width:100px">Left Score</th>
             <th style="width:100px">Right Score</th>
-            <th>Host Name (ID)</th>
+            <th>Host Name</th>
             <th>Status</th>
             <th>Log File</th>
         </tr>
@@ -410,8 +410,14 @@
         //
         // レイアウトの設定
         //
+        // 目盛り間隔を自動で設定
+        const rawTickInterval = xMax / 10; // 10分割の概算値
+        const candidateIntervals = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+        const tickInterval = candidateIntervals.reduce(function(acc, cur) {
+            return (Math.abs(rawTickInterval - cur) < Math.abs(rawTickInterval - acc)) ? cur : acc;
+        }, 1);
         const tickVals = [];
-        for (var i = -xMax; i <= xMax; i++) {
+        for (let i = -xMax; i <= xMax; i += tickInterval) {
             tickVals.push(i);
         }
         const tickText = tickVals.map(function(val) {
@@ -487,8 +493,8 @@
         // });
 
         const layout = {
-            title: '',
-            height: 300,
+            title: 'Histogram of Matches by Host',
+            height: 350,
             barmode: 'overlay',
             bargap: 0,
             bargroupgap: 0,
@@ -516,16 +522,16 @@
                     }
                 }
             },
-            margin: { l: 50, r: 10, t: 10, b: 50 },
-            annotations: [{
-                xref: 'paper',
-                yref: 'paper',
-                x: 0.5,
-                y: -0.18,
-                text: 'Histogram of Matches by Host',
-                showarrow: false,
-                font: { size: 16, color: 'black' }
-            }]
+            margin: { l: 50, r: 10, t: 10, b: 80 },
+            // annotations: [{
+            //     xref: 'paper',
+            //     yref: 'paper',
+            //     x: 0.5,
+            //     y: -0.18,
+            //     text: 'Histogram of Matches by Host',
+            //     showarrow: false,
+            //     font: { size: 16, color: 'black' }
+            // }]
         };
 
         Plotly.newPlot('hostsHistogram', [trace], layout);
@@ -564,7 +570,8 @@
         if (match.host_id === null) {
             cell.textContent = '';
         } else {
-            cell.textContent = `${match.host_name} (${match.host_id})`;
+            // cell.textContent = `${match.host_name} (${match.host_id})`;
+            cell.textContent = match.host_name;
         }
         row.appendChild(cell);
 

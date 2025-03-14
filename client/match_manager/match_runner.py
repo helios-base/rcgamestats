@@ -90,6 +90,8 @@ class MatchRunner:
                 os.remove(f)
                 logger.info(f"Removed old file: {f}")
         for f in glob.glob(os.path.join(user_working_dir, "*.log")):
+            if os.path.basename(f) == "client.log":
+                continue
             if os.path.isfile(f):
                 os.remove(f)
                 logger.info(f"Removed old file: {f}")

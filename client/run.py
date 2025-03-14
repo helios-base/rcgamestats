@@ -1,4 +1,6 @@
 import os
+import sys
+import fcntl
 import time
 import signal
 import logging
@@ -7,6 +9,15 @@ import match_manager
 import team_manager
 import host_manager
 from config import config
+
+
+LOCK_FILE = '/tmp/rcgamestats_client.lock'
+lock_file = open(LOCK_FILE, 'w')
+try:
+    fcntl.lockf(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    print("Another instance is running. Exiting.")
+    sys.exit(0)
 
 
 # logging settings

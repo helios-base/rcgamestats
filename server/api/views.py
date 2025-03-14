@@ -134,25 +134,32 @@ def request_match():
             return jsonify({"error": "Already assigned a match."}), 200
 
     # Find an unexecuted match
-    match = Match.query.filter_by(status=MatchStatus.UNEXECUTED).first()
-    if match is None:
-        return jsonify({"message": "No scheduled matches."}), 200
-    if match.group is None:
-        return jsonify({"error": "Group found."}), 404
-    if match.left_team is None:
-        return jsonify({"error": "Left team not found."}), 404
-    if match.right_team is None:
-        return jsonify({"error": "Right team not found."}), 404
-
-    # Assign the match to the host
-    match.host_id = host.id
-    match.host_name = host_name
-    match.start_time = start_time
-    match.status = MatchStatus.IN_PROGRESS
-    match.log_file_name = f"{str(match.index).zfill(5)}-{match.left_team.name}-{match.right_team.name}-{host_name}"
-    match.token = secrets.token_hex(16)
-    host.assigned_match_id = match.id
     try:
+        match = (
+            Match.query
+            .filter_by(status=MatchStatus.UNEXECUTED)
+            .with_for_update(skip_locked=True)
+            .first()
+        )
+
+        if match is None:
+            return jsonify({"message": "No scheduled matches."}), 200
+        if match.group is None:
+            return jsonify({"error": "Group found."}), 404
+        if match.left_team is None:
+            return jsonify({"error": "Left team not found."}), 404
+        if match.right_team is None:
+            return jsonify({"error": "Right team not found."}), 404
+
+        # Assign the match to the host
+        match.host_id = host.id
+        match.host_name = host_name
+        match.start_time = start_time
+        match.status = MatchStatus.IN_PROGRESS
+        match.log_file_name = f"{str(match.index).zfill(5)}-{match.left_team.name}-{match.right_team.name}-{host_name}"
+        match.token = secrets.token_hex(16)
+        host.assigned_match_id = match.id
+
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()

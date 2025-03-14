@@ -5,11 +5,11 @@
 
 ## 1. 必要なパッケージのインストール
 
-まず、Python3 および仮想環境を構築するために必要なパッケージをインストールします。
+まず、Python3および仮想環境を構築するために必要なパッケージをインストールします。データベースはMySQLを用います．
 
 ```bash
 sudo apt update
-sudo apt install python3 python3-venv python3-pip
+sudo apt install python3 python3-venv python3-pip mysql-server
 ```
 
 また、Apache や必要なモジュール（例：mod_wsgi）がある場合は、適宜インストールしてください。
@@ -49,10 +49,59 @@ pip install -r requirements.txt
 
 ---
 
-## 4. .env ファイルの設定
+## 4. MySQLの設定
+
+***インストール***
+MySQLサーバがインストールされていない場合はインストールしてください。
+```bash
+sudo apt update
+sudo apt intall mysql-server
+```
+
+***初期設定***
+セキュリティ設定ツールを実行してrootパスワードの設定や不要なユーザー・匿名ユーザーの削除、リモートからの不必要なアクセス防止などを行います。
+
+````bash
+sudo mysql_secure_installation
+````
+rootパスワードの設定、匿名ユーザーの削除、リモートrootログインの無効化、テストデータベースの削除などを求められます。
+
+***データベースとユーザーの作成***
+MySQLにログインし、データベースおよびアプリケーション用のユーザーを追加します。
+
+```sql
+
+# MySQLにrootユーザーとしてログイン
+# mysql -u root -p
+sudo mysql  # Ubuntuの場合
+
+# 作業用のデータベースを作成（例：rcgamestats_db）
+CREATE DATABASE rcgamestats_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# アプリケーション用のユーザーを作成（例：myuser）し、パスワードを指定
+CREATE USER 'myuser'@'localhost' IDENTIFIED WITH mysql_native_password BY 'your_password';
+
+# データベースに対して必要な権限を付与
+GRANT ALL PRIVILEGES ON rcgamestats_db.* TO 'myuser'@'localhost';
+
+# 権限の変更を反映
+FLUSH PRIVILEGES;
+```
+
+***接続情報の確認とテスト***
+作成したユーザーアカウントで接続できるかを確認し、SQLAlchemyの設定（SQLALCHEMY_DATABASE_URI）に反映させます。  
+例えば、URIは以下のようになります．
+```
+mysql+pymysql://myuser:your_password@localhost/rcgamestats_db  
+```
+
+---
+
+## 5. .env ファイルの設定
 
 プロジェクトルートに `.env` ファイルを作成し、環境変数を設定します。`.env.example` に雛形を用意していいます。以下は設定例です。
 URLにプレフィックスをつけたい場合は、APPLICATION_ROOTを設定してください。プレフィックスをつけるとは、例えば `http://127.0.0.1:5000` ではなく `http://127.0.0.1:5000/rcgamestats` がルートになるようにすることを意味します（`APPLICATION_ROOT="/rcgamestats"`と設定する）。
+MySQLのURI設定も合わせて行います。MySQLの設定で入力した値を記入してください。
 
 
 ```dotenv
@@ -65,8 +114,15 @@ APPLICATION_ROOT="/"
 SECRET_KEY=your_secret_key
 WTF_CSRF_SECRET_KEY=your_wtf_csrf_secret_key
 
+# MySQLのURI設定
+MYSQL_USER='myuser'
+MYSQL_PASSWORD='your_password'
+MYSQL_HOST='localhost'
+MYSQL_DATABASE='rcgamestats_db'
+
 # 管理者アカウント設定
 ADMIN_USERNAME=admin
+ADMIN_PASSWORD='your_password'
 ADMIN_EMAIL=admin@example.com
 ADMIN_API_KEY=admin_api_key_here
 
@@ -83,7 +139,7 @@ GOOGLE_KEY_PATH=your_google_document_key_filepath
 ※ 設定項目はプロジェクトの仕様に合わせて適宜変更してください。
 
 ---
-## 5. その他の初期設定
+## 6. その他の初期設定
 
 データベース初期化時にユーザーとOAuth用メールアドレスを登録することができます。後からWebインタフェースでも追加できます。
 
@@ -95,7 +151,7 @@ default_allowed_emails.csv にOAuth用メールアドレスをリストできま
 
 ---
 
-## 6. データベースの初期化とマイグレーション
+## 7. データベースの初期化とマイグレーション
 
 初回セットアップやデータベース構造の変更があった場合は、データベースの初期化およびマイグレーションを行います。
 以下は Flask-Migrate を利用している場合の例です。
@@ -122,7 +178,7 @@ flask db upgrade
 
 ---
 
-## 7. ローカルで実行
+## 8. ローカルで実行
 
 LAN内で動かすだけならば、プロジェクトのルートで以下を実行すれば動作します。
 ```bash
@@ -133,7 +189,7 @@ Webブラウザで http://127.0.0.1:5000 (プレフィックスをつけてい�
 
 ---
 
-## 8. (optional) Google OAuth の設定
+## 9. (optional) Google OAuth の設定
 
 Google OAuth を利用した認証機能を用意しています。
 通常のアカウントに対してはパスワードリマインド機能を用意していないため、Googleアカウントでの利用を推奨します。

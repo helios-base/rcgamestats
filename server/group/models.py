@@ -159,8 +159,8 @@ class GroupStats(db.Model):
         self.right_scored_games = 0
         self.left_scored_games_rate = 0.0
         self.right_scored_games_rate = 0.0
-        self.left_score_counts = {str(i): 0 for i in range(5)}
-        self.right_score_counts = {str(i): 0 for i in range(5)}
+        self.left_score_counts = {str(i): 0 for i in range(3)}
+        self.right_score_counts = {str(i): 0 for i in range(3)}
         self.left_mean_score = 0.0
         self.right_mean_score = 0.0
         self.left_score_confidence_interval_lower = 0.0

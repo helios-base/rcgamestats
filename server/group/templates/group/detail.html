@@ -278,15 +278,15 @@
         const annotations = [];
 
         // グラフ下部にタイトルを追加
-        annotations.push({
-            xref: 'paper',
-            yref: 'paper',
-            x: 0.5,
-            y: -0.17,  // グラフ下部の位置。必要に応じて調整
-            text: 'Match Scores Histogram with 95% Confidence Intervals',
-            showarrow: false,
-            font: { size: 16, color: 'black' }
-        });
+        // annotations.push({
+        //     xref: 'paper',
+        //     yref: 'paper',
+        //     x: 0.5,
+        //     y: -0.17,  // グラフ下部の位置。必要に応じて調整
+        //     text: 'Match Scores Histogram with 95% Confidence Intervals',
+        //     showarrow: false,
+        //     font: { size: 16, color: 'black' }
+        // });
 
         // 各バーの根元( x = 0 付近 )にカウントと割合を表示するための annotations を生成
         scoreLabels.forEach(function(label, i) {
@@ -416,15 +416,19 @@
         const tickInterval = candidateIntervals.reduce(function(acc, cur) {
             return (Math.abs(rawTickInterval - cur) < Math.abs(rawTickInterval - acc)) ? cur : acc;
         }, 1);
-        const tickVals = [];
-        for (let i = -xMax; i <= xMax; i += tickInterval) {
+
+        const tickVals = [0];
+        for (let i = tickInterval; i <= xMax; i += tickInterval) {
             tickVals.push(i);
+            tickVals.push(-i);
         }
+        tickVals.sort((a, b) => a - b);
+
         const tickText = tickVals.map(function(val) {
             return Math.abs(val);
         });
 
-        const layout = {
+        const layoutScoreHistogram = {
             // title: 'Match Scores Histogram',
             title: '',
             height: 400,
@@ -461,12 +465,18 @@
             //     yanchor: 'bottom'
             // },
             annotations: annotations,
-            margin: { l: 10, r: 10, t: 10, b: 65 },
+            // margin: { l: 10, r: 10, t: 10, b: 65 },
+            margin: { l: 10, r: 10, t: 10, b: 25 },
         };
 
         const data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
 
-        Plotly.newPlot('matchScoreHistogram', data, layout);
+        const configScoreHistogram = {
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+            displaylogo: false,
+        };
+
+        Plotly.newPlot('matchScoreHistogram', data, layoutScoreHistogram, configScoreHistogram);
     }
 
     function plotHostHistogram() {
@@ -475,7 +485,7 @@
         const hostLabels = Object.keys(hosts).sort();
         const hostData = hostLabels.map(label => hosts[label]);
 
-        const trace = {
+        const traceHostHistogram = {
             x: hostLabels,
             y: hostData,
             type: 'bar',
@@ -492,7 +502,7 @@
         //     return label.replace(' ', '<br>');
         // });
 
-        const layout = {
+        const layoutHostHistogram = {
             title: 'Histogram of Matches by Host',
             height: 350,
             barmode: 'overlay',
@@ -515,14 +525,15 @@
                 },
                 beginAtZero: true,
                 showgrid: true,
-                dtick: 1,
+                tickmode: 'auto',
+                // dtick: 1,
                 ticks: {
                     callback: function (value) {
                         return Number.isInteger(value) ? value : null;
                     }
-                }
+                },
             },
-            margin: { l: 50, r: 10, t: 10, b: 80 },
+            margin: { l: 50, r: 10, t: 30, b: 80 },
             // annotations: [{
             //     xref: 'paper',
             //     yref: 'paper',
@@ -532,9 +543,25 @@
             //     showarrow: false,
             //     font: { size: 16, color: 'black' }
             // }]
+            annotations: [{
+                x: 0.05,
+                y: 1.1,
+                xref: 'paper',
+                yref: 'paper',
+                text: "# of hosts = " + hostLabels.length,
+                showarrow: false,
+                font: { size: 14, color: 'black' },
+                xanchor: 'left',
+                yanchor: 'top'
+            }],
         };
 
-        Plotly.newPlot('hostsHistogram', [trace], layout);
+        const configHostHistogram = {
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+            displaylogo: false,
+        };
+
+        Plotly.newPlot('hostsHistogram', [traceHostHistogram], layoutHostHistogram, configHostHistogram);
     }
 
     //

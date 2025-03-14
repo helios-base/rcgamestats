@@ -1,0 +1,3 @@
+
+HOST_LIST="all_hosts"
+REMOTE_CLIENT_DIR="./client"

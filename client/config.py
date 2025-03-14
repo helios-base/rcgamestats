@@ -4,6 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from distutils.util import strtobool
 
+
 def get_env_int(var_name, default_value):
     """
     Get an environment variable and convert it to an integer.

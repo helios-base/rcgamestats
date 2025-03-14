@@ -206,8 +206,8 @@ class GroupStats(db.Model):
         self.right_scored_games = int(np.sum(right_scores > 0))
         self.left_scored_games_rate = self.left_scored_games / self.completed_count
         self.right_scored_games_rate = self.right_scored_games / self.completed_count
-        self.left_score_counts = {str(i): int(count) for i, count in enumerate(np.bincount(left_scores, minlength=6))}
-        self.right_score_counts = {str(i): int(count) for i, count in enumerate(np.bincount(right_scores, minlength=6))}
+        self.left_score_counts = {str(i): int(count) for i, count in enumerate(np.bincount(left_scores, minlength=3))}
+        self.right_score_counts = {str(i): int(count) for i, count in enumerate(np.bincount(right_scores, minlength=3))}
         self.left_mean_score = float(np.mean(left_scores))
         self.right_mean_score = float(np.mean(right_scores))
         # self.host_counts = dict(Counter([match.host_name for match in matches if match.host_name is not None]))

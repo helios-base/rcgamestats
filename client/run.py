@@ -132,7 +132,7 @@ def main():
         logger.error(f"Failed to create directories. {e}")
         return
 
-    initial_sleep = config.SLEEP_TIME
+    initial_sleep = config.INITIAL_SLEEP_TIME
     max_sleep = config.MAX_SLEEP_TIME
     current_sleep = initial_sleep
 

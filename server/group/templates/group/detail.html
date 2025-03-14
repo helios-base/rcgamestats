@@ -115,7 +115,7 @@
             <th>End At</th>
             <th style="width:100px">Left Score</th>
             <th style="width:100px">Right Score</th>
-            <th>Host Name (ID)</th>
+            <th>Host Name</th>
             <th>Status</th>
             <th>Log File</th>
         </tr>
@@ -570,7 +570,8 @@
         if (match.host_id === null) {
             cell.textContent = '';
         } else {
-            cell.textContent = `${match.host_name} (${match.host_id})`;
+            // cell.textContent = `${match.host_name} (${match.host_id})`;
+            cell.textContent = match.host_name;
         }
         row.appendChild(cell);
 

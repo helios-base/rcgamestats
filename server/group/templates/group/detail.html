@@ -525,7 +525,8 @@
                 },
                 beginAtZero: true,
                 showgrid: true,
-                dtick: 1,
+                tickmode: 'auto',
+                // dtick: 1,
                 ticks: {
                     callback: function (value) {
                         return Number.isInteger(value) ? value : null;

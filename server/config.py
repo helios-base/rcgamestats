@@ -12,7 +12,12 @@ load_dotenv(root_dir / ".env", override=True)
 class Config:
     APPLICATION_ROOT= os.getenv("APPLICATION_ROOT", "/")
     SECRET_KEY = os.getenv("SECRET_KEY", "my_secret_key")
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(root_dir, 'instance', 'rcgamestats.sqlite')}"
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+pymysql://{os.getenv('MYSQL_USER', 'default_user')}:"
+        f"{os.getenv('MYSQL_PASSWORD', 'default_password')}@"
+        f"{os.getenv('MYSQL_HOST', 'localhost')}/"
+        f"{os.getenv('MYSQL_DATABASE', 'default_db')}"
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = True
     WTF_CSRF_SECRET_KEY = os.getenv("WTF_CSRF_SECRET_KEY", "my_wtf_csrf_secret_key")

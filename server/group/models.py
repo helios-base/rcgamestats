@@ -91,7 +91,7 @@ class Match(db.Model):
     right_score = db.Column(db.Integer)
     status = db.Column(db.Enum(MatchStatus), name="match_status_enum", default=MatchStatus.UNEXECUTED)
     log_file_name = db.Column(db.String(255))
-    token = db.Column(db.String(16))
+    token = db.Column(db.String(64))
 
     group = db.relationship('Group', backref=db.backref('matches', cascade='all, delete-orphan', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])

@@ -152,7 +152,7 @@ def main():
             logger.info("Stop file exists. The process finished.")
             break
 
-        match = match_manager.request_match()
+        match, error_type = match_manager.request_match()
 
         if match:
             logger.info(f">>>> Received {match.group_name}/{match.index}")
@@ -169,7 +169,14 @@ def main():
                 match_manager.decline_match(match)
                 logger.error("Failed to download teams.")
         else:
-            current_sleep = min(current_sleep * 1.5, max_sleep)
+            if error_type == "host_not_found":
+                logger.error("Host not found. Register host again.")
+                if not check_or_register_host():
+                    logger.error("Failed to load host_token or register host.")
+                    break
+                current_sleep = initial_sleep
+            else:
+                current_sleep = min(current_sleep * 1.5, max_sleep)
 
         logger.info(f"Sleep for {round(current_sleep, 1)} seconds.")
         interruptable_sleep(current_sleep)

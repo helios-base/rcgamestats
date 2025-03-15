@@ -47,27 +47,28 @@ def request_match():
             try:
                 response_data = response.json()
                 error_msg = response_data.get("error", "")
+                error_type = response_data.get("error_type", "")
             except Exception:
                 error_msg = ""
             if response.status_code == 404:
                 logger.error(f"request_match: [{error_msg}] {e}")
-                return None
+                return None, error_type
             logger.error(f"HTTP error occurred: [{response.status_code}] {error_msg} {e}")
-            return None
+            return None, error_type
         except requests.exceptions.RequestException as e:
             logger.error(f"Request error occurred: {e}")
-            return None
+            return None, "request_error"
         except Exception as e:
             logger.error(f"An error occurred: {e}")
-            return None
+            return None, "unknown_error"
 
         json_message = response.json()
         if "message" in json_message:
             logger.info(f"request_match: (message) {json_message['message']}")
-            return None
+            return None, "message"
         if "error" in json_message:
             logger.error(f"request_match: (error) {json_message['error']}")
-            return None
+            return None, "error"
 
         match = Match.from_json(json_message)
-        return match
+        return match, None

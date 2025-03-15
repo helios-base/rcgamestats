@@ -109,7 +109,8 @@ def request_match():
     host = Host.query.get(host_id)
     if host is None:
         current_app.logger.error(f"Host {host_name} not found.")
-        return jsonify({"error": "Host not found."}), 404
+        return jsonify({"error": "Host not found.",
+                        "error_type": "host_not_found"}), 404
     if host.token != host_token:
         current_app.logger.error(f"Invalid token for host {host_name}.")
         return jsonify({"error": "Invalid token."}), 401
@@ -145,7 +146,7 @@ def request_match():
         if match is None:
             return jsonify({"message": "No scheduled matches."}), 200
         if match.group is None:
-            return jsonify({"error": "Group found."}), 404
+            return jsonify({"error": "Group not found."}), 404
         if match.left_team is None:
             return jsonify({"error": "Left team not found."}), 404
         if match.right_team is None:

@@ -76,6 +76,7 @@ class Group(db.Model):
             json['right_status'] = self.right_team.review_status.value
         return json
 
+
 class Match(db.Model):
     __tablename__ = 'match'
     id = db.Column(db.Integer, primary_key=True)

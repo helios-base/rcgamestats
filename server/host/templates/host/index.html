@@ -70,7 +70,7 @@
             id: "rownum",
             format: function(table) {
                 // tbody の各行を取得し、先頭セルに行番号を設定
-                $(table.tBodies[0]).find("tr").each(function(index) {
+                $(table.tBodies[0]).find("tr:visible").each(function(index) {
                     $(this).find("td:first").text(index + 1);
                 });
             }

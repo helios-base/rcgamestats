@@ -7,6 +7,7 @@
 <table id="host-table" class="tablesorter">
     <thead>
         <tr>
+            <th style="width:1%;">#</th>
             <th>ID</th>
             <th>Host Name</th>
             <th>IPv4</th>
@@ -31,6 +32,7 @@
         {% set total_n = host.total_runtime_normal %}
         {% set average_n = 0 if host.total_matches_normal == 0 else host.total_runtime_normal / host.total_matches_normal %}
         <tr>
+            <td></td>
             <td>{{ host.id }}</td>
             <td class="host-name"><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
             <td>{{ host.ip_v4_address }}</td>
@@ -64,13 +66,24 @@
 {% block scripts %}
 <script>
     $(document).ready(function() {
+        $.tablesorter.addWidget({
+            id: "rownum",
+            format: function(table) {
+                // tbody の各行を取得し、先頭セルに行番号を設定
+                $(table.tBodies[0]).find("tr").each(function(index) {
+                    $(this).find("td:first").text(index + 1);
+                });
+            }
+        });
+    
         $("#host-table").tablesorter({
             headers: {
-                11: { sorter: false, filter: false },
-                12: { sorter: false, filter: false }
+                0: { sorter: false, filter: false },
+                12: { sorter: false, filter: false },
+                13: { sorter: false, filter: false }
             },
             sortList: [[0, 0]],
-            widgets: ['filter'],
+            widgets: ['filter', 'rownum'],
             widgetOptions: {
                 filter_columnFilters: true,
                 filter_cssFilter: 'tablesorter-filter',

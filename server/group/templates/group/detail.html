@@ -110,6 +110,7 @@
 <table id="match-table" class="tablesorter">
     <thead>
         <tr>
+            <th style="width:1%;">#</th>
             <th>Index</th>
             <th>Start At</th>
             <th>End At</th>
@@ -574,6 +575,10 @@
         let row = document.createElement('tr');
 
         let cell = document.createElement('td');
+        cell.textContent = '';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
         cell.textContent = match.index;
         row.appendChild(cell);
 
@@ -667,13 +672,24 @@
     // Initialization after document is ready
     //
     $(function () {
+        $.tablesorter.addWidget({
+            id: "rownum",
+            format: function(table) {
+                // tbody の各行を取得し、先頭セルに行番号を設定
+                $(table.tBodies[0]).find("tr").each(function(index) {
+                    $(this).find("td:first").text(index + 1);
+                });
+            }
+        });
+
         $('#match-table').tablesorter(
             {
                 headers: {
-                    7: { sorter: false, filter: false }
+                    0: { sorter: false, filter: false },
+                    8: { sorter: false, filter: false }
                 },
                 sortList: [[0, 0]], // sort by first column in ascending order
-                widgets: ['filter', 'pager'],
+                widgets: ['filter', 'pager', 'rownum'],
                 widgetOptions: {
                     filter_columnFilters: true,
                     // class name applied to filter row and each input

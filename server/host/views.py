@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for
-from flask import flash
+from flask import flash, request
 from flask_login import login_required
 from ..app import db
 from ..auth.decorators import admin_required
@@ -105,5 +105,59 @@ def delete_host(host_id):
 
     db.session.delete(host)
     db.session.commit()
+
+    return redirect(url_for("host.index"))
+
+
+@host.route("/bulk_action", methods=["POST"])
+@login_required
+@admin_required
+def bulk_reset():
+    """
+    Perform bulk reset on hosts.
+    """
+    host_ids = request.form.getlist("host_ids")
+
+    print(host_ids)
+    if not host_ids:
+        flash("No hosts selected.", "error")
+        return redirect(url_for("host.index"))
+
+    for host_id in host_ids:
+        host = Host.query.get(host_id)
+        host.reset_stats()
+
+    db.session.commit()
+    flash("Hosts reset successfully.", "success")
+
+    return redirect(url_for("host.index"))
+
+
+@host.route("/bulk_delete", methods=["POST"])
+@login_required
+@admin_required
+def bulk_delete():
+    """
+    Perform bulk delete on hosts.
+    """
+    host_ids = request.form.getlist("host_ids")
+
+    if not host_ids:
+        flash("No hosts selected.", "error")
+        return redirect(url_for("host.index"))
+
+    for host_id in host_ids:
+        host = Host.query.get(host_id)
+        if host.assigned_match_id:
+            flash(f"The host {host.name} is currently assigned to a match. Unassign the host first.", "danger")
+            return redirect(url_for("host.index"))
+        matches = Match.query.filter(Match.host_id == host_id).all()
+        for match in matches:
+            match.host_id = None
+
+        db.session.delete(host)
+
+    db.session.commit()
+    flash("Hosts deleted successfully.", "success")
 
     return redirect(url_for("host.index"))

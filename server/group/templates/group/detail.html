@@ -599,7 +599,8 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        if (match.host_id === null) {
+        //if (match.host_id === null) {
+        if (match.host_name === null) {
             cell.textContent = '';
         } else {
             // cell.textContent = `${match.host_name} (${match.host_id})`;

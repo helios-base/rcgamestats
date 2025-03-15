@@ -4,9 +4,18 @@
 {% endblock %}
 
 {% block content %}
+<form id="bulk-action-form" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button id="bulk-reset-button" type="submit" formaction="{{ url_for('host.bulk_reset') }}"
+            onclick="return confirm('Really reset selected hosts?')" disabled>Reset</button>
+        <button id="bulk-delete-button" type="submit" formaction="{{ url_for('host.bulk_delete') }}"
+            onclick="return confirm('Really delete selected hosts?')" disabled>Delete</button>
+    </div>
 <table id="host-table" class="tablesorter">
     <thead>
         <tr>
+            <th style="width:3%;"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
             <th style="width:1%;">#</th>
             <th>ID</th>
             <th>Host Name</th>
@@ -21,7 +30,6 @@
             <th>Average Runtime</th>
             <th class="lborder">Declines</th>
             <th>Resets</th>
-            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -32,6 +40,7 @@
         {% set total_n = host.total_runtime_normal %}
         {% set average_n = 0 if host.total_matches_normal == 0 else host.total_runtime_normal / host.total_matches_normal %}
         <tr>
+            <td><input type="checkbox" name="host_ids" value="{{ host.id }}" onclick="checkCheckboxes()"></td>
             <td></td>
             <td>{{ host.id }}</td>
             <td class="host-name"><a href="{{ url_for('host.show_detail', host_id=host.id) }}">{{ host.name }}</a></td>
@@ -46,22 +55,11 @@
             <td>{{ "%02d" % (average_n // 3600) }}:{{ "%02d" % ((average_n % 3600) // 60) }}:{{ "%02d" % (average_n % 60) }}</td>
             <td class="lborder">{{ host.decline_count }}</td>
             <td>{{ host.reset_count }}</td>
-            <td class="lborder">
-                <div style="display:flex; justify-content: center; align-items:center; gap:4px;">
-                <form method="POST" action="{{ url_for('host.reset_host', host_id=host.id) }}" style="display:inline-block; margin:0;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" style="font-size:xx-small; padding 2px 2px;" onclick="return confirm('Really reset {{host.name}}?')">Reset</button>
-                </form>
-                <form method="POST" action="{{ url_for('host.delete_host', host_id=host.id) }}" style="display:inline-block; margin:0;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" style="font-size:xx-small; padding 2px 2px;" onclick="return confirm('Really delete {{host.name}}?')">Delete</button>
-                </form>
-                </div>
-            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</form>
 {% endblock %}
 {% block scripts %}
 <script>
@@ -69,9 +67,9 @@
         $.tablesorter.addWidget({
             id: "rownum",
             format: function(table) {
-                // tbody の各行を取得し、先頭セルに行番号を設定
-                $(table.tBodies[0]).find("tr:visible").each(function(index) {
-                    $(this).find("td:first").text(index + 1);
+                // tbody の各行を取得し、２番目のセルに行番号を設定
+                $("tbody tr", table).each(function(index) {
+                    $(this).find("td:eq(1)").text(index + 1);
                 });
             }
         });
@@ -79,10 +77,9 @@
         $("#host-table").tablesorter({
             headers: {
                 0: { sorter: false, filter: false },
-                12: { sorter: false, filter: false },
-                13: { sorter: false, filter: false }
+                1: { sorter: false, filter: false },
             },
-            sortList: [[0, 0]],
+            sortList: [[3, 0]], // ホスト名で昇順ソート
             widgets: ['filter', 'rownum'],
             widgetOptions: {
                 filter_columnFilters: true,
@@ -91,5 +88,31 @@
             }
         });
     });
+
+    function toggleCheckboxes(source) {
+        checkboxes = document.getElementsByName('host_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        var checkboxes = document.getElementsByName('host_ids');
+        var anyChecked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                anyChecked = true;
+                break;
+            }
+        }
+        document.getElementById('bulk-reset-button').disabled = !anyChecked;
+        document.getElementById('bulk-delete-button').disabled = !anyChecked;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        checkCheckboxes();
+    });
+
 </script>
 {% endblock %}

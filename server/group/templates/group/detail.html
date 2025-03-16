@@ -431,6 +431,7 @@
 
         const layoutScoreHistogram = {
             // title: 'Match Scores Histogram',
+            dragmode: 'pan',
             title: '',
             height: 400,
             barmode: 'overlay',
@@ -473,7 +474,7 @@
         const data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
 
         const configScoreHistogram = {
-            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+            modeBarButtonsToRemove: ['zoom2d', 'select2d', 'lasso2d'],
             displaylogo: false,
         };
 
@@ -505,6 +506,7 @@
 
         const layoutHostHistogram = {
             title: 'Histogram of Matches by Host',
+            dragmode: 'pan',
             height: 350,
             barmode: 'overlay',
             bargap: 0,
@@ -558,7 +560,7 @@
         };
 
         const configHostHistogram = {
-            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+            modeBarButtonsToRemove: ['zoom2d', 'select2d', 'lasso2d'],
             displaylogo: false,
         };
 

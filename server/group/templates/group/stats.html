@@ -578,6 +578,7 @@
 
         // レイアウト設定：グリッド機能を使って2列に分割し、同じ y 軸 (yaxis1) を共有
         const layout = {
+            dragmode: 'pan',
             height: 50 * groupLabels.length + 200,  // 適宜調整
             margin: { t: 50, b: 50, l: 120, r: 20 },
             grid: { rows: 1, columns: 2, pattern: 'independent', xgap: 0.1 },
@@ -687,6 +688,7 @@
         // グラフのレイアウト設定（横軸：グループ、縦軸：割合）
         const layout = {
             title: 'Win Rates per Group',
+            dragmode: 'pan',
             height: 400,
             xaxis: {
                 title: 'Group',

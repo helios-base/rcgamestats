@@ -7,7 +7,8 @@
 <div class="plot-menu" style="margin-top:10px; margin-bottom:10px;">
     <label for="plotType">Plot Type</label>
     <select id="plotType">
-        <option value="confidence" selected>Conficence Intervals</option>
+        <option value="ciZoom" selected>CI: Zoom</option>
+        <option value="ciHistogram">CI: All Histograms</option>
         <option value="winRate">Win Rate</option>
     </select>
 </div>
@@ -260,8 +261,10 @@
 
     //
     // 95%信頼区間のエラーバー + 簡易ヒストグラムを描画
+    // mode が 'zoom' の場合、信頼区間のエラーバーの範囲のみに絞って描画
+    // それ以外の場合は全体を描画
     //
-    function plotConfidenceIntervals(filteredStatsList) {
+    function plotConfidenceIntervals(filteredStatsList, mode) {
         // 信頼区間の値をサーバで計算済みのstats_listから取得
         const currentStatsList = filteredStatsList || statsList;
         const groupLabels = currentStatsList.map(stats => {
@@ -539,34 +542,39 @@
         });
 
         // 左チームの最大値（平均値＋上側誤差）の最大値を計算
-        //const leftMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 1.5;
-        // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
-        const leftErrorMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i])) + 0.5;
-        // 各グループで left_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
+        const leftErrorMin = Math.min(...leftMean.map((m, i) => m - leftErrorLower[i]));
+        const leftErrorMax = Math.max(...leftMean.map((m, i) => m + leftErrorUpper[i]));
+        // 各グループで left_score_counts のキー（スコアとして扱う）の最大値を求める
         const leftScoreMax = Math.max(...currentStatsList.map(stats => {
             const keys = Object.keys(stats.left_score_counts).map(Number);
             const validKeys = keys.filter(score => stats.left_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
-        })) + 0.5;
-        const leftMax = Math.max(leftErrorMax, leftScoreMax, 5);
+        }));
+        const leftMin = ( mode == 'zoom' 
+                          ? leftErrorMin - 0.5 
+                          : -0.5 );
+        const leftMax = ( mode == 'zoom' 
+                          ? leftErrorMax + 0.5 
+                          : Math.max(leftErrorMax + 0.5, leftScoreMax + 0.5, 5) );
 
         // 右チームの最小値と最大値を計算
-        // const rightMin = Math.min(...rightMean.map((m, i) => m - rightErrorLower[i]));
-        // const rightMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 1.5;
-        // 各グループの (平均値 + 上側誤差) の最大値 + 0.5
-        const rightErrorMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i])) + 0.5;
-        // 各グループで right_score_counts のキー（スコアとして扱う）の最大値を求め、さらに全体で最大の値 + 1
+        const rightErrorMin = Math.min(...rightMean.map((m, i) => m - rightErrorLower[i]));
+        const rightErrorMax = Math.max(...rightMean.map((m, i) => m + rightErrorUpper[i]));
+        // 各グループで right_score_counts のキー（スコアとして扱う）の最大値を求める
         const rightScoreMax = Math.max(...currentStatsList.map(stats => {
             const keys = Object.keys(stats.right_score_counts).map(Number);
             const validKeys = keys.filter(score => stats.right_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
-        })) + 0.5;
-        const rightMax = Math.max(rightErrorMax, rightScoreMax, 5);
+        }));
+        const rightMin = ( mode == 'zoom'
+                           ? rightErrorMin - 0.5
+                           : -0.5 );
+        const rightMax = ( mode == 'zoom'
+                           ? rightErrorMax + 0.5
+                           : Math.max(rightErrorMax + 0.5, rightScoreMax + 0.5, 5) );
 
-        // const bothMax = Math.max(leftMax, rightMax);
-        // 各軸の範囲をそれぞれ広げる
-        const leftRange = [-0.5, leftMax];
-        const rightRange = [-0.5, rightMax];
+        const leftRange = [leftMin, leftMax];
+        const rightRange = [rightMin, rightMax];
 
         // レイアウト設定：グリッド機能を使って2列に分割し、同じ y 軸 (yaxis1) を共有
         const layout = {
@@ -697,6 +705,7 @@
             modeBarButtonsToRemove: ['select2d', 'lasso2d'],
             displaylogo: false,
             responsive: false,  // 自動リサイズを無効化
+            // scrollZoom: true, // スクロールでズームを有効化 plotly-basic-3.0.1.min.js には未対応
         };
 
         Plotly.newPlot('plotArea', data, layout, config);
@@ -719,8 +728,10 @@
         const filteredStatsList = filteredIds.map(id => statsList.find(item => item.group_id === id));
 
         const selected = document.getElementById('plotType').value;
-        if (selected === 'confidence') {
-            plotConfidenceIntervals(filteredStatsList);
+        if (selected === 'ciZoom') {
+            plotConfidenceIntervals(filteredStatsList, 'zoom');
+        } else if (selected === 'ciHistogram') {
+            plotConfidenceIntervals(filteredStatsList, 'full');
         } else if (selected === 'winRate') {
             plotWinRates(filteredStatsList);
         }

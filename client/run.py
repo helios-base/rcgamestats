@@ -2,6 +2,7 @@ import os
 import sys
 import fcntl
 import time
+import random
 import signal
 import logging
 from logging.handlers import RotatingFileHandler
@@ -178,8 +179,10 @@ def main():
             else:
                 current_sleep = min(current_sleep * 1.5, max_sleep)
 
-        logger.info(f"Sleep for {round(current_sleep, 1)} seconds.")
-        interruptable_sleep(current_sleep)
+        jitter = random.uniform(0.8, 1.2)
+        adjusted_sleep = min(max(initial_sleep, current_sleep * jitter), max_sleep + 10)
+        logger.info(f"Sleep for {round(adjusted_sleep, 1)} seconds.")
+        interruptable_sleep(adjusted_sleep)
 
 
 if __name__ == "__main__":

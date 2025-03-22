@@ -148,43 +148,49 @@ def main():
     max_sleep = config.MAX_SLEEP_TIME
     current_sleep = initial_sleep
 
-    while True:
-        if os.path.exists(config.STOP_FILE_PATH):
-            logger.info("Stop file exists. The process finished.")
-            break
+    try:
+        while True:
+            if os.path.exists(config.STOP_FILE_PATH):
+                logger.info("Stop file exists. The process finished.")
+                break
 
-        match, error_type = match_manager.request_match()
+            match, error_type = match_manager.request_match()
 
-        if match:
-            logger.info(f">>>> Received {match.group_name}/{match.index}")
-            remove_temporal_files()
+            if match:
+                logger.info(f">>>> Received {match.group_name}/{match.index}")
+                remove_temporal_files()
 
-            if check_download_teams(match):
-                if match.run():
-                    match_manager.submit_result(match)
+                if check_download_teams(match):
+                    if match.run():
+                        match_manager.submit_result(match)
+                    else:
+                        match_manager.decline_match(match)
+                    logger.info(f"<<<< Finished {match.group_name}/{match.index}")
+                    current_sleep = initial_sleep
                 else:
                     match_manager.decline_match(match)
-                logger.info(f"<<<< Finished {match.group_name}/{match.index}")
-                current_sleep = initial_sleep
+                    logger.error("Failed to download teams.")
             else:
-                match_manager.decline_match(match)
-                logger.error("Failed to download teams.")
-        else:
-            if error_type == "host_not_found":
-                logger.error("Host not found. Register host again.")
-                if not check_or_register_host():
-                    logger.error("Failed to load host_token or register host.")
-                    break
-                current_sleep = initial_sleep
-            else:
-                current_sleep = min(current_sleep * 1.5, max_sleep)
+                if error_type == "host_not_found":
+                    logger.error("Host not found. Register host again.")
+                    if not check_or_register_host():
+                        logger.error("Failed to load host_token or register host.")
+                        break
+                    current_sleep = initial_sleep
+                else:
+                    current_sleep = min(current_sleep * 1.5, max_sleep)
 
-        jitter = random.uniform(0.8, 1.2)
-        adjusted_sleep = min(max(initial_sleep, current_sleep * jitter), max_sleep + 10)
-        logger.info(f"Sleep for {round(adjusted_sleep, 1)} seconds.")
-        interruptable_sleep(adjusted_sleep)
+            jitter = random.uniform(0.8, 1.2)
+            adjusted_sleep = min(max(initial_sleep, current_sleep * jitter), max_sleep + 10)
+            logger.info(f"Sleep for {round(adjusted_sleep, 1)} seconds.")
+            interruptable_sleep(adjusted_sleep)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":
     init_logging()
     main()
+    logger.info("The process finished.")
+    lock_file.close()
+    os.remove(LOCK_FILE)

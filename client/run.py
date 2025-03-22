@@ -59,7 +59,8 @@ def interruptable_sleep(duration):
             # logger.info("Stop file exists. The process will be finished.")
             break
         remaining_time = end_time - time.time()
-        time.sleep(min(remaining_time, 2))
+        sleep_time = min(max(0, remaining_time), 5)
+        time.sleep(sleep_time)
 
 
 def create_directories():

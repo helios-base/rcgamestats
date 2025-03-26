@@ -128,11 +128,11 @@ def login_google_callback():
         token = current_app.oauth.google.authorize_access_token()
         resp = current_app.oauth.google.get('https://www.googleapis.com/oauth2/v2/userinfo', token=token)
         user_info = resp.json()
-        email = user_info['email']
 
+        email = user_info.get('email')
         if not email:
-            flash(f"GoogleLogin: No email", "error")
-            current_app.logger.error(f"GoogleLogin: No email")
+            flash(f"GoogleLogin: No email found in user info", "error")
+            current_app.logger.error(f"GoogleLogin: No email found in user info")
             return redirect(url_for("auth.login"))
 
         allowed_email = AllowedEmail.query.filter_by(email=email).first()
@@ -168,11 +168,13 @@ def login_google_callback():
         db.session.commit()
         flash(f"GoogleLogin: Logged in as [{user.username}]", "success")
         return redirect(url_for("index"))
-    except OAuthError:
-        flash(f"Exception: {OAuthError}", "error")
+    except OAuthError as e:
+        flash(f"Exception: {e}", "error")
+        current_app.logger.error(f"GoogleLogin: OAuthError occured: {e}")
+    except Exception as e:
+        flash("An unexpected error occurred during Google login", "error")
+        current_app.logger.error(f"GoogleLogin: Unexpected error: {e}")
 
-    flash(f"GoogleLogin: Google account {email} cannot be verified", "error")
-    current_app.logger.warning(f"GoogleLogin: Google account {email} cannot be verified")
     return redirect(url_for("auth.login"))
 
 

@@ -54,12 +54,15 @@ signal.signal(signal.SIGINT, signal_handler)
 
 def interruptable_sleep(duration):
     end_time = time.time() + duration
-    while time.time() < end_time:
+    while True:
         if os.path.exists(config.STOP_FILE_PATH):
-            # logger.info("Stop file exists. The process will be finished.")
+            logger.info("Stop file exists. The process will be finished.")
             break
-        remaining_time = end_time - time.time()
-        sleep_time = min(max(0, remaining_time), 5)
+        current_time = time.time()
+        if current_time >= end_time:
+            break
+        sleep_time = end_time - current_time
+        sleep_time = min(max(0, sleep_time), 5)
         time.sleep(sleep_time)
 
 

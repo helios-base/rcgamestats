@@ -44,3 +44,9 @@ class HostStats(db.Model):
     total_matches_normal = db.Column(db.Integer, default=0)
 
     host = db.relationship("Host", back_populates="stats")
+
+    def average_runtime_synch_mode(self):
+        return self.total_runtime_synch_mode / self.total_matches_synch_mode if self.total_matches_synch_mode > 0 else 0.0
+
+    def average_runtime_normal(self):
+        return self.total_runtime_normal / self.total_matches_normal if self.total_matches_normal > 0 else 0.0

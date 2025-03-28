@@ -6,9 +6,9 @@
 {% block content %}
 <h2>Name: {{ host.name }}</h2>
 {% set total_s = host.stats.total_runtime_synch_mode %}
-{% set average_s = 0 if host.stats.total_matches_synch_mode == 0 else host.stats.total_runtime_synch_mode / host.stats.total_matches_synch_mode %}
+{% set average_s = host.stats.average_runtime_synch_mode() %}
 {% set total_n = host.stats.total_runtime_normal %}
-{% set average_n = 0 if host.stats.total_matches_normal == 0 else host.stats.total_runtime_normal / host.stats.total_matches_normal %}
+{% set average_n = host.stats.average_runtime_normal() %}
 <ul>
     <li>Host ID: {{ host.id }}</li>
     <li>Host Name: {{ host.name }}</li>

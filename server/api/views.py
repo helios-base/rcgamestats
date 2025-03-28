@@ -137,6 +137,10 @@ def request_match():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+    if host.enabled is False:
+        current_app.logger.warning(f"@{host_name} is disabled by admin.")
+        return jsonify({"error": "Host is disabled by admin."}), 403
+
     if host.assigned_match_id is not None:
         match = Match.query.filter_by(id=host.assigned_match_id).first()
         if match and match.status == MatchStatus.IN_PROGRESS:

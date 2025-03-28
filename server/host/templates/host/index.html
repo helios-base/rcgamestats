@@ -4,9 +4,23 @@
 {% endblock %}
 
 {% block content %}
+<ul class="submenu">
+    {% if enabled %}
+    <li><a href="{{ url_for('host.show_disabled') }}">Disabled Hosts</a></li>
+    {% else %}
+    <li><a href="{{ url_for('host.index') }}">Active Hosts</a></li>
+    {% endif %}
+</ul>
+
 <form id="bulk-action-form" method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
+        {% if enabled %}
+        <button id="bulk-disable-button" type="submit" formaction="{{ url_for('host.bulk_disable') }}"
+            onclick="return confirm('Really disable selected hosts?')" disabled>Disable</button>
+        {% else %}
+        <button id="bulk-enable-button" type="submit" formaction="{{ url_for('host.bulk_enable') }}" disabled>Enable</button>
+        {% endif %}
         <button id="bulk-reset-button" type="submit" formaction="{{ url_for('host.bulk_reset') }}"
             onclick="return confirm('Really reset selected hosts?')" disabled>Reset</button>
         <button id="bulk-delete-button" type="submit" formaction="{{ url_for('host.bulk_delete') }}"
@@ -106,6 +120,11 @@
                 break;
             }
         }
+        {% if enabled %}
+        document.getElementById('bulk-disable-button').disabled = !anyChecked;
+        {% else %}
+        document.getElementById('bulk-enable-button').disabled = !anyChecked;
+        {% endif %}
         document.getElementById('bulk-reset-button').disabled = !anyChecked;
         document.getElementById('bulk-delete-button').disabled = !anyChecked;
     }

@@ -63,8 +63,19 @@ def index():
     """
     Show all hosts.
     """
-    hosts = Host.query.all()
-    return render_template("host/index.html", hosts=hosts)
+    # hosts = Host.query.all()
+    hosts = Host.query.filter(Host.enabled).all()
+    return render_template("host/index.html", hosts=hosts, enabled=True)
+
+
+@host.route("/disabled")
+@login_required
+def show_disabled():
+    """
+    Show all disabled hosts.
+    """
+    hosts = Host.query.filter(Host.enabled == False).all()
+    return render_template("host/index.html", hosts=hosts, enabled=False)
 
 
 @host.route("/<int:host_id>")
@@ -160,5 +171,51 @@ def bulk_delete():
 
     db.session.commit()
     flash("Hosts deleted successfully.", "success")
+
+    return redirect(url_for("host.index"))
+
+
+@host.route("/bulk_disable", methods=["POST"])
+@login_required
+@admin_required
+def bulk_disable():
+    """
+    Perform bulk disable on hosts.
+    """
+    host_ids = request.form.getlist("host_ids")
+
+    if not host_ids:
+        flash("No hosts selected.", "error")
+        return redirect(url_for("host.index"))
+
+    for host_id in host_ids:
+        host = Host.query.get(host_id)
+        host.enabled = False
+
+    db.session.commit()
+    flash("Hosts disabled successfully.", "success")
+
+    return redirect(url_for("host.index"))
+
+
+@host.route("/bulk_enable", methods=["POST"])
+@login_required
+@admin_required
+def bulk_enable():
+    """
+    Perform bulk enable on hosts.
+    """
+    host_ids = request.form.getlist("host_ids")
+
+    if not host_ids:
+        flash("No hosts selected.", "error")
+        return redirect(url_for("host.index"))
+
+    for host_id in host_ids:
+        host = Host.query.get(host_id)
+        host.enabled = True
+
+    db.session.commit()
+    flash("Hosts enabled successfully.", "success")
 
     return redirect(url_for("host.index"))

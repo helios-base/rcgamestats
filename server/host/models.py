@@ -13,6 +13,7 @@ class Host(db.Model):
     token = db.Column(db.String(36), unique=True, nullable=False,
                       default=generate_host_token)
     ip_v4_address = db.Column(db.String(16), default="")
+    enabled = db.Column(db.Boolean, default=True)
     last_accessed_at = db.Column(db.DateTime, default=datetime.now().replace(microsecond=0))
     assigned_match_id = db.Column(db.Integer,
                                   db.ForeignKey("match.id",

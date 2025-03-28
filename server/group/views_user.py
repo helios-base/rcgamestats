@@ -6,7 +6,7 @@ from flask import send_file, send_from_directory
 from flask_login import login_required, current_user
 from ..app import db
 from . import group as group_bp
-from .models import Group, Match, MatchStatus, GroupStats
+from .models import Group, Match, GroupStats
 from .stats import plot_confidence_intervals
 from ..config import config
 

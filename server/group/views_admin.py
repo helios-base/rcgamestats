@@ -478,7 +478,7 @@ def reset_match(group_id):
     elif match.status == MatchStatus.IN_PROGRESS:
         if match.host:
             match.host.assigned_match_id = None
-            match.host.reset_count += 1
+            match.host.stats.reset_count += 1
             db.session.commit()
         match.reset_assignment()
         db.session.commit()

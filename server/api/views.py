@@ -11,7 +11,7 @@ from ..app import db, csrf
 from ..auth.decorators import api_key_required, admin_api_key_required
 from ..group.models import Group, GroupStats, Match, MatchStatus
 from ..group.utils import save_group_metadata
-from ..host.models import Host
+from ..host.models import Host, HostStats
 from ..team.models import Team, current_datetime_str
 
 api = Blueprint("api", __name__, url_prefix="/api")
@@ -72,6 +72,15 @@ def register_host():
     except IntegrityError as e:
         db.session.rollback()
         current_app.logger.error(f"Failed to register host {host_name}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    host_stats = HostStats(host_id=host.id)
+    db.session.add(host_stats)
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Failed to register host stats {host_name}: {e}")
         return jsonify({"error": str(e)}), 500
 
     current_app.logger.info(f"Registered host: id={host.id} name={host_name}")
@@ -293,11 +302,11 @@ def update_host_by_submit(match, end_time):
     # The seconds of the match duration are calculated as the difference between the start and end times.
     duration = (end_time - match.start_time).total_seconds()
     if match.left_team.synch_mode and match.right_team.synch_mode:
-        match.host.total_runtime_synch_mode += duration
-        match.host.total_matches_synch_mode += 1
+        match.host.stats.total_runtime_synch_mode += duration
+        match.host.stats.total_matches_synch_mode += 1
     else:
-        match.host.total_runtime_normal += duration
-        match.host.total_matches_normal += 1
+        match.host.stats.total_runtime_normal += duration
+        match.host.stats.total_matches_normal += 1
 
 
 @api.route("/submit_result", methods=["POST"])
@@ -381,7 +390,7 @@ def decline_match():
 
     host.last_accessed_at = datetime.now().replace(microsecond=0)
     host.assigned_match_id = None
-    host.decline_count += 1
+    host.stats.decline_count += 1
     db.session.commit()
 
     match = Match.query.get(match_id)

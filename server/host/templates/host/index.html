@@ -35,10 +35,10 @@
     <tbody>
         {% for host in hosts %}
         {% set status = get_host_status(host) %}
-        {% set total_s = host.total_runtime_synch_mode %}
-        {% set average_s = 0 if host.total_matches_synch_mode == 0 else host.total_runtime_synch_mode / host.total_matches_synch_mode %}
-        {% set total_n = host.total_runtime_normal %}
-        {% set average_n = 0 if host.total_matches_normal == 0 else host.total_runtime_normal / host.total_matches_normal %}
+        {% set total_s = host.stats.total_runtime_synch_mode %}
+        {% set average_s = 0 if host.stats.total_matches_synch_mode == 0 else host.stats.total_runtime_synch_mode / host.stats.total_matches_synch_mode %}
+        {% set total_n = host.stats.total_runtime_normal %}
+        {% set average_n = 0 if host.stats.total_matches_normal == 0 else host.stats.total_runtime_normal / host.stats.total_matches_normal %}
         <tr>
             <td><input type="checkbox" name="host_ids" value="{{ host.id }}" onclick="checkCheckboxes()"></td>
             <td></td>
@@ -47,14 +47,14 @@
             <td>{{ host.ip_v4_address }}</td>
             <td class="time">{{ host.last_accessed_at }}</td>
             <td class="{{ status }}">{{ status }}</td>
-            <td class="lborder">{{ host.total_matches_synch_mode }}</td>
+            <td class="lborder">{{ host.stats.total_matches_synch_mode }}</td>
             <td>{{ "%02d" % (total_s // 3600) }}:{{ "%02d" % ((total_s % 3600) // 60) }}:{{ "%02d" % (total_s % 60) }} </td>
             <td>{{ "%02d" % (average_s // 3600) }}:{{ "%02d" % ((average_s % 3600) // 60) }}:{{ "%02d" % (average_s % 60) }}</td>
-            <td class="lborder">{{ host.total_matches_normal }}</td>
+            <td class="lborder">{{ host.stats.total_matches_normal }}</td>
             <td>{{ "%02d" % (total_n // 3600) }}:{{ "%02d" % ((total_n % 3600) // 60) }}:{{ "%02d" % (total_n % 60) }} </td>
             <td>{{ "%02d" % (average_n // 3600) }}:{{ "%02d" % ((average_n % 3600) // 60) }}:{{ "%02d" % (average_n % 60) }}</td>
-            <td class="lborder">{{ host.decline_count }}</td>
-            <td>{{ host.reset_count }}</td>
+            <td class="lborder">{{ host.stats.decline_count }}</td>
+            <td>{{ host.stats.reset_count }}</td>
         </tr>
         {% endfor %}
     </tbody>

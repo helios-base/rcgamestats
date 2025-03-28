@@ -42,6 +42,20 @@ def register_host():
     if x_forwarded_for:
         client_ip = x_forwarded_for.split(',')[0].strip()
 
+    if host_token is not None:
+        host = Host.query.filter_by(token=host_token).first()
+        if host:
+            host.name = host_name
+            host.last_accessed_at = datetime.now().replace(microsecond=0)
+            host.ip_v4_address = client_ip
+            db.session.commit()
+            current_app.logger.info(f"Found already registered host token for id={host_id} name={host_name} ip={client_ip}")
+            if host_id != host.id:
+                current_app.logger.warning(f"Use the existing host ID {host.id} instead of {host_id}.")
+            return jsonify({"message": "Host token already registered.",
+                            "host_id": host.id,
+                            "host_token": host.token})
+
     if host_id:
         host = Host.query.get(host_id)
         if host:
@@ -55,8 +69,9 @@ def register_host():
                     db.session.commit()
                     return jsonify({"message": "Host already registered."})
                 else:
-                    current_app.logger.warning(f"Received invalid token for host id={host_id} name={host_name}.")
-                    return jsonify({"error": "Invalid host token."}), 401
+                    current_app.logger.warning(f"Received invalid token for host id={host_id} name={host_name} ip={client_ip}.")
+                    current_app.logger.warning(f"The host {client_ip} is registered as a new one.")
+                    # return jsonify({"error": "Invalid host token."}), 401
             else:
                 current_app.logger.warning(f"Received a request to register an already registered host {host_name}.")
                 return jsonify({"error": f"{host_name} already registererd. Please provide a token."}), 400
@@ -66,6 +81,8 @@ def register_host():
 
     # host not found, create a new host record
     host = Host(name=host_name, ip_v4_address=client_ip)
+    if host_token is not None and isinstance(host_token, str) and len(host_token) >= 36:
+        host.token = host_token
     db.session.add(host)
     try:
         db.session.commit()

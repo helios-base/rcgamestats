@@ -472,7 +472,14 @@ def reset_match(group_id):
             os.remove(log_file_path)
 
         match.reset_assignment()
-        db.session.commit()
+        group.updated_at = datetime.now().replace(microsecond=0)
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Match {group_name}/{match.index} cannot be reset.", "error")
+            current_app.logger.error(f"Match {group_name}/{match.index} cannot be reset.")
+            return redirect(url_for("group.show_group_detail", group_name=group_name))
         flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")
     elif match.status == MatchStatus.IN_PROGRESS:
@@ -480,8 +487,16 @@ def reset_match(group_id):
             match.host.assigned_match_id = None
             match.host.stats.reset_count += 1
             db.session.commit()
+
         match.reset_assignment()
-        db.session.commit()
+        group.updated_at = datetime.now().replace(microsecond=0)
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Match {group_name}/{match.index} cannot be reset.", "error")
+            current_app.logger.error(f"Match {group_name}/{match.index} cannot be reset.")
+            return redirect(url_for("group.show_group_detail", group_name=group_name))
         flash(f"Match {group_name}/{match.index} has been reset.", "success")
         current_app.logger.info(f"Reset {group_name}/{match.index}")
     else:

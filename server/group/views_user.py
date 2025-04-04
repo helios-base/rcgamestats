@@ -1,4 +1,6 @@
 import os
+import csv
+import io
 import glob
 from datetime import datetime
 from flask import render_template, redirect, url_for, flash, jsonify, request, current_app
@@ -213,6 +215,51 @@ def show_group_logs(group_name):
     )
 
 
+@group_bp.route("/<int:group_id>/export_csv", methods=["POST"])
+@login_required
+def export_group_csv(group_id):
+    """
+    Export group data to a CSV file.
+    """
+    group = Group.query.get(group_id)
+    if group is None:
+        flash(f"Group {group_id} not found.", "error")
+        return redirect(url_for("group.index"))
+
+    matches = Match.query.filter_by(group_id=group.id).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Group Name", "Created At", "Left Team", "Left Version", "Right Team", "Right Version",
+        "Index", "Start Time", "End Time", "Left Score", "Right Score", "Host Name", "Status"
+    ])
+
+    for match in matches:
+        writer.writerow([
+            group.name,
+            group.created_at.strftime("%Y-%m-%d %H:%M:%S") if group.created_at else "",
+            group.left_team.name if group.left_team else "",
+            group.left_team.version if group.left_team else "",
+            group.right_team.name if group.right_team else "",
+            group.right_team.version if group.right_team else "",
+            match.index,
+            match.start_time.strftime("%Y-%m-%d %H:%M:%S") if match.start_time else "",
+            match.end_time.strftime("%Y-%m-%d %H:%M:%S") if match.end_time else "",
+            match.left_score,
+            match.right_score,
+            match.host_name if match.host_name else "",
+            match.status.value
+        ])
+
+    # Create a response object with the CSV data
+    return current_app.response_class(
+        response=output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={group.name}.csv"}
+    )
+
+
 @group_bp.route("/<string:group_name>/<int:index>/", methods=["GET"])
 @login_required
 def show_match_log(group_name, index):
@@ -246,6 +293,7 @@ def show_match_log(group_name, index):
     return render_template(
         "group/log_files.html", group_name=group_name, file_names=file_names
     )
+
 
 @group_bp.route("/<string:group_name>/logs/<path:file_name>", methods=["GET"])
 @login_required

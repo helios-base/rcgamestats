@@ -217,7 +217,7 @@ def show_group_logs(group_name):
 
 @group_bp.route("/<int:group_id>/export_csv", methods=["POST"])
 @login_required
-def export_group_csv(group_id):
+def export_csv(group_id):
     """
     Export group data to a CSV file.
     """

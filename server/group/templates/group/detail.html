@@ -103,7 +103,7 @@
     <select class="gotoPage" title="Select page number"></select>
 </div>
 
-<form action="{{ url_for('group.export_group_csv', group_id=group.id) }}" method="post">
+<form action="{{ url_for('group.export_csv', group_id=group.id) }}" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
         <button type="submit" name="action" value="export_csv">Export CSV</button>

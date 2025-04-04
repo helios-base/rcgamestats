@@ -451,6 +451,11 @@ def reset_match(group_id):
         current_app.logger.error(f"reset_match: Group ID {group_id} not found.")
         return redirect(url_for("group.index"))
 
+    if group.is_active is False:
+        flash(f"Group ID {group_id} is archived.", "error")
+        current_app.logger.error(f"reset_match: Group ID {group_id} is archived.")
+        return redirect(url_for("group.show_archived_groups"))
+
     match = Match.query.get(match_id)
     if match is None:
         flash(f"Match ID {match_id} not found.", "error")

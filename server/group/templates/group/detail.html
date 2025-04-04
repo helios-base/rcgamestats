@@ -573,7 +573,7 @@
     let tableOffset = 0;
     const batchSize = 1000;
 
-    function createMatchTableRow(match) {
+    function createMatchTableRow(match, isGroupActive) {
         let row = document.createElement('tr');
 
         let cell = document.createElement('td');
@@ -611,7 +611,8 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
-        if (match.status === 'in progress' || match.status === 'completed') {
+        if (isGroupActive
+            && (match.status === 'in progress' || match.status === 'completed')) {
             let link = document.createElement('a');
             link.href = '#';
             link.textContent = match.status;
@@ -650,8 +651,9 @@
                 const matches = data.match_records;
                 if ( matches && matches.length > 0 ) {
                     let tableBody = document.getElementById('match-table-body');
+                    const isGroupActive = {{ group.is_active|tojson }};
                     matches.forEach(match => {
-                        tableBody.appendChild(createMatchTableRow(match));
+                        tableBody.appendChild(createMatchTableRow(match, isGroupActive));
                     });
                     tableOffset += matches.length;
 

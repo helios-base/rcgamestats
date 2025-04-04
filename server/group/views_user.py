@@ -230,26 +230,35 @@ def export_group_csv(group_id):
 
     output = io.StringIO()
     writer = csv.writer(output)
+
+    writer.writerow(["Group Information"])
+    writer.writerow(["Group Name", group.name])
+    writer.writerow(["Created At", group.created_at.strftime("%Y-%m-%d %H:%M:%S") if group.created_at else ""])
+    writer.writerow(["Updated At", group.updated_at.strftime("%Y-%m-%d %H:%M:%S") if group.updated_at else ""])
+    writer.writerow(["Is Active", group.is_active])
+    writer.writerow(["Left Team", group.left_team.name if group.left_team else ""])
+    writer.writerow(["Left Version", f"{group.left_team.version}" if group.left_team else ""])
+    writer.writerow(["Right Team", group.right_team.name if group.right_team else ""])
+    writer.writerow(["Right Version", f"{group.right_team.version}" if group.right_team else ""])
+    writer.writerow(["Description", group.description if group.description else ""])
+    writer.writerow(["Total Matches", len(matches)])
+
+    writer.writerow([])
+    writer.writerow(["Match Information"])
     writer.writerow([
-        "Group Name", "Created At", "Left Team", "Left Version", "Right Team", "Right Version",
-        "Index", "Start Time", "End Time", "Left Score", "Right Score", "Host Name", "Status"
+        "Index", "Start Time", "End Time", "Left Score", "Right Score", "Host Name", "Status", "Log File Name"
     ])
 
     for match in matches:
         writer.writerow([
-            group.name,
-            group.created_at.strftime("%Y-%m-%d %H:%M:%S") if group.created_at else "",
-            group.left_team.name if group.left_team else "",
-            group.left_team.version if group.left_team else "",
-            group.right_team.name if group.right_team else "",
-            group.right_team.version if group.right_team else "",
             match.index,
             match.start_time.strftime("%Y-%m-%d %H:%M:%S") if match.start_time else "",
             match.end_time.strftime("%Y-%m-%d %H:%M:%S") if match.end_time else "",
             match.left_score,
             match.right_score,
             match.host_name if match.host_name else "",
-            match.status.value
+            match.status.value,
+            match.log_file_name if match.log_file_name else ""
         ])
 
     # Create a response object with the CSV data

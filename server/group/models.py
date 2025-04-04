@@ -106,7 +106,10 @@ class Match(db.Model):
         self.end_time = None
         self.left_score = None
         self.right_score = None
-        self.status = MatchStatus.UNEXECUTED
+        if self.group.is_active:
+            self.status = MatchStatus.UNEXECUTED
+        else:
+            self.status = MatchStatus.ARCHIVED
         self.log_file_name = None
         self.token = None
 

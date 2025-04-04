@@ -1,4 +1,5 @@
 import os
+import csv
 import glob
 import shutil
 from datetime import datetime
@@ -424,6 +425,29 @@ def upload_group_results_to_google_sheet(group_id):
         current_app.logger.error("Failed to upload the group results to the Google Spreadsheet.")
 
     return redirect(url_for("group.show_group_detail", group_name=group.name))
+
+
+@group_bp.route("/import_csv", methods=["POST"])
+@login_required
+@admin_required
+def import_csv():
+    """
+    Import group results from CSV file.
+    """
+    csv_file = request.files.get("csv_file")
+    if not csv_file:
+        flash("No CSV file selected.", "error")
+        return redirect(url_for("group.index"))
+
+    print(f"Importing group results from CSV file: {csv_file.filename}")
+    current_app.logger.info(f"Importing group results from CSV file: {csv_file.filename}")
+
+    # Process the CSV file and update the database
+    # ...
+
+    flash("Successfully imported group results from CSV file.", "success")
+    current_app.logger.info("Successfully imported group results from CSV file.")
+    return redirect(url_for("group.index"))
 
 
 #

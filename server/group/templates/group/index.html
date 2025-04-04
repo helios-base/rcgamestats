@@ -61,6 +61,19 @@
         {% endfor %}</tbody>
     </table>
 </form>
+
+{% if current_user.is_admin %}
+<form action="{{ url_for('group.import_csv') }}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button type="button" onclick="document.getElementById('csv-input').click();">
+            Import CSV
+        </button>
+    </div>
+    <!-- This input is hidden and will be triggered by the button above -->
+    <input id="csv-input" type="file" name="csv_file" accept=".csv" style="display: none;" onchange="this.form.submit();">
+</form>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

@@ -480,7 +480,7 @@ def read_group_from_csv(reader):
     try:
         first_row = next(reader)
     except StopIteration:
-        raise ValueError("CSV file is empty.")
+        raise ValueError("Group data not found.")
     except Exception as e:
         raise ValueError(f"Error reading CSV file: {e}")
 
@@ -501,7 +501,7 @@ def read_group_from_csv(reader):
         created_at = datetime.strptime(group_info["Created At"], "%Y-%m-%d %H:%M:%S")
         updated_at = datetime.strptime(group_info["Updated At"], "%Y-%m-%d %H:%M:%S")
         left_name = group_info["Left Team"]
-        left_version = group_info["Left Team"]
+        left_version = group_info["Left Version"]
         right_name = group_info["Right Team"]
         right_version = group_info["Right Version"]
         description = group_info["Description"]
@@ -564,7 +564,7 @@ def read_matches_from_csv(reader, group):
     try:
         first_row = next(reader)
     except StopIteration:
-        raise ValueError("CSV file is empty.")
+        raise ValueError("Match data not found.")
     except Exception as e:
         raise ValueError(f"Error reading CSV file: {e}")
 

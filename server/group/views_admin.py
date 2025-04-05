@@ -1,10 +1,12 @@
 import os
+import csv
 import glob
 import shutil
 from datetime import datetime
 from flask import render_template, redirect, url_for, flash, current_app
 from flask import request
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from ..app import db
 from ..auth.decorators import admin_required
@@ -200,7 +202,7 @@ def edit_group(group_id):
             flash("The total number of matches cannot exceed 10,000.", "error")
             current_app.logger.error("The total number of matches cannot exceed 10,000.")
             return redirect(url_for("group.edit_group", group_id=group_id))
-        
+
         for i in range(int(form.additional_matches.data)):
             match = Match(
                 index=number_of_matches + i + 1,
@@ -424,6 +426,192 @@ def upload_group_results_to_google_sheet(group_id):
         current_app.logger.error("Failed to upload the group results to the Google Spreadsheet.")
 
     return redirect(url_for("group.show_group_detail", group_name=group.name))
+
+
+@group_bp.route("/import_csv", methods=["POST"])
+@login_required
+@admin_required
+def import_csv():
+    """
+    Import group results from CSV file.
+    """
+    csv_file = request.files.get("csv_file")
+    if not csv_file:
+        flash("No CSV file selected.", "error")
+        return redirect(url_for("group.index"))
+
+    print(f"Importing group results from CSV file: {csv_file.filename}")
+    current_app.logger.info(f"Importing group results from CSV file: {csv_file.filename}")
+
+    # Process the CSV file and update the database
+    reader = csv.reader(csv_file.read().decode("utf-8").splitlines())
+
+    try:
+        group = read_group_from_csv(reader)
+        read_matches_from_csv(reader, group)
+    except Exception as e:
+        flash(f"Error importing group results: {e}", "error")
+        current_app.logger.error(f"Error importing group results: {e}")
+        return redirect(url_for("group.index"))
+
+    if group is None:
+        flash("Group not found.", "error")
+        current_app.logger.error("Group not found.")
+        return redirect(url_for("group.index"))
+
+    group_stats = GroupStats(group.id)
+    db.session.add(group_stats)
+    db.session.commit()
+
+    group_stats.update()
+    db.session.commit()
+
+    save_group_metadata(group)
+
+    flash("Successfully imported group results from CSV file.", "success")
+    current_app.logger.info("Successfully imported group results from CSV file.")
+    return redirect(url_for("group.index"))
+
+
+def read_group_from_csv(reader):
+    """
+    Read group data from the CSV reader.
+    Returns a Group object.
+    """
+    try:
+        first_row = next(reader)
+    except StopIteration:
+        raise ValueError("Group data not found.")
+    except Exception as e:
+        raise ValueError(f"Error reading CSV file: {e}")
+
+    if not first_row or first_row[0].strip() != "Group Information":
+        raise ValueError("CSV file does not contain 'Group Information' line")
+
+    group_info = {}
+    for row in reader:
+        # finish reading if the row is empty
+        if not row:
+            break
+        key = row[0].strip()
+        value = row[1].strip()
+        group_info[key] = value
+
+    try:
+        group_name = group_info["Group Name"]
+        created_at = datetime.strptime(group_info["Created At"], "%Y-%m-%d %H:%M:%S")
+        updated_at = datetime.strptime(group_info["Updated At"], "%Y-%m-%d %H:%M:%S")
+        left_name = secure_filename(group_info["Left Team"])
+        left_version = secure_filename(group_info["Left Version"])
+        right_name = secure_filename(group_info["Right Team"])
+        right_version = secure_filename(group_info["Right Version"])
+        description = group_info["Description"]
+    except KeyError as e:
+        raise ValueError(f"Missing required field: {e}")
+    except Exception as e:
+        raise ValueError(f"Error processing group information: {e}")
+
+    # Check if the group name already exists
+    existing_group = Group.query.filter_by(name=group_name).first()
+    if existing_group:
+        raise ValueError(f"Group name [{group_name}] already exists.")
+
+    # Check if the teams already exist
+    # If not, create new teams
+    left_team_id = 0
+    right_team_id = 0
+    left_team = Team.query.filter_by(name=left_name, version=left_version).first()
+    right_team = Team.query.filter_by(name=right_name, version=right_version).first()
+
+    if left_team:
+        left_team_id = left_team.id
+    else:
+        archive_dir = os.path.join("teams", left_name, left_version)
+        absolute_path = os.path.join(current_app.static_folder, archive_dir)
+        if not os.path.exists(absolute_path):
+            os.makedirs(absolute_path)
+        left_team = Team(name=left_name, version=left_version, archive_path=archive_dir, is_active=False)
+        db.session.add(left_team)
+        db.session.commit()
+        left_team_id = left_team.id
+
+    if right_team:
+        right_team_id = right_team.id
+    else:
+        archive_dir = os.path.join("teams", right_name, right_version)
+        absolute_path = os.path.join(current_app.static_folder, archive_dir)
+        if not os.path.exists(absolute_path):
+            os.makedirs(absolute_path)
+        right_team = Team(name=right_name, version=right_version, archive_path=archive_dir, is_active=False)
+        db.session.add(right_team)
+        db.session.commit()
+        right_team_id = right_team.id
+
+    # Create the group
+    group = Group(
+        name=group_name,
+        created_at=created_at,
+        updated_at=updated_at,
+        left_team_id=left_team_id,
+        right_team_id=right_team_id,
+        description=description,
+    )
+
+    db.session.add(group)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise ValueError(f"Group name [{group_name}] already exists.")
+
+    return group
+
+
+def read_matches_from_csv(reader, group):
+    """
+    Read match data from the CSV reader.
+    """
+    try:
+        first_row = next(reader)
+    except StopIteration:
+        raise ValueError("Match data not found.")
+    except Exception as e:
+        raise ValueError(f"Error reading CSV file: {e}")
+
+    if not first_row or first_row[0].strip() != "Match Information":
+        raise ValueError("CSV file does not contain 'Match Information' line")
+
+    # read header line
+    header = next(reader)
+    if not header:
+        raise ValueError("CSV file does not contain the header line for match information")
+
+    for row in reader:
+        # finish reading if the row is empty
+        if not row:
+            break
+
+        match_info = {}
+        for i, value in enumerate(row):
+            match_info[i] = value.strip()
+            print(f"match_info[{i}]: {match_info[i]}")
+
+        # Create the match
+        match = Match(
+            group_id=group.id,            
+            index=int(match_info[0]),
+            start_time=datetime.strptime(match_info[1], "%Y-%m-%d %H:%M:%S"),
+            end_time=datetime.strptime(match_info[2], "%Y-%m-%d %H:%M:%S"),
+            left_score=int(match_info[3]),
+            right_score=int(match_info[4]),
+            host_name=match_info[5],
+            status=MatchStatus(match_info[6]),
+            log_file_name=match_info[7],
+            left_team_id=group.left_team_id,
+            right_team_id=group.right_team_id,
+        )
+        db.session.add(match)
+    db.session.commit()
 
 
 #

@@ -103,6 +103,12 @@
     <select class="gotoPage" title="Select page number"></select>
 </div>
 
+<form action="{{ url_for('group.export_csv', group_id=group.id) }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button type="submit" name="action" value="export_csv">Export CSV</button>
+    </div>
+</form>
 <form id="resetForm" method="post" action="{{ url_for('group.reset_match', group_id=group.id) }}" style="display:none;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="match_id" id="matchId" value="">

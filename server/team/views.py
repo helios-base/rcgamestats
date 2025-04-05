@@ -313,11 +313,12 @@ def delete_teams():
             return redirect(url_for("team.show_archived"))
 
         # Delete the archive file
-        abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
-        if os.path.exists(abs_path):
-            # print(f"Delete {abs_path}")
-            shutil.rmtree(abs_path)
-            current_app.logger.info(f"Deleted {abs_path}")
+        if team.archive_path is not None and team.archive_path != "":
+            abs_path = os.path.join(current_app.static_folder, os.path.dirname(team.archive_path))
+            if os.path.exists(abs_path):
+                # print(f"Delete {abs_path}")
+                shutil.rmtree(abs_path)
+                current_app.logger.info(f"Deleted {abs_path}")
 
         db.session.delete(team)
         db.session.commit()
@@ -408,6 +409,10 @@ def download(name, version):
     team = Team.query.filter_by(name=name, version=version).first()
     if team:
         abs_path = os.path.join(current_app.static_folder, team.archive_path)
+        if not os.path.exists(abs_path) or not os.path.isfile(abs_path):
+            flash(f"Archive file [{team.archive_path}] not found.", "error")
+            current_app.logger.error(f"download: Archive file [{abs_path}] not found.")
+            return redirect(url_for("team.index"))
         try:
             return send_file(abs_path, as_attachment=True)
         except FileNotFoundError:

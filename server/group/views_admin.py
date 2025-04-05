@@ -6,6 +6,7 @@ from datetime import datetime
 from flask import render_template, redirect, url_for, flash, current_app
 from flask import request
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from ..app import db
 from ..auth.decorators import admin_required
@@ -500,10 +501,10 @@ def read_group_from_csv(reader):
         group_name = group_info["Group Name"]
         created_at = datetime.strptime(group_info["Created At"], "%Y-%m-%d %H:%M:%S")
         updated_at = datetime.strptime(group_info["Updated At"], "%Y-%m-%d %H:%M:%S")
-        left_name = group_info["Left Team"]
-        left_version = group_info["Left Version"]
-        right_name = group_info["Right Team"]
-        right_version = group_info["Right Version"]
+        left_name = secure_filename(group_info["Left Team"])
+        left_version = secure_filename(group_info["Left Version"])
+        right_name = secure_filename(group_info["Right Team"])
+        right_version = secure_filename(group_info["Right Version"])
         description = group_info["Description"]
     except KeyError as e:
         raise ValueError(f"Missing required field: {e}")
@@ -521,10 +522,15 @@ def read_group_from_csv(reader):
     right_team_id = 0
     left_team = Team.query.filter_by(name=left_name, version=left_version).first()
     right_team = Team.query.filter_by(name=right_name, version=right_version).first()
+
     if left_team:
         left_team_id = left_team.id
     else:
-        left_team = Team(name=left_name, version=left_version, archive_path="", is_active=False)
+        archive_dir = os.path.join("teams", left_name, left_version)
+        absolute_path = os.path.join(current_app.static_folder, archive_dir)
+        if not os.path.exists(absolute_path):
+            os.makedirs(absolute_path)
+        left_team = Team(name=left_name, version=left_version, archive_path=archive_dir, is_active=False)
         db.session.add(left_team)
         db.session.commit()
         left_team_id = left_team.id
@@ -532,7 +538,11 @@ def read_group_from_csv(reader):
     if right_team:
         right_team_id = right_team.id
     else:
-        right_team = Team(name=right_name, version=right_version, archive_path="", is_active=False)
+        archive_dir = os.path.join("teams", right_name, right_version)
+        absolute_path = os.path.join(current_app.static_folder, archive_dir)
+        if not os.path.exists(absolute_path):
+            os.makedirs(absolute_path)
+        right_team = Team(name=right_name, version=right_version, archive_path=archive_dir, is_active=False)
         db.session.add(right_team)
         db.session.commit()
         right_team_id = right_team.id

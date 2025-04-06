@@ -177,7 +177,7 @@ def main():
             else:
                 if error_type == "request_error" or error_type == "unknown_error" or error_type == "http_error":
                     logger.error("Request error. Retry.")
-                    current_sleep = min(current_sleep * 1.5, config.MAX_SLEEP_TIME * 2)
+                    current_sleep = min(current_sleep * 1.5, max_sleep)
                 elif error_type == "host_not_found":
                     logger.error("Host not found. Register host again.")
                     if not check_or_register_host():

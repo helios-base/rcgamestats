@@ -18,7 +18,8 @@ class Host(db.Model):
     assigned_match_id = db.Column(db.Integer,
                                   db.ForeignKey("match.id",
                                                 use_alter=True,
-                                                name="fk_host_match_id"),
+                                                name="fk_host_match_id",
+                                                ondelete="SET NULL"),
                                   nullable=True)
 
     # stats is a one-to-one relationship with HostStats

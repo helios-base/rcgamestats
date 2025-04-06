@@ -260,7 +260,16 @@ def archive_groups():
         group.is_active = False
         matches_in_group = Match.query.filter_by(group_id=group_id).all()
         for match in matches_in_group:
-            if match.status == MatchStatus.IN_PROGRESS or match.status == MatchStatus.UNEXECUTED:
+            if match.status == MatchStatus.IN_PROGRESS:
+                match.host.assigned_match_id = None
+                match.host_id = None
+                match.host_name = None
+                match.host_name = None
+                match.start_time = None
+                match.status = MatchStatus.ARCHIVED
+                match.log_file_name = None
+                match.token = None
+            elif match.status == MatchStatus.UNEXECUTED:
                 match.status = MatchStatus.ARCHIVED
         try:
             db.session.commit()
@@ -347,11 +356,11 @@ def delete_groups():
             current_app.logger.error(f"Group ID {group.name} is active. Cannot delete.")
             continue
 
-        # matches = Match.query.filter_by(group_id=group_id)
+        # matches = group.matches
         # if matches:
         #     matches.delete()
 
-        # stats = GroupStats.query.filter_by(group_id=group_id)
+        # stats = group.stats
         # if stats:
         #     stats.delete()
 

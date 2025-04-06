@@ -351,7 +351,9 @@ def submit_result():
     match = Match.query.get(params["match_id"])
     error_msg, status_code = validate_match(match, params)
     if error_msg:
-        current_app.logger.error(f"@{params['host_name']} {error_msg} for {match.group.name}/{match.index}.")
+        match_index = match.index if match else "Unknown"
+        group_name = match.group.name if match and match.group else "Unknown"
+        current_app.logger.error(f"@{params['host_name']} {error_msg} for {group_name}/{match_index}.")
         return jsonify({"error": error_msg}), status_code
 
     # Save the log files

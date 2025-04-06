@@ -44,6 +44,7 @@ def request_match():
             response = session.post(url, headers=headers, json=data, timeout=(3, 10))
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            error_type = "http_error"
             try:
                 response_data = response.json()
                 error_msg = response_data.get("error", "")

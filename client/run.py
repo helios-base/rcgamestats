@@ -175,7 +175,10 @@ def main():
                     match_manager.decline_match(match)
                     logger.error("Failed to download teams.")
             else:
-                if error_type == "host_not_found":
+                if error_type == "request_error" or error_type == "unknown_error" or error_type == "http_error":
+                    logger.error("Request error. Retry.")
+                    current_sleep = min(current_sleep * 1.5, max_sleep)
+                elif error_type == "host_not_found":
                     logger.error("Host not found. Register host again.")
                     if not check_or_register_host():
                         logger.error("Failed to load host_token or register host.")

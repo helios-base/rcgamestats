@@ -232,77 +232,48 @@ def edit_group(group_id):
     return render_template("group/edit.html", form=form, group=group)
 
 
-@group_bp.route("/<int:group_id>/archive", methods=["POST"])
+@group_bp.route("archive_groups", methods=["POST"])
 @login_required
 @admin_required
-def archive_group(group_id):
+def archive_groups():
     """
-    Archive a group.
+    Archive groups.
     """
-    group = Group.query.get(group_id)
-    if group is None:
-        flash(f"Group ID {group_id} not found.", "error")
-        current_app.logger.error(f"archive_group: Group ID {group_id} not found.")
+    group_ids = request.form.getlist("group_ids")
+    if not group_ids:
+        flash("No groups selected for archiving.", "error")
+        current_app.logger.error("No groups selected for archiving.")
         return redirect(url_for("group.index"))
 
-    group.is_active = False
-
-    matches_in_group = Match.query.filter_by(group_id=group_id).all()
-    for match in matches_in_group:
-        if match.status == MatchStatus.IN_PROGRESS or match.status == MatchStatus.UNEXECUTED:
-            match.status = MatchStatus.ARCHIVED
-
-    db.session.commit()
-
-    flash(f"Group [{group.name}] has been archived.", "success")
-    current_app.logger.info(f"Archived [{group.name}]")
-    return redirect(url_for("group.index"))
-
-
-def archive_groups(group_ids):
-    """
-    Bulk archive groups.
-    """
+    count = 0
     for group_id in group_ids:
         group = Group.query.get(group_id)
         if group is None:
-            return "error", f"Group ID {group_id} not found."
+            flash(f"Group ID {group_id} not found.", "error")
+            current_app.logger.error(f"Group ID {group_id} not found.")
+            continue
+        if group.is_active is False:
+            flash(f"Group ID {group.name} is already archived.", "error")
+            current_app.logger.error(f"Group ID {group.name} is already archived.")
+            continue
 
         group.is_active = False
-
         matches_in_group = Match.query.filter_by(group_id=group_id).all()
         for match in matches_in_group:
             if match.status == MatchStatus.IN_PROGRESS or match.status == MatchStatus.UNEXECUTED:
                 match.status = MatchStatus.ARCHIVED
-
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Group [{group.name}] cannot be archived.", "error")
+            current_app.logger.error(f"Group [{group.name}] cannot be archived.")
+            continue
+        count += 1
         current_app.logger.info(f"Archived {group.name}.")
 
-    return "success", f"Archived {len(group_ids)} groups."
-
-
-@group_bp.route("/bulk_action", methods=["POST"])
-@login_required
-@admin_required
-def bulk_action():
-    """
-    Bulk action
-    """
-    action = request.form.get("action")
-    group_ids = request.form.getlist("group_ids")
-    if not group_ids:
-        flash("No groups selected.", "error")
-        return redirect(url_for("group.index"))
-
-    result = "error"
-    message = ""
-    if action == "archive":
-        result, message = archive_groups(group_ids)
-    else:
-        message = f"Unknown action [{action}]."
-
-    flash(message, result)
-    current_app.logger.info(message)
+    flash(f"Archived {count} groups.", "success")
+    current_app.logger.info(f"Archived {count} groups")
     return redirect(url_for("group.index"))
 
 
@@ -319,19 +290,35 @@ def unarchive_groups():
         current_app.logger.error("No groups selected for unarchiving.")
         return redirect(url_for("group.show_archived_groups"))
 
+    count = 0
     for group_id in group_ids:
         group = Group.query.get(group_id)
-        if group:
-            group.is_active = True
-            matches_in_group = Match.query.filter_by(group_id=group_id).all()
-            for match in matches_in_group:
-                if match.status == MatchStatus.ARCHIVED:
-                    match.status = MatchStatus.UNEXECUTED
-            current_app.logger.info(f"Unarchived {group.name}")
+        if group is None:
+            flash(f"Group ID {group_id} not found.", "error")
+            current_app.logger.error(f"Group ID {group_id} not found.")
+            continue
+        if group.is_active:
+            flash(f"Group ID {group.name} is already active.", "error")
+            current_app.logger.error(f"Group ID {group.name} is already active.")
+            continue
 
-    db.session.commit()
-    flash(f"Unarchived {len(group_ids)} groups.", "success")
-    current_app.logger.info(f"Unarchived {len(group_ids)} groups")
+        group.is_active = True
+        matches_in_group = Match.query.filter_by(group_id=group_id).all()
+        for match in matches_in_group:
+            if match.status == MatchStatus.ARCHIVED:
+                match.status = MatchStatus.UNEXECUTED
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Group [{group.name}] cannot be unarchived.", "error")
+            current_app.logger.error(f"Group [{group.name}] cannot be unarchived.")
+            continue
+        count += 1
+        current_app.logger.info(f"Unarchived {group.name}")
+
+    flash(f"Unarchived {count} groups.", "success")
+    current_app.logger.info(f"Unarchived {count} groups")
     return redirect(url_for("group.show_archived_groups"))
 
 
@@ -348,35 +335,45 @@ def delete_groups():
         current_app.logger.error("No groups selected for deletion.")
         return redirect(url_for("group.show_archived_groups"))
 
+    count = 0
     for group_id in group_ids:
         group = Group.query.get(group_id)
-        if group:
-            # matches = Match.query.filter_by(group_id=group_id)
-            # if matches:
-            #     matches.delete()
+        if group is None:
+            flash(f"Group ID {group_id} not found.", "error")
+            current_app.logger.error(f"Group ID {group_id} not found.")
+            continue
+        if group.is_active:
+            flash(f"Group ID {group.name} is active. Cannot delete.", "error")
+            current_app.logger.error(f"Group ID {group.name} is active. Cannot delete.")
+            continue
 
-            # stats = GroupStats.query.filter_by(group_id=group_id)
-            # if stats:
-            #     stats.delete()
+        # matches = Match.query.filter_by(group_id=group_id)
+        # if matches:
+        #     matches.delete()
 
-            db.session.delete(group)
-            try:
-                db.session.commit()
-            except IntegrityError:
-                db.session.rollback()
-                flash(f"Group [{group.name}] cannot be deleted.", "error")
-                continue
+        # stats = GroupStats.query.filter_by(group_id=group_id)
+        # if stats:
+        #     stats.delete()
 
-            log_dir = os.path.join(current_app.static_folder, "logs", group.name)
-            if os.path.exists(log_dir):
-                # print(f"Delete {log_dir}")
-                shutil.rmtree(log_dir)
-                current_app.logger.info(f"Deleted {log_dir}")
+        db.session.delete(group)
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Group [{group.name}] cannot be deleted.", "error")
+            continue
 
-            current_app.logger.info(f"Deleted {group.name}")
+        log_dir = os.path.join(current_app.static_folder, "logs", group.name)
+        if os.path.exists(log_dir):
+            # print(f"Delete {log_dir}")
+            shutil.rmtree(log_dir)
+            current_app.logger.info(f"Deleted {log_dir}")
 
-    flash(f"Deleted {len(group_ids)} groups.", "success")
-    current_app.logger.info(f"Deleted {len(group_ids)} groups")
+        current_app.logger.info(f"Deleted {group.name}")
+        count += 1
+
+    flash(f"Deleted {count} groups.", "success")
+    current_app.logger.info(f"Deleted {count} groups")
     return redirect(url_for("group.show_archived_groups"))
 
 

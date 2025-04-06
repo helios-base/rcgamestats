@@ -12,10 +12,10 @@
     <li><a href="{{ url_for('group.show_archived_groups') }}">Show Archived Groups</a></li>
 </ul>
 
-<form action="{{ url_for('group.bulk_action') }}" method="post">
+<form id="bulk-action-form" method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
-        <button type="submit" name="action" id="bulk-archive-button" value="archive" disabled>Archive</button>
+        <button id="bulk-archive-button" type="submit" formaction="{{ url_for('group.archive_groups') }}" disabled>Archive</button>
     </div>
     <table id="group-table" class="tablesorter">
         <thead>

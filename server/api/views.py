@@ -156,7 +156,7 @@ def request_match():
         return jsonify({"error": str(e)}), 500
 
     if host.enabled is False:
-        current_app.logger.warning(f"@{host_name} is disabled by admin.")
+        # current_app.logger.warning(f"@{host_name} is disabled by admin.")
         return jsonify({"error": "Host is disabled by admin."}), 403
 
     if host.assigned_match_id is not None:

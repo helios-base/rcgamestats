@@ -17,7 +17,8 @@ from .forms import GroupCreateForm, RoundrobinCreateForm
 from .forms import GroupEditForm
 from .models import Group, GroupStats, Match
 from .utils import create_group_name, save_group_metadata
-from .models import GroupStatus, MatchStatus
+from .models import MatchStatus
+from ..notifications.discord_notify import notify_new_group
 
 
 @group_bp.route("/create", methods=["GET", "POST"])
@@ -87,6 +88,8 @@ def create():
         db.session.commit()
 
         save_group_metadata(group)
+        if current_app.config.get("DISCORD_WEBHOOK_URL"):
+            notify_new_group(group)
 
         message = f"Created {group_name}, matches={form.number_of_matches.data}"
         flash(message, "success")
@@ -170,6 +173,8 @@ def create_roundrobin():
                 db.session.commit()
 
                 save_group_metadata(group)
+                if current_app.config.get("DISCORD_WEBHOOK_URL"):
+                    notify_new_group(group)
                 created_count += 1
                 current_app.logger.info(f"Created {group_name}, matches={form.number_of_matches.data}")
 

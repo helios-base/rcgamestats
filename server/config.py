@@ -30,6 +30,8 @@ class Config:
     GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
     GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
 
+    DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
+
     GOOGLE_DOC_ID = os.getenv("GOOGLE_DOC_ID", "")
     GOOGLE_KEY_PATH = os.getenv("GOOGLE_KEY_PATH", "")
 

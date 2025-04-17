@@ -141,6 +141,9 @@ def create_app(test_config=None):
     def basename(path):
         return os.path.basename(path)
 
+    # Register event listeners
+    # from .notifications import event_listeners
+
     return app
 
 

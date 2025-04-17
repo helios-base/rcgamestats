@@ -13,6 +13,7 @@ from ..group.models import Group, GroupStats, Match, MatchStatus
 from ..group.utils import save_group_metadata
 from ..host.models import Host, HostStats
 from ..team.models import Team, current_datetime_str
+from ..notifications.discord_notify import notify_group_all_completed
 
 api = Blueprint("api", __name__, url_prefix="/api")
 
@@ -381,6 +382,16 @@ def submit_result():
 
     message = f"@{match.host_name} Result   {match.group.name}/{match.index}, {match.left_score} - {match.right_score}"
     current_app.logger.info(message)
+
+    if current_app.config.get("DISCORD_WEBHOOK_URL"):
+        incomplete = db.session.query(Match).filter(
+            Match.group_id == match.group.id,
+            Match.status != MatchStatus.COMPLETED,
+        ).first()
+        if incomplete is None:
+            # Notify Discord about all matches in a group being completed.
+            notify_group_all_completed(match.group)    
+
     return jsonify({"message": message})
 
 

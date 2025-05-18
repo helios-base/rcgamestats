@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>{% block title %}Team{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<h2>Team: {{ team.name }}, {{ team.version }}</h2>
+{% if current_user.is_admin %}
+<form action="{{ url_for('team.set_review_status', team_id=team.id) }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button type="submit" name="action" id="approve-button" value="approve"{% if team.review_status == TeamReviewStatus.APPROVED %} disabled{% endif %}>Approve</button>
+        <button type="submit" name="action" id="reject-button" value="reject"{% if team.review_status == TeamReviewStatus.REJECTED %} disabled{% endif %}>Reject</button>
+        <button type="submit" name="action" id="under-review-button" value="under_review"{% if team.review_status == TeamReviewStatus.UNDER_REVIEW %} disabled{% endif %}>Under Review</button>
+        <button type="submit" name="action" id="reset-status-button" value="reset_status"{% if team.review_status == TeamReviewStatus.NORMAL %} disabled{% endif %}>Reset Status</button>
+    </div>
+</form>
+<ul class="submenu">
+    <li><a href="{{ url_for('team.edit_team', team_id=team.id) }}">Edit</a></li>
+</ul>
+{% endif %}
+<ul>
+    <li>Review Status: <span style="padding: 2px 2px;" class={% if team.review_status == TeamReviewStatus.APPROVED %}"approved"{% elif team.review_status == TeamReviewStatus.REJECTED %}"rejected"{% elif team.review_status == TeamReviewStatus.UNDER_REVIEW %}"under_review"{% endif %}>{{ team.review_status.value }}</span></li>
+    <li>Uploaded At: {{ team.uploaded_at }}</li>
+    <li>Synch Mode: {{ team.synch_mode }}</li>
+    <li>Archive File: <a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></li>
+    <li>Description:
+        <p style="text-indent: 1em; margin-top: 0px;">{{ team.description }}</p>    
+    </li>    
+</ul>
+
+
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

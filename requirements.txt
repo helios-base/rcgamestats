@@ -1,0 +1,15 @@
+python-dotenv
+flask >= 3.1
+flask-migrate
+flask-login
+flask-wtf
+PyMySQL
+flask-sqlalchemy
+oauth2client
+gspread
+scipy
+numpy
+pandas
+matplotlib
+authlib >= 1.5
+pyuwsgi >= 2.0

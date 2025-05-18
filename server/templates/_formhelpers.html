@@ -1,0 +1,21 @@
+{% macro render_field(field) %}
+    <dl style="margin: 0px;">
+    <dt style="margin-bottom: 10px;">{{ field.label }}</dt>
+    <dd>
+        {%if field.type == 'TextAreaField' %}
+            {{ field(class_='textarea-field', **kwargs)| safe }}
+        {% elif field.type == 'SelectField' %}
+            {{ field(class_='select-field', **kwargs)| safe }}
+        {% else %}
+            {{ field(**kwargs)| safe }}
+        {% endif %}
+    </dd>
+    </dl>
+    {% if field.errors %}
+    <ul style="color: red;">
+        {% for error in field.errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+{% endmacro %}

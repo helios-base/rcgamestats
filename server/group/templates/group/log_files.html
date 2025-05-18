@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>{% block title %}Log Files{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Group Name: {{ group_name }}</h2>
+<div>
+  <a href="{{ url_for('group.show_group_detail', group_name=group_name) }}">Back to Group</a>
+  </a>
+  {% if file_names %}
+  <h3>Log Files:</h3>
+  {% else %}
+  <h3>No log files found.</h3>
+  {% endif %}
+  <ul>
+    {% for file_name in file_names %}<li><a href="{{ url_for('group.download_log', group_name=group_name, file_name=file_name) }}">{{ file_name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

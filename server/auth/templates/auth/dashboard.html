@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Dashboard{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<h2>Welcome, {{ current_user.username }}!</h2>
+
+{% if current_user.is_admin %}
+<h3>Admin menu</h3>
+<ul class="submenu">
+  <li><a href="{{ url_for('auth.show_users') }}">Users</a></li>
+  <li><a href="{{ url_for('auth.show_allowed_emails') }}">Allowed emails</a></li>
+  <li><a href="{{ url_for('auth.admin_api_keys') }}">API Keys</a></li>
+</ul>
+<ul class="submenu">
+  <li><a href="{{ url_for('auth.show_server_logs') }}">Server Log</a></li>
+</ul>
+{% endif %}
+
+<h3>User menu</h3>
+<ul class="submenu">
+  <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
+</ul>
+<ul class="submenu">
+  <li><a href="{{ url_for('auth.api_keys') }}">API Keys</a></li>
+</ul>
+{% endblock %}

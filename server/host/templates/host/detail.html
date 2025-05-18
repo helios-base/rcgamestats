@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>{% block title %}Host Detail{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Name: {{ host.name }}</h2>
+{% set total_s = host.stats.total_runtime_synch_mode %}
+{% set average_s = host.stats.average_runtime_synch_mode() %}
+{% set total_n = host.stats.total_runtime_normal %}
+{% set average_n = host.stats.average_runtime_normal() %}
+<ul>
+    <li>Host ID: {{ host.id }}</li>
+    <li>Host Name: {{ host.name }}</li>
+    <li>Host Token: {{ host.token }}</li>
+    <li>Host IP: {{ host.ip_v4_address }}</li>
+    <li>Last Access: {{ host.last_accessed_at }}</li>
+    <li>Status: {{ get_host_status(host) }}</li>
+    <li>sync_mode Matches: {{ host.stats.total_matches_synch_mode }}</li>
+    <ul>
+        <li>Total Runtime: {{ "%02d" % (total_s // 3600) }}:{{ "%02d" % ((total_s % 3600) // 60) }}:{{ "%02d" % (total_s % 60) }} </li>
+        <li>Average Time: {{ "%02d" % (average_s // 3600) }}:{{ "%02d" % ((average_s % 3600) // 60) }}:{{ "%02d" % (average_s % 60) }}</li>
+    </ul>
+    <li>normal_mode Matches: {{ host.stats.total_matches_normal }}</li>
+    <ul>
+        <li>Total Runtime: {{ "%02d" % (total_n // 3600) }}:{{ "%02d" % ((total_n % 3600) // 60) }}:{{ "%02d" % (total_n % 60) }} </li>
+        <li>Average Runtime: {{ "%02d" % (average_n // 3600) }}:{{ "%02d" % ((average_n % 3600) // 60) }}:{{ "%02d" % (average_n % 60) }}</li>
+    </ul>
+    <li>Declines: {{ host.stats.decline_count }}</li>
+    <li>Resets: {{ host.stats.reset_count }}</li>
+</ul>
+
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

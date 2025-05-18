@@ -1,0 +1,726 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}Group Detail{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('group.edit_group', group_id=group.id) }}">Edit</a></li>
+    <li><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">All Logs</a></li>
+</ul>
+{% if use_googlesheet %}
+<div class="button-container">
+    <form action="{{ url_for('group.upload_group_results_to_google_sheet', group_id=group.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Upload to Google Spreadsheet</button>
+    </form>
+</div>
+{% endif %}
+
+<h2>Group Name: {{ group.name }}</h2>
+<div class="matchup-info">
+    {% if group.left_team %}
+    <a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}">{{ group.left_team.name }} ({{ group.left_team.version }})</a>
+    {% else %}
+    <span class="error">Not found</span>
+    {% endif %}
+    vs.
+    {% if group.right_team %}
+    <a href="{{ url_for('team.show_team', team_id=group.right_team.id) }}">{{ group.right_team.name }} ({{ group.right_team.version }})</a>
+    {% else %}
+    <span class="error">Not found</span>
+    {% endif %}
+</div>
+<div>
+    Description: {{ group.description }}
+</div>
+
+<h3>Stats</h3>
+<table>
+    <thead>
+        <tr>
+            <th class="stats">Total</th>
+            <th class="stats lborder">Left Win</th>
+            <th class="stats">Draw</th>
+            <th class="stats">Right Win</th>
+            <th class="stats lborder">Left Win Rate</th>
+            <th class="stats">Draw Rate</th>
+            <th class="stats">Right Win Rate</th>
+            <th class="stats lborder">Left Goal</th>
+            <th class="stats">Right Goal</th>
+            <th class="stats lborder">Left Ave. Goal</th>
+            <th class="stats">Right Ave. Goal</th>
+            <th class="stats lborder">Left Max Goal</th>
+            <th class="stats">Right Max Goal</th>
+            <th class="stats lborder">Left Scored</th>
+            <th class="stats">Right Scored</th>
+            <th class="stats lborder">Left Score Rate</th>
+            <th class="stats">Right Score Rate</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="stats">{{ stats.completed_count }}</td>
+            <td class="stats lborder">{{ stats.left_win }}</td>
+            <td class="stats">{{ stats.draw }}</td>
+            <td class="stats">{{ stats.right_win }}</td>
+            <td class="stats lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
+            <td class="stats lborder">{{ stats.left_sum_of_scores }}</td>
+            <td class="stats">{{ stats.right_sum_of_scores }}</td>
+            <td class="stats lborder">{{ stats.left_mean_score|round(3) }}</td>
+            <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
+            <td class="stats lborder">{{ stats.left_max_score }}</td>
+            <td class="stats">{{ stats.right_max_score }}</td>
+            <td class="stats lborder">{{ stats.left_scored_games }}</td>
+            <td class="stats">{{ stats.right_scored_games }}</td>
+            <td class="stats lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Scores Histogram and 95% Confidence Intervals</h3>
+<div id="matchScoreHistogram" style="border: 1px solid black; padding: 0px; margin-top: 0px;"></div>
+
+<h3>Host Counts</h3>
+<div id="hostsHistogram" style="border: 1px solid black; padding: 0px; margin-top: 0px;"></div>
+
+<h3>Matches</h3>
+<div id="pager" class="pager">
+    <button type="button" class="first"><<</button>
+    <button type="button" class="prev"><</button>
+    <span class="pagedisplay"></span>
+    <button type="button" class="next">></button>
+    <button type="button" class="last">>></button>
+    <select class="pagesize" title="Select page size">
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+    </select>
+    <select class="gotoPage" title="Select page number"></select>
+</div>
+
+<form action="{{ url_for('group.export_csv', group_id=group.id) }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button type="submit" name="action" value="export_csv">Export CSV</button>
+    </div>
+</form>
+<form id="resetForm" method="post" action="{{ url_for('group.reset_match', group_id=group.id) }}" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="match_id" id="matchId" value="">
+</form>
+<table id="match-table" class="tablesorter">
+    <thead>
+        <tr>
+            <th style="width:1%;">#</th>
+            <th>Index</th>
+            <th>Start At</th>
+            <th>End At</th>
+            <th style="width:100px">Left Score</th>
+            <th style="width:100px">Right Score</th>
+            <th>Host Name</th>
+            <th>Status</th>
+            <th>Log File</th>
+        </tr>
+    </thead>
+    <tbody id="match-table-body">
+        <!-- Match data will be loaded by JavaScript -->
+    </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='plotly-3.0.0.min.js') }}"></script>
+<script>
+    function resetMatch(matchId) {
+        document.getElementById('matchId').value = matchId;
+        document.getElementById('resetForm').submit();
+    }
+
+    function plotScoreHistogramWithCI() {
+        // prepare data for histograms
+        const leftScoreCounts = {{ stats.left_score_counts | tojson }};
+        const rightScoreCounts = {{ stats.right_score_counts | tojson }};
+        
+        //const scoreLabels = Array.from(new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])).sort((a, b) => a - b);
+        const scoreLabels = Array.from(
+            new Set([...Object.keys(leftScoreCounts), ...Object.keys(rightScoreCounts)])
+        ).sort(function(a, b) {
+            return parseInt(a, 10) - parseInt(b, 10);
+        });
+
+        // 各ラベルごとに左＆右のカウントを抽出（存在しない場合は 0）
+        const leftData = scoreLabels.map(function(label) {
+            return leftScoreCounts[label] || 0;
+        });
+        const rightData = scoreLabels.map(function(label) {
+            return rightScoreCounts[label] || 0;
+        });
+
+        // x軸は左右対称となるように、ゼロライン中心に設定
+        const xMax = Math.max(Math.max.apply(null, leftData), Math.max.apply(null, rightData)) + 1;
+
+        // 左側は負の値として表示するため変換（※ツールチップには元の数値を表示するなどの調整は可能）
+        const leftTransformed = leftData.map(function(value) {
+            return -value;
+        });
+
+        // 全体の合計値を算出（％表示に利用）
+        const leftTotal = leftData.reduce(function(acc, cur) { return acc + cur; }, 0);
+        const rightTotal = rightData.reduce(function(acc, cur) { return acc + cur; }, 0);
+
+        // 区間推定結果を合わせて描画
+        // 信頼区間の値はサーバで計算済みの変数から取得
+        const leftMean = {{ stats.left_mean_score }};
+        const leftCI_lower = {{ stats.left_score_confidence_interval_lower }};
+        const leftCI_upper = {{ stats.left_score_confidence_interval_upper }};
+        const rightMean = {{ stats.right_mean_score }};
+        const rightCI_lower = {{ stats.right_score_confidence_interval_lower }};
+        const rightCI_upper = {{ stats.right_score_confidence_interval_upper }};
+
+        // 左右のバー trace の定義
+        const traceLeft = {
+            type: 'bar',
+            orientation: 'h',
+            x: leftTransformed,
+            y: scoreLabels,
+            name: 'Left Team Scores',
+            marker: {
+                // color: 'rgba(255,215,0,0.2)',
+                // line: { color: 'rgba(255,215,0,0.4)', width: 1 }
+                color: leftData.map(function(d) {
+                    return d === 0 ? 'rgba(255,215,0,0)' : 'rgba(255,215,0,0.2)';
+                }),
+                line: {
+                    color: leftData.map(function(d) {
+                        return d === 0 ? 'rgba(255,215,0,0)' : 'rgba(255,215,0,0.4)';
+                    }),
+                    width: leftData.map(function(d) {
+                        return d === 0 ? 0 : 1;
+                    })
+                }
+            },
+            hoverinfo: 'x+y'
+        };
+
+        const traceRight = {
+            type: 'bar',
+            orientation: 'h',
+            x: rightData,
+            y: scoreLabels,
+            name: 'Right Team Scores',
+            marker: {
+                // color: 'rgba(240,20,20,0.2)',
+                // line: { color: 'rgba(240,20,20,0.4)', width: 1 }
+                color: rightData.map(function(d) {
+                    return d === 0 ? 'rgba(240,20,20,0)' : 'rgba(240,20,20,0.2)';
+                }),
+                line: {
+                    color: rightData.map(function(d) {
+                        return d === 0 ? 'rgba(240,20,20,0)' : 'rgba(240,20,20,0.4)';
+                    }),
+                    width: rightData.map(function(d) {
+                        return d === 0 ? 0 : 1;
+                    })
+                }
+            },
+            hoverinfo: 'x+y'
+        };
+
+        // エラーバー描画位置
+        const leftErrorBarPosition = -xMax / 3.7;
+        const rightErrorBarPosition = xMax / 3.7;
+
+        // 左チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
+        const traceLeftCI = {
+            x: [leftErrorBarPosition],
+            y: [leftMean],  // y 軸はスコア
+            mode: 'markers',
+            marker: {
+                color: 'blue',
+                size: 8
+            },
+            error_y: {
+                type: 'data',
+                array: [leftCI_upper - leftMean],
+                arrayminus: [leftMean - leftCI_lower],
+                visible: true,
+                thickness: 1.5,
+                width: 3,
+                color: 'blue'
+            },
+            showlegend: false,
+            hoverinfo: 'y'
+        };
+
+        // 右チームの平均スコアの信頼区間を示すエラーバートレース（縦方向のエラーバー）
+        const traceRightCI = {
+            x: [rightErrorBarPosition],
+            y: [rightMean],
+            mode: 'markers',
+            marker: {
+                color: 'red',
+                size: 8
+            },
+            error_y: {
+                type: 'data',
+                array: [rightCI_upper - rightMean],
+                arrayminus: [rightMean - rightCI_lower],
+                visible: true,
+                thickness: 1.5,
+                width: 3,
+                color: 'red'
+            },
+            showlegend: false,
+            hoverinfo: 'y'
+        };
+
+        //
+        // annotations の設定
+        //
+        const annotations = [];
+
+        // グラフ下部にタイトルを追加
+        // annotations.push({
+        //     xref: 'paper',
+        //     yref: 'paper',
+        //     x: 0.5,
+        //     y: -0.17,  // グラフ下部の位置。必要に応じて調整
+        //     text: 'Match Scores Histogram with 95% Confidence Intervals',
+        //     showarrow: false,
+        //     font: { size: 16, color: 'black' }
+        // });
+
+        // 各バーの根元( x = 0 付近 )にカウントと割合を表示するための annotations を生成
+        scoreLabels.forEach(function(label, i) {
+            // 左チーム用（bar の値は leftData[i]）
+            const lCount = leftData[i] || 0;
+            const lPercent = (leftTotal > 0) ? ((lCount / leftTotal) * 100).toFixed(1) + '%' : '0%';
+            if(lCount > 0){
+                annotations.push({
+                    x: 0,
+                    y: label,
+                    xanchor: 'right',  // 左側に配置
+                    text: lCount + " (" + lPercent + ")",
+                    showarrow: false,
+                    font: { size: 11, color: 'rgba(0,0,0,1)', family: 'Arial Black, Impact, Helvetica, sans-serif' },
+                    xshift: -10  // x=0から左へオフセット
+                });
+            }
+            // 右チーム用（bar の値は rightData[i]）
+            const rCount = rightData[i] || 0;
+            const rPercent = (rightTotal > 0) ? ((rCount / rightTotal) * 100).toFixed(1) + '%' : '0%';
+            if(rCount > 0){
+                annotations.push({
+                    x: 0,
+                    y: label,
+                    xanchor: 'left',  // 右側に配置
+                    text: rCount + " (" + rPercent + ")",
+                    showarrow: false,
+                    font: { size: 11, color: 'rgba(0,0,0,1)', family: 'Arial Black, Impact, Helvetica, sans-serif' },
+                    xshift: 10   // x=0から右へオフセット
+                });
+            }
+        });
+
+        // 追加：x=0 の直線上に、各バーの得点（score）ラベルを中央揃えで表示
+        scoreLabels.forEach(function(label) {
+            annotations.push({
+                x: 0,
+                y: label,
+                xanchor: 'center',
+                text: label,         // ここで得点の値（文字列）を表示
+                showarrow: false,
+                font: { size: 12, color: 'rgba(0,0,0,0.7)' },
+                xshift: 0,
+                yshift: 0
+            });
+        });
+
+        // 信頼区間のアノテーションを追加
+        // 左チーム
+        annotations.push({ // 平均値のテキスト
+            x: leftErrorBarPosition,
+            y: leftMean,
+            xref: 'x',
+            yref: 'y',
+            text: leftMean.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'blue' },
+            xanchor: 'left',
+            yanchor: 'center',
+            xshift: 10
+        });
+        annotations.push({ // 上限のテキスト
+            x: leftErrorBarPosition,
+            y: leftCI_upper,
+            xref: 'x',
+            yref: 'y',
+            text: leftCI_upper.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'blue' },
+            xanchor: 'left',
+            yanchor: 'bottom'
+        });
+        annotations.push({ // 下限のテキスト
+            // 下限のテキスト
+            x: leftErrorBarPosition,
+            y: leftCI_lower,
+            xref: 'x',
+            yref: 'y',
+            text: leftCI_lower.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'blue' },
+            xanchor: 'left',
+            yanchor: 'top'
+        });
+        // 右チーム
+        annotations.push({ // 平均値のテキスト
+            x: rightErrorBarPosition,
+            y: rightMean,
+            xref: 'x',
+            yref: 'y',
+            text: rightMean.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'red' },
+            xanchor: 'right',
+            yanchor: 'center',
+            xshift: -10
+        });
+        annotations.push({ // 上限のテキスト
+            x: rightErrorBarPosition,
+            y: rightCI_upper,
+            xref: 'x',
+            yref: 'y',
+            text: rightCI_upper.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'red' },
+            xanchor: 'right',
+            yanchor: 'bottom'
+        });
+        annotations.push({ // 下限のテキスト
+            x: rightErrorBarPosition,
+            y: rightCI_lower,
+            xref: 'x',
+            yref: 'y',
+            text: rightCI_lower.toFixed(3),
+            showarrow: false,
+            font: { size: 10, color: 'red' },
+            xanchor: 'right',
+            yanchor: 'top'
+        });
+
+        //
+        // レイアウトの設定
+        //
+        // 目盛り間隔を自動で設定
+        const rawTickInterval = xMax / 10; // 10分割の概算値
+        const candidateIntervals = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+        const tickInterval = candidateIntervals.reduce(function(acc, cur) {
+            return (Math.abs(rawTickInterval - cur) < Math.abs(rawTickInterval - acc)) ? cur : acc;
+        }, 1);
+
+        const tickVals = [0];
+        for (let i = tickInterval; i <= xMax; i += tickInterval) {
+            tickVals.push(i);
+            tickVals.push(-i);
+        }
+        tickVals.sort((a, b) => a - b);
+
+        const tickText = tickVals.map(function(val) {
+            return Math.abs(val);
+        });
+
+        const layoutScoreHistogram = {
+            // title: 'Match Scores Histogram',
+            dragmode: 'pan',
+            title: '',
+            height: 400,
+            barmode: 'overlay',
+            bargap: 0,         // バー間のグループ間隔を 0 に設定
+            bargroupgap: 0,    // グループ内のバー間隔を 0 に設定
+            // font: { color: 'rgba(0,0,0,1)' }, // 全体のデフォルトフォントカラーを設定
+            xaxis: {
+                title: 'Number of Matches',
+                zeroline: true,
+                zerolinecolor: 'rgba(0,0,0,0.2)',
+                zerolinewidth: 1,
+                range: [-xMax-0.01, xMax+0.01],
+                tickmode: 'array',
+                tickvals: tickVals,
+                ticktext: tickText,
+                showgrid: true,
+                dtick: 1,
+            },
+            yaxis: {
+                title: 'Scores',
+                // autorange: 'reversed'  // 得点ラベルが上から降順になるように
+                showticklabels: false,  // y軸ラベルは非表示
+                showgrid: true,
+                tick0: 0.5,
+                dtick: 1,
+            },
+            showlegend: false,
+            // legend: {
+            //     orientation: 'h',
+            //     x: 0.5,
+            //     xanchor: 'center',
+            //     y: 1.1,
+            //     yanchor: 'bottom'
+            // },
+            annotations: annotations,
+            // margin: { l: 10, r: 10, t: 10, b: 65 },
+            margin: { l: 10, r: 10, t: 10, b: 25 },
+        };
+
+        const data = [traceLeft, traceRight, traceLeftCI, traceRightCI];
+
+        const configScoreHistogram = {
+            modeBarButtonsToRemove: ['zoom2d', 'select2d', 'lasso2d'],
+            displaylogo: false,
+        };
+
+        Plotly.newPlot('matchScoreHistogram', data, layoutScoreHistogram, configScoreHistogram);
+    }
+
+    function plotHostHistogram() {
+        // draw hosts histogram
+        const hosts = {{ stats.host_counts | tojson }};
+        const hostLabels = Object.keys(hosts).sort();
+        const hostData = hostLabels.map(label => hosts[label]);
+
+        const traceHostHistogram = {
+            x: hostLabels,
+            y: hostData,
+            type: 'bar',
+            marker: {
+                color: 'rgba(75, 192, 192, 0.2)',
+                line: {
+                    color: 'rgba(75, 192, 192, 1)',
+                    width: 1
+                }
+            }
+        };
+
+        // const modifiedHostLabels = hostLabels.map(function(label) {
+        //     return label.replace(' ', '<br>');
+        // });
+
+        const layoutHostHistogram = {
+            title: 'Histogram of Matches by Host',
+            dragmode: 'pan',
+            height: 350,
+            barmode: 'overlay',
+            bargap: 0,
+            bargroupgap: 0,
+            xaxis: {
+                title: 'Hosts',
+                showgrid: true,
+                tickson: 'boundaries',
+                range: [-0.51, hostLabels.length - 0.49],
+                tickvals: hostLabels,
+                ticktext: hostLabels,
+                // ticktext: modifiedHostLabels,
+                // tickangle: -90,
+                // tickfont: { size: 10 },
+            },
+            yaxis: {
+                title: {
+                    text: 'Number of Matches',
+                },
+                beginAtZero: true,
+                showgrid: true,
+                tickmode: 'auto',
+                // dtick: 1,
+                ticks: {
+                    callback: function (value) {
+                        return Number.isInteger(value) ? value : null;
+                    }
+                },
+            },
+            margin: { l: 50, r: 10, t: 30, b: 80 },
+            // annotations: [{
+            //     xref: 'paper',
+            //     yref: 'paper',
+            //     x: 0.5,
+            //     y: -0.18,
+            //     text: 'Histogram of Matches by Host',
+            //     showarrow: false,
+            //     font: { size: 16, color: 'black' }
+            // }]
+            annotations: [{
+                x: 0.05,
+                y: 1.1,
+                xref: 'paper',
+                yref: 'paper',
+                text: "# of hosts = " + hostLabels.length,
+                showarrow: false,
+                font: { size: 14, color: 'black' },
+                xanchor: 'left',
+                yanchor: 'top'
+            }],
+        };
+
+        const configHostHistogram = {
+            modeBarButtonsToRemove: ['zoom2d', 'select2d', 'lasso2d'],
+            displaylogo: false,
+        };
+
+        Plotly.newPlot('hostsHistogram', [traceHostHistogram], layoutHostHistogram, configHostHistogram);
+    }
+
+    //
+    // Load match table using Ajax
+    //
+    let tableOffset = 0;
+    const batchSize = 1000;
+
+    function createMatchTableRow(match, isGroupActive) {
+        let row = document.createElement('tr');
+
+        let cell = document.createElement('td');
+        cell.textContent = '';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.index;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.start_time;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.end_time;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.left_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.textContent = match.right_score;
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        //if (match.host_id === null) {
+        if (match.host_name === null) {
+            cell.textContent = '';
+        } else {
+            // cell.textContent = `${match.host_name} (${match.host_id})`;
+            cell.textContent = match.host_name;
+        }
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        if (isGroupActive
+            && (match.status === 'in progress' || match.status === 'completed')) {
+            let link = document.createElement('a');
+            link.href = '#';
+            link.textContent = match.status;
+            link.onclick = function (event) {
+                event.preventDefault();
+                if (confirm('Really reset?')) {
+                    resetMatch(match.id);
+                }
+            };
+            cell.appendChild(link);
+        } else {
+            cell.textContent = match.status;
+        }
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        if (match.status === 'completed') {
+            let link = document.createElement('a');
+            link.href = match.log_url;
+            link.textContent = 'Log';
+            cell.appendChild(link);
+        }
+        else {
+            cell.textContent = '';
+        }
+        row.appendChild(cell);
+
+        return row;
+    }
+
+    function loadMatchTableBatch() {
+        fetch("{{ url_for('group.get_match_records', group_id=group.id) }}"
+              +  "?offset=" + tableOffset + "&limit=" + batchSize)
+            .then(response => response.json())
+            .then(data => {
+                const matches = data.match_records;
+                if ( matches && matches.length > 0 ) {
+                    let tableBody = document.getElementById('match-table-body');
+                    const isGroupActive = {{ group.is_active|tojson }};
+                    matches.forEach(match => {
+                        tableBody.appendChild(createMatchTableRow(match, isGroupActive));
+                    });
+                    tableOffset += matches.length;
+
+                    // If the number of matches is equal to the batch size, load the next batch
+                    if (matches.length === batchSize) {
+                        loadMatchTableBatch();
+                        return; // Exit early to avoid re-applying tablesorter and filter
+                    }
+                }
+
+                // Re-apply tablesorter and filter after updating the table
+                $('#match-table').trigger('update');
+                $('#match-table').trigger('search');
+            })
+            .catch(error => {
+                console.error('Error: loading batch:', error);
+            });
+    }
+
+    //
+    // Initialization after document is ready
+    //
+    $(function () {
+        $.tablesorter.addWidget({
+            id: "rownum",
+            format: function(table) {
+                // tbody の各行を取得し、先頭セルに行番号を設定
+                $(table.tBodies[0]).find("tr:visible").each(function(index) {
+                    $(this).find("td:first").text(index + 1);
+                });
+            }
+        });
+
+        $('#match-table').tablesorter(
+            {
+                headers: {
+                    0: { sorter: false, filter: false },
+                    8: { sorter: false, filter: false }
+                },
+                sortList: [[0, 0]], // sort by first column in ascending order
+                widgets: ['filter', 'pager', 'rownum'],
+                widgetOptions: {
+                    filter_columnFilters: true,
+                    // class name applied to filter row and each input
+                    filter_cssFilter: 'tablesorter-filter',
+                    // Set this option to false to make the searches case sensitive
+                    filter_ignoreCase: true,
+
+                }
+            }
+        ).tablesorterPager({
+            container: $(".pager"),
+            size: 100,
+            savePages: false,
+            output: '{startRow} – {endRow} / {filteredRows} of {totalRows} rows',
+        });
+
+        plotScoreHistogramWithCI();
+        plotHostHistogram();
+
+        loadMatchTableBatch();
+    });
+</script>
+{% endblock %}

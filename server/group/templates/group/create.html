@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Create New Group{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('group.index') }}">Show Groups</a></li>
+</ul>
+    {% from "_formhelpers.html" import render_field %}
+    <form method="POST" action="{{ url_for('group.create') }}" novalidate>
+        {{ form.hidden_tag() }}
+        {{ render_field(form.team_left) }}
+        {{ render_field(form.team_right) }}
+        {{ render_field(form.number_of_matches) }}
+        {{ render_field(form.description) }}
+        <br>
+        {% for message in get_flashed_messages() %}
+        {% endfor %}
+        {{ form.submit }}
+    </form>
+{% endblock %}

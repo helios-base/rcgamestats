@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>{% block title %}Create Roundrobin{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% from "_formhelpers.html" import render_field %}
+<form method="POST" action="{{ url_for('group.create_roundrobin') }}" novalidate>
+    {{ form.hidden_tag() }}
+    <div style="display: flex; justify-content: flex-start;">
+        <div>
+            <h3>{{ form.left_teams.label }}</h3>
+            {{ form.left_teams }}
+        </div>
+        <div style="align-content: center; margin: 0 10px;">
+            <h3>vs.</h3>
+        </div>
+        <div>
+            <h3>{{ form.right_teams.label }}</h3>
+            {{ form.right_teams }}
+        </div>
+    </div>
+        {{ render_field(form.number_of_matches) }}
+        <br>
+        {% for message in get_flashed_messages() %}
+        {% endfor %}
+        {{ form.submit }}
+    </div>
+</form>
+{% endblock %}

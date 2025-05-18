@@ -1,0 +1,433 @@
+html { font-family: sans-serif; background: #eee; padding: 1rem; }
+body { max-width: 1400px; margin: 0 auto; background: white; }
+h1 { font-family: serif; color: #377ba8; margin: 1rem 0; font-size: 2.2em; } 
+h2 { color: #000000; margin: 1rem 0; }
+a { color: #202020; }
+hr { border: none; border-top: 1px solid lightgray; }
+nav { background: lightgray; display: flex; align-items: center; padding: 0 0.5rem; }
+nav h1 { flex: auto; margin: 0; }
+nav h1 a { text-decoration: none; padding: 0.25rem 0.5rem; }
+nav ul  { display: flex; list-style: none; margin: 0; padding: 0; }
+nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
+.content { padding: 0 1rem 1rem; }
+.content > header { border-bottom: 1px solid lightgray; display: flex; align-items: flex-end; }
+.content > header h1 { flex: auto; margin: 1rem 0 0.25rem 0; }
+.flash { margin: 1em 0; padding: 1em; background: #d4ede3; border: 1px solid #5cb167; }
+.flash-error { background: #f8d7da; border: 1px solid #c00000; }
+.flash-success { background: #cae6f6; border: 1px solid #377ba8; }
+.post > header { display: flex; align-items: flex-end; font-size: 0.85em; }
+.post > header > div:first-of-type { flex: auto; }
+.post > header h1 { font-size: 1.5em; margin-bottom: 0; }
+.post .about { color: slategray; font-style: italic; }
+.post .body { white-space: pre-line; }
+.content:last-child { margin-bottom: 0; }
+.content form { margin: 1em 0; display: flex; flex-direction: column; }
+.content label { font-weight: bold; margin-bottom: 0.5em; }
+.content input, .content textarea, .content select { margin-bottom: 1em; }
+.content textarea { min-height: 3em; resize: vertical; } 
+input.danger { color: #cc2f2e; }
+input[type=submit] { align-self: start; min-width: 10em; }
+
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 5px 0;
+}
+.submenu li {
+    margin: 0;
+    padding: 0;
+}
+    
+.submenu li:not(:last-child)::after {
+    content: "/";
+    margin: 0 5px;
+    color: #666;
+}
+
+.bg-true { background: #d4ede3; }
+.bg-false { background: #f8d7da; }
+
+.matchup-info { font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em; }
+.success { font-weight: bold; }
+.error { color: white; background-color: rgb(22, 46, 180); }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #000000; padding: 1px 4px; word-wrap: break-word; max-width: 200px; }
+th { background-color: #f2f2f2; text-align: left; }
+tr:nth-child(even) { background-color: #f7f5f5; }
+tr:hover { background-color: #ddd; }
+
+.approved, tr.approved { background-color: greenyellow; }
+.approved:hover, tr.approved:hover { background-color: lime; }
+.under_review, tr.under_review { background-color: gold; }
+.under_review:hover, tr..under_review:hover { background-color: orange; }
+.rejected, tr.rejected { background-color: coral; }
+.rejected:hover, tr.rejected:hover  { background-color: red; }
+/* 
+tr.updated { 
+    background-color: yellow;
+    border: 2px solid #000000;
+    transition: background-color 2s ease-out, border 2s ease-out;
+}
+*/
+/* 強調時のアニメーション定義 */
+@keyframes pulseHighlight {
+    0% {
+        background-color: yellow;
+        box-shadow: 0 0 0px yellow;
+    }
+    50% {
+        background-color: yellow;
+        box-shadow: 0 0 10px orange;
+    }
+    100% {
+        background-color: white; /* 通常の背景色に戻す */
+        box-shadow: none;
+    }
+}
+/* 更新された行にアニメーションを適用 */
+tr.updated {
+    animation: pulseHighlight 2s ease-out forwards;
+}
+
+td.host-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 20ch;
+}
+td.online { background-color:palegreen; }
+td.busy { background-color:#eeff7c }
+td.offline { background-color:#bbb; }
+td.stalled { background-color:indianred; }
+
+/* thやtd内の特定の要素の余白を調整する場合 */
+td *:first-child {
+    margin-top: 0; /* 最初の子要素の上の余白を0に設定 */
+}
+td *:last-child {
+    margin-bottom: 0; /* 最後の子要素の下の余白を0に設定 */
+}
+
+.table-cb { width: 1%; white-space: nowrap; }
+td.index{
+    text-align: center;
+    width: 5em;
+}
+td.time {
+    word-wrap: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+td.group-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 20ch;
+}
+td.team-name {
+    word-wrap: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+td.description {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 10ch;
+}
+td.score {
+    text-align: right;
+    padding-right: 10px;
+}
+td.team-archive {
+    font-size: x-small;
+    word-wrap: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+th.stats {
+    font-size: 8pt;
+}
+td.stats {
+    font-size: 10pt;
+    white-space: nowrap; /* テキストを1行にする */
+    overflow: hidden; /* 溢れたテキストを隠す */
+    max-width: 20ch; /* 最大幅を設定 */
+}
+/* 特定のカラムの境界線を強調する */
+th.lborder, td.lborder {
+    border-left: 3px solid #000; /* 左側の境界線を太くする */
+}
+
+/* group-tableの3列目のセルに対して幅をコンテンツに合わせる */
+#group-table th:nth-child(2),
+#group-table td:nth-child(2) {
+    white-space: nowrap;
+    width: 1%;
+}
+
+/* index column */
+#match-table td:nth-child(2) {
+    text-align: center;
+    width: 5em;
+}
+/* time columns */
+#match-table td:nth-child(3),
+#match-table td:nth-child(4) {
+    white-space: nowrap;
+    width: 1%;
+    padding: 0 6px;
+}
+/* score columns */
+#match-table td:nth-child(5),
+#match-table td:nth-child(6) {
+    text-align: right;
+    padding-right: 10px;
+}
+
+#email-table {
+    width: 32em;
+}
+
+.footer-nav { 
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: -180px;
+    /* 初期位置を画面外に設定 */
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #ffffff;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    transition: right 0.3s ease;
+    /* アニメーションを追加 */
+}
+.footer-nav a {
+    text-decoration: none;
+    color: #377ba8;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #f3f3f3;
+    /* 各リンクを線で囲む */
+    border-radius: 4px;
+    /* 角を丸くする */
+    font-weight: bold;
+    /* フォントを太くする */
+    font-size: 1.1em;
+    /* フォントサイズを大きくする */
+}
+.footer-nav a:hover {
+    background-color: #ddd;
+    /* ホバー時の背景色を変更 */
+    color: #000;
+    /* ホバー時の文字色を変更 */
+}
+.footer-nav:hover {
+    right: 0;
+    /* カーソルが近づくと表示 */
+}
+.footer-nav::before {
+    content: '';
+    position: absolute;
+    left: -40px;
+    /* 少し出ている部分の幅 */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    /* 少し出ている部分の幅 */
+    height: 100%;
+    background-color: #377ba8;
+    /* 装飾の背景色 */
+    border-top-left-radius: 4px;
+    /* 角を丸くする */
+    border-bottom-left-radius: 4px;
+    /* 角を丸くする */
+}
+
+.textarea-field {
+    width: 80%;
+    box-sizing: border-box;
+    /* パディングとボーダーを含めて幅を計算 */
+}
+
+.form-group {
+    margin-bottom: 1px;
+}
+
+.input-group {
+    margin-top: 10px;
+    margin-left: 2em;
+    display: flex;
+    align-items: center;
+}
+
+.select-field {
+    display: block;
+    width: fit-content;
+    min-width: 16em;
+    box-sizing: border-box;
+    margin-bottom: 1px;
+}
+
+.or-text {
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+}
+.button-container button {
+    margin-right: 10px;
+    padding: 5px 10px;
+}
+
+
+.tablesorter th{
+    position: relative;
+    cursor: pointer;
+    text-align: left;
+    padding-right: 12px;
+}
+.tablesorter th::before, .tablesorter th::after{
+    content: '';
+    position: absolute;
+    z-index: 2;
+    right: 7px;
+    width: 0;
+    height: 0;
+    border: 4px dashed;
+    border-color: #333 transparent;
+    pointer-events: none;
+}
+.tablesorter th::before{
+    border-bottom-style: solid;
+    border-top: none;
+    top: 25%;
+}
+.tablesorter th::after{
+    border-top-style: solid;
+    border-bottom: none;
+    bottom: 25%;
+}
+.tablesorter th.tablesorter-headerAsc:after{
+    border: none;
+}
+.tablesorter th.tablesorter-headerAsc:before{
+    top: 50%;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+}
+.tablesorter th.tablesorter-headerDesc:before{
+    border: none;
+}
+.tablesorter th.tablesorter-headerDesc:after{
+    top: 50%;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+}
+.tablesorter th.sorter-false:before, .tablesorter th.sorter-false:after{
+    border: none;
+}
+
+
+/* 
+  hide filter input when filter_disabled option is true
+*/
+.tablesorter .filter-false input.tablesorter-filter,
+.tablesorter .filter-false select.tablesorter-filter {
+    display: none;
+}
+
+
+/*
+ * from tablesorter theme.blue.css
+ */
+*/
+/* filter widget */
+.tablesorter .tablesorter-filter-row {
+	background-color: #eee;
+}
+.tablesorter .tablesorter-filter-row td {
+	background-color: #eee;
+	line-height: normal;
+	text-align: center; /* center the input */
+	-webkit-transition: line-height 0.1s ease;
+	-moz-transition: line-height 0.1s ease;
+	-o-transition: line-height 0.1s ease;
+	transition: line-height 0.1s ease;
+}
+/* optional disabled input styling */
+.tablesorter .tablesorter-filter-row .disabled {
+	opacity: 0.5;
+	filter: alpha(opacity=50);
+	cursor: not-allowed;
+}
+/* hidden filter row */
+.tablesorter .tablesorter-filter-row.hideme td {
+	/*** *********************************************** ***/
+	/*** change this padding to modify the thickness     ***/
+	/*** of the closed filter row (height = padding x 2) ***/
+	padding: 2px;
+	/*** *********************************************** ***/
+	margin: 0;
+	line-height: 0;
+	cursor: pointer;
+}
+.tablesorter .tablesorter-filter-row.hideme * {
+	height: 1px;
+	min-height: 0;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	/* don't use visibility: hidden because it disables tabbing */
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+/* filters */
+.tablesorter input.tablesorter-filter,
+.tablesorter select.tablesorter-filter {
+	width: 98%;
+	height: auto;
+	margin: 0;
+	padding: 4px;
+	background-color: #fff;
+	border: 1px solid #bbb;
+	color: #333;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	-webkit-transition: height 0.1s ease;
+	-moz-transition: height 0.1s ease;
+	-o-transition: height 0.1s ease;
+	transition: height 0.1s ease;
+}
+/* rows hidden by filtering (needed for child rows) */
+.tablesorter .filtered {
+	display: none;
+}
+
+/* ajax error row */
+.tablesorter .tablesorter-errorRow td {
+	text-align: center;
+	cursor: pointer;
+	background-color: #e6bf99;
+}

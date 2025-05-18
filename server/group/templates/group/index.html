@@ -1,0 +1,127 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}Groups{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('group.create') }}">Create a new group</a></li>
+    <li><a href="{{ url_for('group.create_roundrobin') }}">Create round robin</a></li>
+</ul>
+<ul class="submenu">
+    <li><a href="{{ url_for('group.show_archived_groups') }}">Show Archived Groups</a></li>
+</ul>
+
+<form id="bulk-action-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button id="bulk-archive-button" type="submit" formaction="{{ url_for('group.archive_groups') }}" disabled>Archive</button>
+    </div>
+    <table id="group-table" class="tablesorter">
+        <thead>
+            <tr>
+                <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th>Name</th>
+                <th>Created At</th>
+                <th>Left Team</th>
+                <th>Right Team</th>
+                <th>Scheduled</th>
+                <th>Completed</th>
+                <th>Description</th>
+                <th>Log Files</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups if group.is_active %}
+            {% set scheduled_count = group.matches.count() %}
+            {% set completed_count = group.completed_count() %}
+            <tr>
+                <td><input type="checkbox" name="group_ids" value="{{ group.id }}" onclick="checkCheckboxes()"></td>
+                <td class="group-name"><a href="{{ url_for('group.show_group_detail', group_name=group.name) }}" title="{{ group.name }}">{{ group.name }}</a></td>
+                <td class="time">{{ group.created_at }}</td>
+                <td class="team-name {{ group.left_team.review_status.value if group.left_team else ''}}">
+                    {% if group.left_team %}
+                    <a href="{{ url_for('team.show_team', team_id=group.left_team.id) }}" title="{{ group.left_team.version }}">{{ group.left_team.name }} <span style="font-size:xx-small;">({{ group.left_team.version }})</span></a>
+                    {% else %}
+                    <span class="error">Not found</span>
+                    {% endif %}
+                </td>
+                <td class="team-name {{ group.right_team.review_status.value if group.right_team else '' }}">
+                    {% if group.right_team %}
+                    <a href="{{ url_for('team.show_team', team_id=group.right_team.id) }}" title="{{ group.right_team.version }}">{{ group.right_team.name }} <span style="font-size:xx-small;">({{ group.right_team.version }})</span></a>
+                    {% else %}
+                    <span class="error">Not found</span>
+                    {% endif %}
+                </td>
+                <td>{{ scheduled_count}}</td>
+                <td>{% if completed_count == scheduled_count %}<span class="success">{{ completed_count }}</span>{% else %}<span class="error">{{ completed_count }}</span>{% endif %}</td>
+                <td class="description">{{ group.description }}</td>
+                <td><a href="{{ url_for('group.show_group_logs', group_name=group.name) }}">Log File</a></td>
+            </tr>
+        {% endfor %}</tbody>
+    </table>
+</form>
+
+{% if current_user.is_admin %}
+<form action="{{ url_for('group.import_csv') }}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button type="button" onclick="document.getElementById('csv-input').click();">
+            Import CSV
+        </button>
+    </div>
+    <!-- This input is hidden and will be triggered by the button above -->
+    <input id="csv-input" type="file" name="csv_file" accept=".csv" style="display: none;" onchange="this.form.submit();">
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('#group-table').tablesorter({
+            headers: {
+                0: { sorter: false, filter: false },
+                7: { sorter: false },
+                8: { sorter: false, filter: false }
+            },
+            sortList: [[2, 1]], // sort by the third column in descending order
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
+    });
+
+
+    function toggleCheckboxes(source) {
+        checkboxes = document.getElementsByName('group_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        var checkboxes = document.getElementsByName('group_ids');
+        var anyChecked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                anyChecked = true;
+                break;
+            }
+        }
+        document.getElementById('bulk-archive-button').disabled = !anyChecked;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        checkCheckboxes();
+    });
+
+</script>
+{% endblock %}

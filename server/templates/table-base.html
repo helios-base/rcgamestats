@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}{% endblock %} - rcgamestats</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">  
+  <script type="text/javascript" src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='jquery.tablesorter.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='jquery.tablesorter.widgets.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='jquery.tablesorter.pager.min.js') }}"></script>
+</head>
+
+<body>
+<nav>
+  <h1>RCGameStats</h1>
+  <ul>
+    {% if current_user.is_authenticated %}
+      <li><a href="{{ url_for('index') }}">Top</a></li>
+      <li><a href="{{ url_for('group.index') }}">Groups</a></li>
+      <li><a href="{{ url_for('group.show_stats') }}">Stats</a></li>
+      <li><a href="{{ url_for('team.index') }}">Teams</a></li>
+      <li><a href="{{ url_for('host.index') }}">Hosts</a></li>
+      {% if current_user.is_admin %}
+        <li><a href="{{ url_for('auth.show_server_logs') }}">ServerLog</a></li>
+      {% endif %}
+      <li><span> | </span></li>
+      <li><a href="{{ url_for('auth.dashboard') }}">{{ current_user['username'] }}</a></li>
+      <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+    {% endif %}
+  </ul>
+</nav>
+<section class="content">
+  <header>
+    {% block header %}{% endblock %}
+  </header>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+{% block content %}{% endblock %}
+</section>
+{% block scripts %}{% endblock %}
+</body>
+</html>

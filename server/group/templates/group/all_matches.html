@@ -1,0 +1,118 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}All Matches{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('group.index') }}">Group List</a></li>
+</ul>
+
+
+<h3>Stats</h3>
+<table id="stats-table" class="tablesorter">
+    <thead>
+        <tr>
+            <th class="stats">Created At</th>
+            <th class="stats lborder">Left</th>
+            <th class="stats">Right</th>
+            <th class="stats lborder">Total</th>
+            <th class="stats">Left Win</th>
+            <th class="stats">Draw</th>
+            <th class="stats">Right Win</th>
+            <th class="stats lborder">Left Win Rate</th>
+            <th class="stats">Draw Rate</th>
+            <th class="stats">Right Win Rate</th>
+            <th class="stats lborder">Left Goal</th>
+            <th class="stats">Right Goal</th>
+            <th class="stats lborder">Left Ave. Goal</th>
+            <th class="stats">Right Ave. Goal</th>
+            <th class="stats lborder">Left Max Goal</th>
+            <th class="stats">Right Max Goal</th>
+            <th class="stats lborder">Left Scored</th>
+            <th class="stats">Right Scored</th>
+            <th class="stats lborder">Left Score Rate</th>
+            <th class="stats">Right Score Rate</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stats in stats_list %}
+        <tr>
+            <td class="stats">{{ stats.group.created_at }}</a></td>
+            <td class="stats lborder">{{ stats.group.left_team.name }}</td>
+            <td class="stats">{{ stats.group.right_team.name }}</td>
+            <td class="stats lborder">{{ stats.completed_count }}</td>
+            <td class="stats">{{ stats.left_win }}</td>
+            <td class="stats">{{ stats.draw }}</td>
+            <td class="stats">{{ stats.right_win }}</td>
+            <td class="stats lborder">{{ "%.2f" % (stats.left_win_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.draw_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_win_rate * 100) }} %</td>
+            <td class="stats lborder">{{ stats.left_sum_of_scores }}</td>
+            <td class="stats">{{ stats.right_sum_of_scores }}</td>
+            <td class="stats lborder">{{ stats.left_mean_score|round(3) }}</td>
+            <td class="stats">{{ stats.right_mean_score|round(3) }}</td>
+            <td class="stats lborder">{{ stats.left_max_score }}</td>
+            <td class="stats">{{ stats.right_max_score }}</td>
+            <td class="stats lborder">{{ stats.left_scored_games }}</td>
+            <td class="stats">{{ stats.right_scored_games }}</td>
+            <td class="stats lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
+            <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
+        </tr>
+        {% endfor %}
+</table>
+
+<h3>Matches</h3>
+
+<table id="match-table" class="tablesorter">
+    <thead>
+        <tr>
+            <th>Group</th>
+            <th>Index</th>
+            <th>Start At</th>
+            <th>End At</th>
+            <th>Left Score</th>
+            <th>Right Score</th>
+            <th>Host Name</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for match in matches %}<tr>
+            <td>{{ match.group.name }}</td>
+            <td>{{ match.index }}</td>
+            <td>{{ match.start_time }}</td>
+            <td>{{ match.end_time }}</td>
+            <td>{{ match.left_score }}</td>
+            <td>{{ match.right_score }}</td>
+            <td>{{ match.host_name }}</td>
+            <td>{{ match.status.value }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('#stats-table').tablesorter(
+            {
+                headers: {
+                    
+                },
+                sortList: [[0, 0]], // sort by first column in ascending order
+            }
+        )
+
+    $(function () {
+        $('#match-table').tablesorter(
+            {
+                headers: {
+                    
+                },
+                sortList: [[0, 0]], // sort by first column in ascending order
+            }
+        ));
+</script>
+{% endblock %}

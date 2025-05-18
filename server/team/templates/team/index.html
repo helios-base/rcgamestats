@@ -1,0 +1,99 @@
+{% extends 'table-base.html' %}
+{% block header %}
+<h1>{% block title %}Teams{% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<ul class="submenu">
+    <li><a href="{{ url_for('team.upload') }}">Upload a new team</a></li>
+</ul>
+<ul class="submenu">
+    <li><a href="{{ url_for('team.show_archived') }}">Show Archived Teams</a></li>
+</ul>
+
+<form action="{{ url_for('team.archive_teams')}}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="button-container">
+        <button id="bulk-archive-button" type="submit" disabled>Archive</button>
+    </div>
+    <table id="team-table" class="tablesorter">
+        <thead>
+            <tr>
+                <th class="table-cb"><input type="checkbox" id="select-all" onclick="toggleCheckboxes(this)"></th>
+                <th>Team Name</th>
+                <th>Review Status</th>
+                <th>Version</th>
+                <th>Uploaded At</th>
+                <th>Synch Mode</th>
+                <th>Archive File</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+            <tr class={% if team.review_status.value == 'approved' %}"approved"{% elif team.review_status.value == 'rejected' %}"rejected"{% elif team.review_status.value == 'under_review' %}"under_review"{% endif %}>
+                <td><input type="checkbox" name="team_ids" value="{{ team.id }}" onclick="checkCheckboxes()"></td>
+                <td><a href="{{ url_for('team.show_team', team_id=team.id) }}">{{ team.name }}</a></td>
+                <td>{{ team.review_status.value }}</td>
+                <td>{{ team.version }}</td>
+                <td class="time">{{ team.uploaded_at }}</td>
+                <td class="{% if team.synch_mode %}bg-true{% else %}bg-false{% endif %}">{{ team.synch_mode }}</td>
+                <td class="team-archive"><a href="{{ url_for('team.download', name=team.name, version=team.version) }}">{{ team.archive_path | basename }}</a></td>
+                <td>{{ team.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('#team-table').tablesorter({
+            headers: {
+                0: { sorter: false, filter: false },
+                3: { sorter: false, filter: false },
+                4: { sorter: false, filter: false },
+                5: { sorter: false }
+            },
+            sortList: [[1, 0]], // sort by second column in ascending order
+            widgets: ['filter'],
+            widgetOptions: {
+                filter_columnFilters: true,
+                // class name applied to filter row and each input
+                filter_cssFilter: 'tablesorter-filter',
+                // Set this option to false to make the searches case sensitive
+                filter_ignoreCase: true,
+
+            }
+        });
+    });
+
+    function toggleCheckboxes(source) {
+        checkboxes = document.getElementsByName('team_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkCheckboxes();
+    }
+
+    function checkCheckboxes() {
+        var checkboxes = document.getElementsByName('team_ids');
+        var button = document.getElementById('bulk-archive-button');
+        var anyChecked = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                anyChecked = true;
+                break;
+            }
+        }
+        button.disabled = !anyChecked;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        checkCheckboxes();
+    });
+</script>
+{% endblock %}

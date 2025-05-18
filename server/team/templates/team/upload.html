@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block head %}
+  <link href="{{ url_for('static', filename='filepond.min.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block header %}
+<h1>{% block title %}Team Upload{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="submenu">
+    (*) fields are mandatory.
+</div>
+{% from "_formhelpers.html" import render_field %}
+<form method="POST" action="{{ url_for('team.upload') }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        <label for="existing_team_name">Team Name(*):</label>
+        <div class="input-group">
+            {{ render_field(form.existing_team_name) }}
+            <span class="or-text">or</span>
+            {{ render_field(form.new_team_name) }}
+        </div>
+    </div>
+    {{ render_field(form.synch_mode) }}
+    {{ render_field(form.version) }}
+    {{ render_field(form.description) }}
+    {{ render_field(form.archive_file) }}
+    <br />
+    {% for message in get_flashed_messages() %}
+    <div style="color: blue;">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {{ form.submit }}
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='filepond.min.js') }}"></script>
+<script>
+  // const inputElement = document.querySelector('input[type="file"]');
+  const inputElement = document.querySelector('input[name="archive_file"]'); 　
+  FilePond.create(inputElement, {
+      allowMultiple: false, // restrict to single file
+      instantUpload: false, // disable immediate upload
+      storeAsFile: true, // store file as file object
+      // restrict file type
+      acceptedFileTypes: [".tar.gz", ".tgz", ".tar.xz", ".txz", ".zip"],
+      labelIdle: 'Drag & Drop your files or <span class="filepond--label-action">Browse</span>',
+
+  });
+</script>
+{% endblock %}

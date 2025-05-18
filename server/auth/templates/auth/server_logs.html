@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Server Log{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <pre id="logContainer" style="background:#f0f0f0; padding:10px; height:500px; overflow:auto;"></pre>
+{% endblock %}
+{% block scripts %}
+  <script>
+    const source = new EventSource("{{ prefix }}/auth/admin/logs/stream");
+    const logContainer = document.getElementById("logContainer");
+    const maxLines = 100; // max number of lines to display
+    let lines = [];
+
+    source.onmessage = function(event) {
+      lines.push(event.data); // append line to array
+      if (lines.length > maxLines) {
+        lines = lines.slice(lines.length - maxLines); // remove first lines
+      }
+      /// append log to container
+      logContainer.textContent = lines.join("\n");
+      // scroll to bottom
+      logContainer.scrollTop = logContainer.scrollHeight;
+    };
+    
+    source.onerror = function(e) {
+      console.error("EventSource failed:", e);
+    };
+  </script>
+{% endblock %}

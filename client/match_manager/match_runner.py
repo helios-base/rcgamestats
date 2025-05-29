@@ -133,9 +133,9 @@ class MatchRunner:
             if not matching_files:
                 logger.error(f"rcg file not found: {log_file_pattern}")
                 return False
-            selected_file = max(matching_files, key=os.path.getctime)
-            # logger.info(f"Selected rcg file: {selected_file}")
-            cmd = ["rcgvalidator", selected_file]
+            selected = max(matching_files, key=os.path.getctime)
+            # logger.info(f"Selected rcg file: {selected}")
+            cmd = ["rcgvalidator", selected]
             try:
                 subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
                 logger.info("rcgvalidator passed.")
@@ -153,14 +153,14 @@ class MatchRunner:
         if not matching_files:
             logger.error(f"rcg file not found: {log_file_pattern}")
             return
-        selected_file = max(matching_files, key=os.path.getctime)
-        # logger.info(f"Selected rcg file: {selected_file}")
+        selected = max(matching_files, key=os.path.getctime)
+        # logger.info(f"Selected rcg file: {selected}")
 
         if config.USE_RCG2CSV:
             if shutil.which("rcg2csv"):
                 try:
-                    subprocess.run(["rcg2csv", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                    # result = subprocess.run(["rcg2csv", selected_file])
+                    subprocess.run(["rcg2csv", selected], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                    # result = subprocess.run(["rcg2csv", selected])
                     tracking_csv = os.path.join(self.log_dir, f"{self.log_name}.tracking.csv")
                     if os.path.exists(tracking_csv):
                         subprocess.run(["gzip", "-f", tracking_csv])
@@ -173,8 +173,8 @@ class MatchRunner:
         if config.USE_RCG2DATA:
             if shutil.which("rcg2data"):
                 try:
-                    subprocess.run(["rcg2data", selected_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                    # result = subprocess.run(["rcg2data", selected_file])
+                    subprocess.run(["rcg2data", selected], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                    # result = subprocess.run(["rcg2data", selected])
                     event_csv = os.path.join(self.log_dir, f"{self.log_name}.event.csv")
                     if os.path.exists(event_csv):
                         subprocess.run(["gzip", "-f", event_csv])
@@ -184,6 +184,38 @@ class MatchRunner:
             else:
                 logger.warning("rcg2data not found.")
 
+    def run_loganalyzer3(self, side="l"):
+        """
+        Run loganalyzer3 for the specified side ('l' or 'r').
+        """
+        # look for compressed game log
+        pattern = os.path.join(self.log_dir, f"{self.log_name}.rcl.gz")
+        files = glob.glob(pattern)
+        if not files:
+            logger.error(f"No game log found for loganalyzer3: {pattern}")
+            return False
+
+        selected = max(files, key=os.path.getctime)
+        if not shutil.which("loganalyzer3"):
+            logger.warning("loganalyzer3 not found.")
+            return False
+        try:
+            logger.info(f"Running loganalyzer3: loganalyzer3 {selected} --side {side} --output-dir {self.log_dir}")
+            # ensure output_dir ends with a slash
+            output_dir = self.log_dir if self.log_dir.endswith(os.path.sep) else self.log_dir + os.path.sep
+
+            subprocess.run(
+                ["loganalyzer3", selected, "--side", side, "--output-dir", output_dir],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=True
+            )
+            logger.info(f"loganalyzer3 completed successfully.")
+            return True
+        except subprocess.CalledProcessError as e:
+            logger.error(f"loganalyzer3 failed (exit={e.returncode})")
+            return False    
+    
     def move_csv_files(self):
         """
         Move the csv files to the log directory.
@@ -314,6 +346,9 @@ class MatchRunner:
         if not self.validate_game_log():
             return False
         self.analyze_game_log()
+        logger.info("run loganalyzer3")
+        self.run_loganalyzer3(side="l")
+        logger.info("Completed")
         self.move_csv_files()
         self.compress_debug_logs()
         self.change_cpufreq("powersave")

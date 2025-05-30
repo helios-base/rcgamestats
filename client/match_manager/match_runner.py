@@ -210,7 +210,15 @@ class MatchRunner:
                 stderr=subprocess.DEVNULL,
                 check=True
             )
-            logger.info(f"loganalyzer3 completed successfully.")
+            logger.info("loganalyzer3 completed successfully.")
+
+            # === CSV ファイルを <self.log_name>.csv にリネーム ===
+            for csv_path in glob.glob(os.path.join(self.log_dir, "*.csv")):
+                dst = os.path.join(self.log_dir, f"{self.log_name}.csv")
+                if os.path.exists(dst):
+                    os.remove(dst)
+                os.rename(csv_path, dst)
+
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"loganalyzer3 failed (exit={e.returncode})")

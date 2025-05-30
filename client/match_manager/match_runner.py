@@ -346,9 +346,7 @@ class MatchRunner:
         if not self.validate_game_log():
             return False
         self.analyze_game_log()
-        logger.info("run loganalyzer3")
         self.run_loganalyzer3(side="l")
-        logger.info("Completed")
         self.move_csv_files()
         self.compress_debug_logs()
         self.change_cpufreq("powersave")

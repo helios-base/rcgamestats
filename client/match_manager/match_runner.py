@@ -214,7 +214,7 @@ class MatchRunner:
 
             # === CSV ファイルを <self.log_name>.csv にリネーム ===
             for csv_path in glob.glob(os.path.join(self.log_dir, "*.csv")):
-                dst = os.path.join(self.log_dir, f"{self.log_name}.csv")
+                dst = os.path.join(self.log_dir, f"{self.log_name}.loganalyzer3.csv")
                 if os.path.exists(dst):
                     os.remove(dst)
                 os.rename(csv_path, dst)

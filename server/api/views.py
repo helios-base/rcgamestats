@@ -239,6 +239,8 @@ def extract_result_params(data):
             "left_score": int(data.get("left_score")),
             "right_score": int(data.get("right_score")),
             "match_token": data.get("match_token"),
+            "our_domination_time": int(data.get("our_domination_time")) if data.get("our_domination_time") is not None else None,
+            "opp_domination_time": int(data.get("opp_domination_time")) if data.get("opp_domination_time") is not None else None,
         }
     except Exception as e:
         raise ValueError(f"Invalid parameters: {e}")
@@ -310,6 +312,8 @@ def update_match_result(match, params, end_time):
     match.end_time = end_time
     match.left_score = params["left_score"]
     match.right_score = params["right_score"]
+    match.our_domination_time = params.get("our_domination_time", 0)
+    match.opp_domination_time = params.get("opp_domination_time", 0)
     match.status = MatchStatus.COMPLETED
 
 
@@ -378,6 +382,8 @@ def submit_result():
         return jsonify({"error": str(e)}), 500
 
     message = f"@{match.host_name} Result   {match.group.name}/{match.index}, {match.left_score} - {match.right_score}"
+    if match.left_possession is not None and match.right_possession is not None:
+        message += f", Pos: {match.our_domination_time:.1f}% - {match.opp_domination_time:.1f}%"
     current_app.logger.info(message)
     return jsonify({"message": message})
 
@@ -682,6 +688,8 @@ def admin_submit_result():
         left_score = data.get("left_score")
         right_score = data.get("right_score")
         log_file_name = data.get("log_file_name")
+        our_domination_time = data.get("our_domination_time")
+        opp_domination_time = data.get("opp_domination_time")
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
@@ -733,6 +741,10 @@ def admin_submit_result():
     match.left_score = left_score
     match.right_score = right_score
     match.log_file_name = log_file_name
+    if our_domination_time is not None:
+        match.our_domination_time = int(our_domination_time)
+    if opp_domination_time is not None:
+        match.opp_domination_time = int(opp_domination_time)
     match.status = MatchStatus.COMPLETED
 
     group.updated_at = end_time

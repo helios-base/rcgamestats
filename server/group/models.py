@@ -97,8 +97,8 @@ class Match(db.Model):
     status = db.Column(db.Enum(MatchStatus), name="match_status_enum", default=MatchStatus.UNEXECUTED)
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(64))
-    left_dominate_time = db.Column(db.Integer, default=0)
-    right_dominate_time = db.Column(db.Integer, default=0)
+    our_dominate_time = db.Column(db.Integer, default=0)
+    opp_dominate_time = db.Column(db.Integer, default=0)
 
     group = db.relationship('Group', backref=db.backref('matches', cascade='all, delete-orphan', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
@@ -112,8 +112,8 @@ class Match(db.Model):
         self.end_time = None
         self.left_score = None
         self.right_score = None
-        self.left_dominate_time = None
-        self.right_dominate_time = None
+        self.our_dominate_time = None
+        self.opp_dominate_time = None
 
         if self.group.is_active:
             self.status = MatchStatus.UNEXECUTED
@@ -213,11 +213,11 @@ class GroupStats(db.Model):
         left_scores = np.array([match.left_score for match in matches if match.left_score is not None and match.left_score >= 0])
         right_scores = np.array([match.right_score for match in matches if match.right_score is not None and match.right_score >= 0])
 
-        left_dominate_times = np.array([match.left_dominate_time for match in matches if match.left_dominate_time is not None])
-        right_dominate_times = np.array([match.right_dominate_time for match in matches if match.right_dominate_time is not None])
+        our_dominate_times = np.array([match.our_dominate_time for match in matches if match.our_dominate_time is not None])
+        opp_dominate_times = np.array([match.opp_dominate_time for match in matches if match.opp_dominate_time is not None])
 
-        self.left_sum_of_dominate_time = int(np.sum(left_dominate_times))
-        self.right_sum_of_dominate_time = int(np.sum(right_dominate_times))
+        self.left_sum_of_dominate_time = int(np.sum(our_dominate_times))
+        self.right_sum_of_dominate_time = int(np.sum(opp_dominate_times))
         self.left_possession_rate = float(self.left_sum_of_dominate_time) / (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) if (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) > 0 else 0.0
         self.right_possession_rate = float(self.right_sum_of_dominate_time) / (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) if (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) > 0 else 0.0
         self.left_win = int(np.sum(left_scores > right_scores))

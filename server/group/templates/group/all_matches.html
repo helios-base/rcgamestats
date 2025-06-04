@@ -60,8 +60,8 @@
             <td class="stats">{{ stats.right_scored_games }}</td>
             <td class="stats lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
             <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
-            <td class="stats lborder">{{ stats.left_possession_late * 100 }}</td>
-            <td class="stats">{{ stats.right_possession_late  * 100}}</td>
+            <td class="stats lborder">{{ stats.left_possession_rate * 100 }}</td>
+            <td class="stats">{{ stats.right_possession_rate  * 100}}</td>
         </tr>
         {% endfor %}
 </table>

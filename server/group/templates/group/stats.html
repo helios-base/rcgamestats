@@ -222,12 +222,12 @@
 
         cell = document.createElement('td');
         cell.classList.add('stats', 'lborder');
-        cell.textContent = (stats.left_possession_late * 100).toFixed(1) + ' %';
+        cell.textContent = (stats.left_possession_rate * 100).toFixed(1) + ' %';
         row.appendChild(cell);
 
         cell = document.createElement('td');
         cell.classList.add('stats');
-        cell.textContent = (stats.right_possession_late * 100).toFixed(1) + ' %';
+        cell.textContent = (stats.right_possession_rate * 100).toFixed(1) + ' %';
         row.appendChild(cell);
 
         return row;

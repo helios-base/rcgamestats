@@ -31,6 +31,8 @@ class Match:
         self.right_score = -1
         self.log_file_name = log_file_name
         self.synch_mode = True
+        self.our_domination_time = 0
+        self.opp_domination_time = 0
 
 
     def __str__(self):
@@ -53,6 +55,8 @@ class Match:
             right_team_version = json_data["right_team_version"]
             left_score = json_data.get("left_score", -1)
             right_score = json_data.get("right_score", -1)
+            our_domination_time = json_data.get("our_domination_time", 0)
+            opp_domination_time = json_data.get("opp_domination_time", 0)
             log_file_name = json_data["log_file_name"]
             synch_mode = json_data.get("synch_mode", True)
         except KeyError:
@@ -64,6 +68,8 @@ class Match:
         match.right_team_version = right_team_version
         match.left_score = left_score
         match.right_score = right_score
+        match.our_domination_time = our_domination_time
+        match.opp_domination_time = opp_domination_time
         match.synch_mode = synch_mode
         return match
 
@@ -81,6 +87,8 @@ class Match:
             "right_team_version": self.right_team_version,
             "left_score": self.left_score,
             "right_score": self.right_score,
+            "our_domination_time": self.our_domination_time,
+            "opp_domination_time": self.opp_domination_time,
             "log_file_name": self.log_file_name,
             "synch_mode": self.synch_mode,
         }
@@ -111,6 +119,33 @@ class Match:
 
         self.left_score = left_score
         self.right_score = right_score
+
+    def set_loganalyzer3(self, loganalyzer3_csv):
+        """
+        Set the loganalyzer3 result.
+        """
+        if not os.path.exists(loganalyzer3_csv):
+            logger.error(f"The loganalyzer3 file does not exist.")
+            return
+
+        our_domination_time = 0
+        opp_domination_time = 0
+        with open(loganalyzer3_csv, "r") as f:
+            reader = csv.DictReader(f, skipinitialspace=True)
+            for row in reader:
+                try:
+                    if row["our_domination_time"]:
+                        our_domination_time = int(row["our_domination_time"])
+                    if row["opp_domination_time"]:
+                        opp_domination_time = int(row["opp_domination_time"])
+                except ValueError:
+                    continue
+
+                if our_domination_time != 0 and opp_domination_time != 0:
+                    break
+        self.our_domination_time = our_domination_time
+        self.opp_domination_time = opp_domination_time
+
 
     def run(self):
         """
@@ -147,4 +182,7 @@ class Match:
 
         result_csv = os.path.join(log_dir, f"{self.log_file_name}.result.csv")
         self.set_result(result_csv)
+
+        loganalyzer3_csv = os.path.join(log_dir, f"{self.log_file_name}.loganalyzer3.csv")
+        self.set_loganalyzer3(loganalyzer3_csv)
         return True

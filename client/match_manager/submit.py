@@ -66,6 +66,8 @@ def submit_result(match):
         "right_team_name": match.right_team_name,
         "left_score": match.left_score,
         "right_score": match.right_score,
+        "our_domination_time": match.our_domination_time,
+        "opp_domination_time": match.opp_domination_time,
     }
 
     tmp_dir = config.TEMPORAL_DIR

@@ -46,11 +46,11 @@ def __submit_result(group_id, result, loganalyzer3):
     filename = result[0];
     left_score = result[1];
     right_score = result[2];
-    our_dominate_time = loganalyzer3[8];
-    opp_dominate_time = loganalyzer3[9];
+    our_domination_time = loganalyzer3[1];
+    opp_domination_time = loganalyzer3[2];
     if filename is None or left_score is None or right_score is None:
         return False
-    if our_dominate_time is None or opp_dominate_time is None:
+    if our_domination_time is None or opp_domination_time is None:
         return False
 
     url = __get_submit_results_url()
@@ -71,8 +71,8 @@ def __submit_result(group_id, result, loganalyzer3):
         "left_score": left_score,
         "right_score": right_score,
         "log_file_name": filename,
-        "our_dominate_time": our_dominate_time,
-        "opp_dominate_time": opp_dominate_time
+        "our_domination_time": our_domination_time,
+        "opp_domination_time": opp_domination_time
     }
 
     filepaths = glob.glob(os.path.join(config.GROUP_DIR, f"{filename}*"))

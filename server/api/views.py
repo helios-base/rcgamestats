@@ -382,8 +382,6 @@ def submit_result():
         return jsonify({"error": str(e)}), 500
 
     message = f"@{match.host_name} Result   {match.group.name}/{match.index}, {match.left_score} - {match.right_score}"
-    if match.left_possession is not None and match.right_possession is not None:
-        message += f", Pos: {match.our_domination_time:.1f}% - {match.opp_domination_time:.1f}%"
     current_app.logger.info(message)
     return jsonify({"message": message})
 

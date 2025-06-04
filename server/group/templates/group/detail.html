@@ -56,6 +56,8 @@
             <th class="stats">Right Scored</th>
             <th class="stats lborder">Left Score Rate</th>
             <th class="stats">Right Score Rate</th>
+            <th class="stats lborder">Left Domination Time</Time></th>
+            <th class="stats">Right Domination Time</th>
         </tr>
     </thead>
     <tbody>
@@ -77,6 +79,8 @@
             <td class="stats">{{ stats.right_scored_games }}</td>
             <td class="stats lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
             <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
+            <td class="stats lborder">{{ stats.our_domination_time }}</td>
+            <td class="stats">{{ stats.opp_domination_time }}</td>
         </tr>
     </tbody>
 </table>

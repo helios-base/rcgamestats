@@ -33,6 +33,8 @@
             <th class="stats">Right Scored</th>
             <th class="stats lborder">Left Score Rate</th>
             <th class="stats">Right Score Rate</th>
+            <th class="stats lborder">Left posession late</th>
+            <th class="stats">Right posession late</th>
         </tr>
     </thead>
     <tbody>
@@ -58,6 +60,8 @@
             <td class="stats">{{ stats.right_scored_games }}</td>
             <td class="stats lborder">{{ "%.2f" % (stats.left_scored_games_rate * 100) }} %</td>
             <td class="stats">{{ "%.2f" % (stats.right_scored_games_rate * 100) }} %</td>
+            <td class="stats lborder">{{ stats.left_possession_late * 100 }}</td>
+            <td class="stats">{{ stats.right_possession_late  * 100}}</td>
         </tr>
         {% endfor %}
 </table>
@@ -75,6 +79,8 @@
             <th>Right Score</th>
             <th>Host Name</th>
             <th>Status</th>
+            <th>Left Domination Time</th>
+            <th>Right Domination Time</th>
         </tr>
     </thead>
     <tbody>
@@ -87,6 +93,8 @@
             <td>{{ match.right_score }}</td>
             <td>{{ match.host_name }}</td>
             <td>{{ match.status.value }}</td>
+            <td>{{ match.our_domination_time }}</td>
+            <td>{{ match.opp_domination_time }}</td>
         </tr>
         {% endfor %}
     </tbody>

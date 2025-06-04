@@ -47,6 +47,8 @@
             <th class="stats">Right Scored</th>
             <th class="stats lborder">Left Score Rate</th>
             <th class="stats">Right Score Rate</th>
+            <th class="stats lborder">Left Posession Rate</th>
+            <th class="stats">Right Posession Rate</th>
         </tr>
     </thead>
     <tbody id="stats-table-body">
@@ -216,6 +218,16 @@
         cell = document.createElement('td');
         cell.classList.add('stats');
         cell.textContent = (stats.right_scored_games_rate * 100).toFixed(2) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats', 'lborder');
+        cell.textContent = (stats.left_possession_late * 100).toFixed(1) + ' %';
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        cell.textContent = (stats.right_possession_late * 100).toFixed(1) + ' %';
         row.appendChild(cell);
 
         return row;

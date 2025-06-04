@@ -284,6 +284,10 @@ def validate_match(match, params):
         return "Host not found.", 404
     if params["left_score"] < 0 or params["right_score"] < 0:
         return "Invalid score.", 400  # Bad Request
+    if params["our_domination_time"] is not None and params["our_domination_time"] < 0:
+        return "Invalid our domination time.", 400
+    if params["opp_domination_time"] is not None and params["opp_domination_time"] < 0:
+        return "Invalid opponent domination time.", 400
     return None, 200
 
 
@@ -312,8 +316,8 @@ def update_match_result(match, params, end_time):
     match.end_time = end_time
     match.left_score = params["left_score"]
     match.right_score = params["right_score"]
-    match.our_domination_time = params.get("our_domination_time", 0)
-    match.opp_domination_time = params.get("opp_domination_time", 0)
+    match.our_domination_time = params["our_domination_time"]
+    match.opp_domination_time = params["opp_domination_time"]
     match.status = MatchStatus.COMPLETED
 
 
@@ -381,7 +385,7 @@ def submit_result():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-    message = f"@{match.host_name} Result   {match.group.name}/{match.index}, {match.left_score} - {match.right_score}"
+    message = f"@{match.host_name} Result   {match.group.name}/{match.index}, {match.left_score} - {match.right_score}, {match.our_domination_time} - {match.opp_domination_time}"
     current_app.logger.info(message)
     return jsonify({"message": message})
 
@@ -690,6 +694,10 @@ def admin_submit_result():
         opp_domination_time = data.get("opp_domination_time")
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
+    # Add this line to log the value of opp_domination_time
+    current_app.logger.info(f"opp_domination_time: {opp_domination_time}")
+
 
     start_time = datetime.now().replace(microsecond=0)
     end_time = start_time
@@ -739,10 +747,8 @@ def admin_submit_result():
     match.left_score = left_score
     match.right_score = right_score
     match.log_file_name = log_file_name
-    if our_domination_time is not None:
-        match.our_domination_time = int(our_domination_time)
-    if opp_domination_time is not None:
-        match.opp_domination_time = int(opp_domination_time)
+    match.our_domination_time = our_domination_time
+    match.opp_domination_time = opp_domination_time
     match.status = MatchStatus.COMPLETED
 
     group.updated_at = end_time

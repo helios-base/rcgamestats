@@ -68,8 +68,8 @@ class Group(db.Model):
             'right_score_ci': [self.stats.right_score_confidence_interval_lower, self.stats.right_score_confidence_interval_upper] if self.stats else [0, 0],
             'left_score_counts': self.stats.left_score_counts if self.stats else {"0": 0},
             'right_score_counts': self.stats.right_score_counts if self.stats else {"0": 0},
-            'left_sum_of_dominate_time': self.stats.left_sum_of_dominate_time if self.stats else 0,
-            'right_sum_of_dominate_time': self.stats.right_sum_of_dominate_time if self.stats else 0,
+            'left_sum_of_domination_time': self.stats.left_sum_of_domination_time if self.stats else 0,
+            'right_sum_of_domination_time': self.stats.right_sum_of_domination_time if self.stats else 0,
             'left_possession_rate': self.stats.left_possession_rate if self.stats else 0.0,
             'right_possession_rate': self.stats.right_possession_rate if self.stats else 0.0,
         }
@@ -97,8 +97,8 @@ class Match(db.Model):
     status = db.Column(db.Enum(MatchStatus), name="match_status_enum", default=MatchStatus.UNEXECUTED)
     log_file_name = db.Column(db.String(255))
     token = db.Column(db.String(64))
-    our_dominate_time = db.Column(db.Integer, default=0)
-    opp_dominate_time = db.Column(db.Integer, default=0)
+    our_domination_time = db.Column(db.Integer, default=0)
+    opp_domination_time = db.Column(db.Integer, default=0)
 
     group = db.relationship('Group', backref=db.backref('matches', cascade='all, delete-orphan', lazy='dynamic'))
     left_team = db.relationship('Team', foreign_keys=[left_team_id])
@@ -112,8 +112,8 @@ class Match(db.Model):
         self.end_time = None
         self.left_score = None
         self.right_score = None
-        self.our_dominate_time = None
-        self.opp_dominate_time = None
+        self.our_domination_time = None
+        self.opp_domination_time = None
 
         if self.group.is_active:
             self.status = MatchStatus.UNEXECUTED
@@ -152,8 +152,8 @@ class GroupStats(db.Model):
     right_score_confidence_interval_lower = db.Column(db.Float)
     right_score_confidence_interval_upper = db.Column(db.Float)
     host_counts = db.Column(db.JSON)
-    left_sum_of_dominate_time = db.Column(db.Integer, default=0)
-    right_sum_of_dominate_time = db.Column(db.Integer, default=0)
+    left_sum_of_domination_time = db.Column(db.Integer, default=0)
+    right_sum_of_domination_time = db.Column(db.Integer, default=0)
     left_possession_rate = db.Column(db.Float, default=0.0)
     right_possession_rate = db.Column(db.Float, default=0.0)
 
@@ -185,8 +185,8 @@ class GroupStats(db.Model):
         self.right_score_confidence_interval_lower = 0.0
         self.right_score_confidence_interval_upper = 0.0
         self.host_counts = {}
-        self.left_sum_of_dominate_time = 0
-        self.right_sum_of_dominate_time = 0
+        self.left_sum_of_domination_time = 0
+        self.right_sum_of_domination_time = 0
         self.left_possession_rate = 0.0
         self.right_possession_rate = 0.0
 
@@ -213,13 +213,13 @@ class GroupStats(db.Model):
         left_scores = np.array([match.left_score for match in matches if match.left_score is not None and match.left_score >= 0])
         right_scores = np.array([match.right_score for match in matches if match.right_score is not None and match.right_score >= 0])
 
-        our_dominate_times = np.array([match.our_dominate_time for match in matches if match.our_dominate_time is not None])
-        opp_dominate_times = np.array([match.opp_dominate_time for match in matches if match.opp_dominate_time is not None])
+        our_domination_times = np.array([match.our_domination_time for match in matches if match.our_domination_time is not None])
+        opp_domination_times = np.array([match.opp_domination_time for match in matches if match.opp_domination_time is not None])
 
-        self.left_sum_of_dominate_time = int(np.sum(our_dominate_times))
-        self.right_sum_of_dominate_time = int(np.sum(opp_dominate_times))
-        self.left_possession_rate = float(self.left_sum_of_dominate_time) / (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) if (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) > 0 else 0.0
-        self.right_possession_rate = float(self.right_sum_of_dominate_time) / (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) if (self.left_sum_of_dominate_time + self.right_sum_of_dominate_time) > 0 else 0.0
+        self.left_sum_of_domination_time = int(np.sum(our_domination_times))
+        self.right_sum_of_domination_time = int(np.sum(opp_domination_times))
+        self.left_possession_rate = float(self.left_sum_of_domination_time) / (self.left_sum_of_domination_time + self.right_sum_of_domination_time) if (self.left_sum_of_domination_time + self.right_sum_of_domination_time) > 0 else 0.0
+        self.right_possession_rate = float(self.right_sum_of_domination_time) / (self.left_sum_of_domination_time + self.right_sum_of_domination_time) if (self.left_sum_of_domination_time + self.right_sum_of_domination_time) > 0 else 0.0
         self.left_win = int(np.sum(left_scores > right_scores))
         self.right_win = int(np.sum(left_scores < right_scores))
         self.draw = int(np.sum(left_scores == right_scores))

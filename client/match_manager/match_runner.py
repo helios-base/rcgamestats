@@ -196,7 +196,12 @@ class MatchRunner:
             return False
 
         selected = max(files, key=os.path.getctime)
-        if not shutil.which("loganalyzer3"):
+
+        # loganalyzer3 のパスを一時的に追加
+        env = os.environ.copy()
+        env["PATH"] = os.path.expanduser("~/rcss/tools/loganalyzer3") + ":" + env.get("PATH", "")
+
+        if not shutil.which("loganalyzer3", path=env["PATH"]):
             logger.warning("loganalyzer3 not found.")
             return False
         try:
@@ -208,7 +213,8 @@ class MatchRunner:
                 ["loganalyzer3", selected, "--side", side, "--output-dir", output_dir],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                check=True
+                check=True,
+                env=env  # ここでPATHを上書き
             )
             logger.info("loganalyzer3 completed successfully.")
 

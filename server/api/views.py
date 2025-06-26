@@ -834,6 +834,7 @@ def admin_upload_team():
 
     # Create a new team record
     team = Team(name=team_name,
+                uploaded_at=datetime.now().replace(microsecond=0),
                 version=team_version,
                 synch_mode=synch_mode,
                 archive_path=os.path.join(archive_dir, filename),

@@ -2,5 +2,8 @@ name,version,synch_mode,archive_path,description
 cyrus2024,0,true,./teams/cyrus2024/0/cyrus2024.tar.gz,""
 fraunited24,0,false,./teams/fraunited24/0/fraunited24.tar.gz,""
 helios24,0,true,./teams/helios24/0/helios24.tar.gz,""
+oxsy2024,0,false,./teams/oxsy2024/0/oxsy2024.tar.gz,""
 robocin2024,0,true,./teams/robocin2024/0/robocin2024.tar.gz,""
 yushan2024,0,true,./teams/yushan2024/0/yushan2024.tar.gz,""
+robocin2025,io2025,true,./teams/robocin2025/io2025/robocin2025.tar.gz,""
+yushan2025,io2025,true,./teams/yushan2025/io2025/yushan2025.tar.gz,""

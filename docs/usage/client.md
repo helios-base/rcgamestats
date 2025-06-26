@@ -40,6 +40,9 @@ cpufrequtils(cpufreq-set)を実行可能な状態にしておくと、実行効�
 
 client/.env.exampleを参考にして client/.env ファイルを作成してください。API_KEYとSERVER_URLの設定は必ず必要です。その他、チームバイナリやログファイルを保存する場所の指定も可能です。
 
+loganalyzer3を使用したい場合は, 
+rcgamestats/client/setuploganalyzer3.sh を実行してからクライアントを起動してください．
+
 ## 実行方法
 
 ```bash

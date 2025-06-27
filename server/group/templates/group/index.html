@@ -73,6 +73,10 @@
     <!-- This input is hidden and will be triggered by the button above -->
     <input id="csv-input" type="file" name="csv_file" accept=".csv" style="display: none;" onchange="this.form.submit();">
 </form>
+
+<p>
+    <a href="{{ url_for('group.show_orphaned_records') }}">Orphaned Records</a>
+</p>
 {% endif %}
 {% endblock %}
 

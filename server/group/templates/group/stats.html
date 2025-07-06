@@ -550,11 +550,12 @@
             const validKeys = keys.filter(score => stats.left_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
         }));
+        const leftMargin = ( leftErrorMax - leftErrorMin ) * 0.05; // マージンを5%とする
         const leftMin = ( mode == 'zoom' 
-                          ? leftErrorMin - 0.5 
+                          ? leftErrorMin - leftMargin
                           : -0.5 );
         const leftMax = ( mode == 'zoom' 
-                          ? leftErrorMax + 0.5 
+                          ? leftErrorMax + leftMargin
                           : Math.max(leftErrorMax + 0.5, leftScoreMax + 0.5, 5) );
 
         // 右チームの最小値と最大値を計算
@@ -566,11 +567,12 @@
             const validKeys = keys.filter(score => stats.right_score_counts[score] > 0);
             return validKeys.length ? Math.max(...validKeys) : 0;
         }));
+        const rightMargin = ( rightErrorMax - rightErrorMin ) * 0.05; // マージンを5%とする
         const rightMin = ( mode == 'zoom'
-                           ? rightErrorMin - 0.5
+                           ? rightErrorMin - rightMargin
                            : -0.5 );
         const rightMax = ( mode == 'zoom'
-                           ? rightErrorMax + 0.5
+                           ? rightErrorMax + rightMargin
                            : Math.max(rightErrorMax + 0.5, rightScoreMax + 0.5, 5) );
 
         const leftRange = [leftMin, leftMax];

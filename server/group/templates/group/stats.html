@@ -29,6 +29,7 @@
         <tr>
             <th class="stats">Created At</th>
             <th class="stats lborder">Left</th>
+            <th class="stats">Status</th>
             <th class="stats">Right</th>
             <th class="stats lborder">Total</th>
             <th class="stats lborder">Left Win</th>
@@ -115,6 +116,18 @@
         link.href = teamShowUrlTemplate.replace("0", stats.left_team_id);
         link.textContent = stats.left_team;
         cell.appendChild(link);
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
+        cell.classList.add('stats');
+        if (stats.left_status === 'approved') {
+            cell.classList.add('approved');
+        } else if (stats.left_status === 'rejected') {
+            cell.classList.add('rejected');
+        } else if (stats.left_status === 'under_review') {
+            cell.classList.add('under_review');
+        }
+        cell.textContent = stats.left_status;
         row.appendChild(cell);
 
         cell = document.createElement('td');

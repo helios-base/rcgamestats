@@ -708,3 +708,55 @@ def reset_match(group_id):
         current_app.logger.error("reset_match: Match not found or not in progress or completed.", "error")
 
     return redirect(url_for("group.show_group_detail", group_name=group_name))
+
+
+@group_bp.route("/orphaned_records", methods=["GET"])
+@login_required
+@admin_required
+def show_orphaned_records():
+    """
+    Show orphaned records.
+    """
+    orphaned_matches = Match.query.outerjoin(Group, Match.group_id == Group.id).filter(Group.id.is_(None)).all()
+    # The following line is an alternative way to find orphaned matches
+    # orphaned_matches = Match.query.filter(~Match.group_id.in_(db.session.query(Group.id))).all()
+
+    orphaned_stats = GroupStats.query.outerjoin(Group, GroupStats.group_id == Group.id).filter(Group.id.is_(None)).all()
+
+    if not orphaned_matches and not orphaned_stats:
+        flash("No orphaned matches or stats found.", "info")
+        current_app.logger.info("No orphaned matches or stats found.")
+        return redirect(url_for("group.index"))
+
+    return render_template("group/orphaned_records.html", matches=orphaned_matches, stats=orphaned_stats)
+
+
+@group_bp.route("/orphaned_records/delete", methods=["POST"])
+@login_required
+@admin_required
+def delete_orphaned_records():
+    """
+    Delete orphaned matches.
+    """
+    orphaned_matches = Match.query.outerjoin(Group, Match.group_id == Group.id).filter(Group.id.is_(None)).all()
+    orphaned_stats = GroupStats.query.outerjoin(Group, GroupStats.group_id == Group.id).filter(Group.id.is_(None)).all()
+
+    if not orphaned_matches and not orphaned_stats:
+        flash("No orphaned matches or stats found.", "info")
+        current_app.logger.info("No orphaned matches or stats found.")
+        return redirect(url_for("group.index"))
+
+    count = 0
+    for match in orphaned_matches:
+        db.session.delete(match)
+        count += 1
+
+    for stat in orphaned_stats:
+        db.session.delete(stat)
+        count += 1
+
+    db.session.commit()
+    flash(f"Deleted {count} orphaned records.", "success")
+    current_app.logger.info(f"Deleted {count} orphaned records.")
+
+    return redirect(url_for("group.index"))

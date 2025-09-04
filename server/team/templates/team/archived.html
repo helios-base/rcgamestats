@@ -29,7 +29,7 @@
         </thead>
         <tbody>
             {% for team in teams %}
-            <tr>
+            <tr class={% if team.review_status.value == 'approved' %}"approved"{% elif team.review_status.value == 'rejected' %}"rejected"{% elif team.review_status.value == 'under_review' %}"under_review"{% endif %}>
                 <td><input type="checkbox" name="team_ids" value="{{ team.id }}" onclick="checkCheckboxes()"></td>
                 <td><a href="{{ url_for('team.show_team', team_id=team.id) }}">{{ team.name }}</a></td>
                 <td>{{ team.version }}</td>

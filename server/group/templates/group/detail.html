@@ -122,6 +122,7 @@
             <th>End At</th>
             <th style="width:100px">Left Score</th>
             <th style="width:100px">Right Score</th>
+            <th style="width:70px">Winner</th>
             <th>Host Name</th>
             <th>Status</th>
             <th>Log File</th>
@@ -607,6 +608,16 @@
         row.appendChild(cell);
 
         cell = document.createElement('td');
+        if (match.left_score > match.right_score) {
+            cell.textContent = 'Left';
+        } else if (match.left_score < match.right_score) {
+            cell.textContent = 'Right';
+        } else {
+            cell.textContent = 'Draw';
+        }
+        row.appendChild(cell);
+
+        cell = document.createElement('td');
         //if (match.host_id === null) {
         if (match.host_name === null) {
             cell.textContent = '';
@@ -696,8 +707,8 @@
         $('#match-table').tablesorter(
             {
                 headers: {
-                    0: { sorter: false, filter: false },
-                    8: { sorter: false, filter: false }
+                    0: { sorter: false, filter: false }
+                    // 8: { sorter: false, filter: false }
                 },
                 sortList: [[0, 0]], // sort by first column in ascending order
                 widgets: ['filter', 'pager', 'rownum'],

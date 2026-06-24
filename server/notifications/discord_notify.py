@@ -38,7 +38,7 @@ def notify_new_group(group):
     with db.session.no_autoflush:
         match_count = group.matches.count()
 
-    message = f"New group created: {group.name} with {match_count} matches."
+    message = f"Created: group [{group.name}] with {match_count} matches."
     send_discord_notification(message)
 
 
@@ -47,5 +47,5 @@ def notify_group_all_completed(group):
     Notify Discord about all tasks in a group being completed.
     :param group: The group object containing group details.
     """
-    message = f"All matches for group {group.name} have been completed."
+    message = f"Finished: group [{group.name}]."
     send_discord_notification(message)

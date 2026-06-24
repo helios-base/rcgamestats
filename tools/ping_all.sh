@@ -9,9 +9,9 @@ count=0
 for i in `cat tmp_hosts`; do
     count=`expr $count + 1`
     if ! ping -c 1 -W 1 $i > /dev/null 2>&1; then
-        echo "$count: $i ... Unavailable"
+        echo "$count: $i \t... Unavailable"
     else
-        echo "$count: $i ... Ok"
+        echo "$count: $i \t... Ok"
     fi
 done
 

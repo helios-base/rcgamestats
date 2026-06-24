@@ -16,6 +16,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="button-container">
         <button id="bulk-archive-button" type="submit" formaction="{{ url_for('group.archive_groups') }}" disabled>Archive</button>
+        <button id="bulk-cancel-button" type="submit" formaction="{{ url_for('group.cancel_groups') }}" disabled>Cancel</button>
     </div>
     <table id="group-table" class="tablesorter">
         <thead>
@@ -121,6 +122,7 @@
             }
         }
         document.getElementById('bulk-archive-button').disabled = !anyChecked;
+        document.getElementById('bulk-cancel-button').disabled = !anyChecked;
     }
 
     document.addEventListener('DOMContentLoaded', function () {

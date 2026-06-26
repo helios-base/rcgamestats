@@ -166,7 +166,10 @@ def main():
 
                 if check_download_teams(match):
                     if match.run():
-                        match_manager.submit_result(match)
+                        try:
+                            match_manager.submit_result(match)
+                        except Exception as e:
+                            logger.error(f"Failed to submit result for match {match.group_name}/{match.index}: {e}")
                     else:
                         match_manager.decline_match(match)
                     logger.info(f"<<<< Finished {match.group_name}/{match.index}")

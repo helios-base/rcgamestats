@@ -1,5 +1,7 @@
+import errno
 import os
 import glob
+import shutil
 import logging
 import requests
 from requests.adapters import HTTPAdapter
@@ -14,15 +16,39 @@ logger = logging.getLogger("client")
 def __move_log_files(file_paths, log_dir):
     """
     Move log files from temporal directory to log directory.
+    Works across different filesystems.
     """
-    # logger.info(f"Move logs to {log_dir}")
+    # # logger.info(f"Move logs to {log_dir}")
+    # if not os.path.exists(log_dir):
+    #     os.makedirs(log_dir)
+
+    # for file_path in file_paths:
+    #     if os.path.exists(file_path):
+    #         new_file_path = os.path.join(log_dir, os.path.basename(file_path))
+    #         os.rename(file_path, new_file_path)
+
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
     for file_path in file_paths:
-        if os.path.exists(file_path):
-            new_file_path = os.path.join(log_dir, os.path.basename(file_path))
-            os.rename(file_path, new_file_path)
+        if not os.path.exists(file_path):
+            continue
+
+        new_file_path = os.path.join(log_dir, os.path.basename(file_path))
+
+        try:
+            if os.path.exists(new_file_path):
+                os.remove(new_file_path)
+            shutil.move(file_path, new_file_path)
+        except OSError as e:
+            if e.errno == errno.EXDEV:
+                logger.error(
+                    f"submit_result: cross-device move failed: {file_path} -> {new_file_path}: {e}"
+                )
+            else:
+                logger.error(
+                    f"submit_result: failed to move log file: {file_path} -> {new_file_path}: {e}"
+                )
 
 
 def __delete_log_files(file_paths):
@@ -112,10 +138,17 @@ def submit_result(match):
             for f in files:
                 f[1].close()
 
-    if delete_logs:
-        __delete_log_files(file_paths)
-    else:
-        __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+    # if delete_logs:
+    #     __delete_log_files(file_paths)
+    # else:
+    #     __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+    try:
+        if delete_logs:
+            __delete_log_files(file_paths)
+        else:
+            __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+    except Exception as e:
+        logger.error(f"submit_result: failed to finalize log files: {e}")
 
     # max_retries = 3
     # retry_delay = 5  # seconds

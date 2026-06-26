@@ -237,6 +237,66 @@ def edit_group(group_id):
     return render_template("group/edit.html", form=form, group=group)
 
 
+@group_bp.route("cancel_groups", methods=["POST"])
+@login_required
+@admin_required
+def cancel_groups():
+    """
+    Cancel groups.
+    """
+    group_ids = request.form.getlist("group_ids")
+    if not group_ids:
+        flash("No groups selected for canceling.", "error")
+        current_app.logger.error("No groups selected for canceling.")
+        return redirect(url_for("group.index"))
+
+    count = 0
+    for group_id in group_ids:
+        group = Group.query.get(group_id)
+        if group is None:
+            flash(f"Group ID {group_id} not found.", "error")
+            current_app.logger.error(f"Group ID {group_id} not found.")
+            continue
+        if group.is_active is False:
+            flash(f"Group ID {group.name} is already archived.", "error")
+            current_app.logger.error(f"Group ID {group.name} is already archived.")
+            continue
+
+        current = datetime.now().replace(microsecond=0)
+        try:
+            # UNEXECUTEDの試合のみを取り出す
+            matches_in_group = Match.query.filter_by(group_id=group_id, status=MatchStatus.UNEXECUTED).all()
+            if not matches_in_group:
+                flash(f"Group ID {group.name} has no unexecuted matches.", "error")
+                current_app.logger.error(f"Group ID {group.name} has no unexecuted matches.")
+                continue
+
+            for match in matches_in_group:
+                if match.status == MatchStatus.UNEXECUTED:
+                    # UNEXECUTEDの試合はCOMPLETEDにする
+                    match.host_name = "CANCELED"
+                    match.start_time = current
+                    match.end_time = current
+                    match.left_score = 0
+                    match.right_score = 0
+                    match.log_file_name = ""
+                    match.status = MatchStatus.COMPLETED
+
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Group [{group.name}] cannot be canceled.", "error")
+            current_app.logger.error(f"Group [{group.name}] cannot be canceled.")
+            continue
+
+        count += 1
+        current_app.logger.info(f"Canceled group [{group.name}].")
+
+    flash(f"Canceled {count} group(s).", "success")
+    current_app.logger.info(f"Canceled {count} group(s).")
+    return redirect(url_for("group.index"))
+
+
 @group_bp.route("archive_groups", methods=["POST"])
 @login_required
 @admin_required
@@ -262,21 +322,29 @@ def archive_groups():
             current_app.logger.error(f"Group ID {group.name} is already archived.")
             continue
 
-        group.is_active = False
-        matches_in_group = Match.query.filter_by(group_id=group_id).all()
-        for match in matches_in_group:
-            if match.status == MatchStatus.IN_PROGRESS:
-                match.host.assigned_match_id = None
-                match.host_id = None
-                match.host_name = None
-                match.host_name = None
-                match.start_time = None
-                match.status = MatchStatus.ARCHIVED
-                match.log_file_name = None
-                match.token = None
-            elif match.status == MatchStatus.UNEXECUTED:
-                match.status = MatchStatus.ARCHIVED
         try:
+            # IN_PROGRESSの試合が存在するグループはアーカイブしない
+            in_progress_matches = Match.query.filter_by(group_id=group_id, status=MatchStatus.IN_PROGRESS).all()
+            if in_progress_matches:
+                flash(f"Group ID {group.name} has matches in progress. Cannot archive.", "error")
+                current_app.logger.error(f"Group ID {group.name} has matches in progress. Cannot archive.")
+                continue
+
+            group.is_active = False
+            matches_in_group = Match.query.filter_by(group_id=group_id).all()
+            for match in matches_in_group:
+                if match.status == MatchStatus.IN_PROGRESS:
+                    match.host.assigned_match_id = None
+                    match.host_id = None
+                    match.host_name = None
+                    match.host_name = None
+                    match.start_time = None
+                    match.status = MatchStatus.ARCHIVED
+                    match.log_file_name = None
+                    match.token = None
+                elif match.status == MatchStatus.UNEXECUTED:
+                    match.status = MatchStatus.ARCHIVED
+
             db.session.commit()
         except IntegrityError:
             db.session.rollback()

@@ -3,6 +3,7 @@ import os
 import glob
 import shutil
 import logging
+import time
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -96,59 +97,79 @@ def submit_result(match):
 
     tmp_dir = config.TEMPORAL_DIR
     file_paths = glob.glob(os.path.join(tmp_dir, f"{match.log_file_name}*"))
-    # files = [('log_file', (os.path.basename(file_path), open(file_path, 'rb'))) for file_path in file_paths]
-    files = [('log_file', (open(file_path, 'rb'))) for file_path in file_paths]
-    # files = [(os.path.basename(file_path), open(file_path, 'rb')) for file_path in file_paths]
+    if not file_paths:
+        logger.error("submit_result: log files do not exist.")
+        return None
 
     # logger.info(f"Submit result: {match_data}")
     logger.info(f"Submitting result {match.group_name}/{match.index}, {match.left_score} - {match.right_score}")
-    delete_logs = False
+    retry_delay = 5
+    max_retry_delay = 60
+
     with requests.Session() as session:
         retries = Retry(total=3, backoff_factor=0.3, status_forcelist=[502, 503, 504], allowed_methods=["POST"])
         session.mount("https://", HTTPAdapter(max_retries=retries))
         session.mount("http://", HTTPAdapter(max_retries=retries))
 
-        try:
-            response = session.post(url, headers=headers, data=match_data, files=files, timeout=(3, 10))
-            response.raise_for_status()
-            logger.info(f"SubmitResponse: {response.json()}")
-            delete_logs = True
-        except requests.exceptions.HTTPError as e:
-            try:
-                response_data = response.json()
-                error_msg = response_data.get("error", "")
-            except Exception:
-                error_msg = ""
-            # If the error is not 5xx, it is not a server error.
-            if response.status_code == 401:
-                logger.error(f"submit_result: The match token may be changed. [{error_msg}] {e}")
-            elif response.status_code == 404:
-                logger.error(f"submit_result: The match may be deleted. [{error_msg}] {e}")
-            elif response.status_code == 409:
-                logger.error(f"submit_result: Some information may be wrong. [{error_msg}] {e}")
-            elif response.status_code == 410:
-                logger.error(f"submit_result: The match may be reset. [{error_msg}] {e}")
-            else:
-                logger.error(f"submit_result: Client error occurred: [{error_msg}] {e}")
-        except requests.exceptions.RequestException as e:
-            logger.error(f"submit_result: Request error occurred: {e}")
-        except Exception as e:
-            logger.error(f"submit_result: An error occurred: {e}")
-        finally:
-            for f in files:
-                f[1].close()
+        while True:
+            response = None
+            opened_files = []
 
-    # if delete_logs:
-    #     __delete_log_files(file_paths)
-    # else:
-    #     __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
-    try:
-        if delete_logs:
-            __delete_log_files(file_paths)
-        else:
-            __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
-    except Exception as e:
-        logger.error(f"submit_result: failed to finalize log files: {e}")
+            try:
+                for file_path in file_paths:
+                    opened_files.append((os.path.basename(file_path), open(file_path, "rb")))
+
+                files = [("log_file", (file_name, file_obj)) for file_name, file_obj in opened_files]
+                response = session.post(url, headers=headers, data=match_data, files=files, timeout=(3, 10))
+                response.raise_for_status()
+                logger.info(f"SubmitResponse: {response.json()}")
+                __delete_log_files(file_paths)
+                return True
+
+            except requests.exceptions.HTTPError as e:
+                status_code = getattr(response, "status_code", None)
+
+                try:
+                    response_data = response.json() if response is not None else {}
+                    error_msg = response_data.get("error", "")
+                except Exception:
+                    error_msg = ""
+
+                if status_code == 401:
+                    logger.error(f"submit_result: The match token may be changed. [{error_msg}] {e}")
+                    __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+                    return None
+                if status_code == 404:
+                    logger.error(f"submit_result: The match may be deleted. [{error_msg}] {e}")
+                    __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+                    return None
+                if status_code == 409:
+                    logger.error(f"submit_result: Some information may be wrong. [{error_msg}] {e}")
+                    __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+                    return None
+                if status_code == 410:
+                    logger.error(f"submit_result: The match may be reset. [{error_msg}] {e}")
+                    __move_log_files(file_paths, os.path.join(config.LOG_DIR, match.group_name))
+                    return None
+
+                logger.error(f"submit_result: transient HTTP error, retrying: [{status_code}] [{error_msg}] {e}")
+
+            except requests.exceptions.RequestException as e:
+                logger.error(f"submit_result: request error, retrying: {e}")
+
+            except Exception as e:
+                logger.error(f"submit_result: unexpected error, retrying: {e}")
+
+            finally:
+                for _, file_obj in opened_files:
+                    try:
+                        file_obj.close()
+                    except Exception:
+                        pass
+
+            logger.info(f"submit_result: retry in {int(retry_delay)} seconds")
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 1.5, max_retry_delay)
 
     # max_retries = 3
     # retry_delay = 5  # seconds
